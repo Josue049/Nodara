@@ -1,4 +1,5 @@
-import { expect, test, type Page } from "@playwright/test";
+import type { Page } from "@playwright/test";
+import { apiCreate, expect, test } from "./fixtures";
 
 async function newPage(page: Page, title: string) {
   await page.goto("/");
@@ -9,8 +10,6 @@ async function newPage(page: Page, title: string) {
 }
 
 const saved = (page: Page) => expect(page.getByTestId("save-status")).toHaveText("Guardado");
-
-test.describe.configure({ mode: "serial" });
 
 test("escribir texto y persistir tras recargar", async ({ page }) => {
   await newPage(page, "Editor texto");
@@ -93,7 +92,7 @@ test("bloque desplegable se inserta y se pliega", async ({ page }) => {
 });
 
 test("API: rechaza contenido que no es un documento", async ({ request }) => {
-  const created = await (await request.post("/api/pages", { data: {} })).json();
+  const created = await apiCreate(request, {});
   const bad = await request.patch(`/api/pages/${created.id}`, { data: { content: [1, 2] } });
   expect(bad.status()).toBe(400);
   const ok = await request.patch(`/api/pages/${created.id}`, { data: { content: { type: "doc", content: [] } } });

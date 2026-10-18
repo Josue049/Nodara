@@ -1,13 +1,4 @@
-import { expect, test, type Page } from "@playwright/test";
-
-async function createRootPage(page: Page, title: string) {
-  await page.getByRole("button", { name: "Nueva página" }).click();
-  await expect(page.getByTestId("page-title")).toBeVisible();
-  await page.getByTestId("page-title").fill(title);
-  await expect(page.getByTestId("save-status")).toHaveText("Guardado");
-}
-
-test.describe.configure({ mode: "serial" });
+import { apiCreate, expect, sidebarRow, test } from "./fixtures";
 
 test("estado vacío y creación de la primera página", async ({ page }) => {
   const errors: string[] = [];
@@ -16,30 +7,34 @@ test("estado vacío y creación de la primera página", async ({ page }) => {
   await expect(page.getByText("Aún no hay páginas")).toBeVisible();
   await page.getByRole("button", { name: "Nueva página" }).first().click();
   await expect(page).toHaveURL(/\/[0-9a-f-]{36}$/);
-  await expect(page.getByTestId("page-title")).toBeFocused({ timeout: 100 }).catch(() => {});
   expect(errors).toEqual([]);
 });
 
 test("el título se autoguarda y persiste tras recargar", async ({ page }) => {
   await page.goto("/");
-  await createRootPage(page, "Plan de proyecto");
-  await expect(page.getByTestId("sidebar-page").filter({ hasText: "Plan de proyecto" })).toBeVisible();
+  await page.getByRole("button", { name: "Nueva página" }).first().click();
+  await page.getByTestId("page-title").fill("Plan de proyecto");
+  await expect(page.getByTestId("save-status")).toHaveText("Guardado");
+  await expect(sidebarRow(page, "Plan de proyecto")).toBeVisible();
   await page.reload();
   await expect(page.getByTestId("page-title")).toHaveValue("Plan de proyecto");
-  await expect(page.getByTestId("sidebar-page").filter({ hasText: "Plan de proyecto" })).toBeVisible();
+  await expect(sidebarRow(page, "Plan de proyecto")).toBeVisible();
 });
 
-test("subpáginas anidadas, expandir/contraer y ruta de navegación", async ({ page }) => {
+test("subpáginas anidadas, expandir/contraer y ruta de navegación", async ({ page, request }) => {
+  await apiCreate(request, { title: "Otra página" });
+  await apiCreate(request, { title: "Plan de proyecto" });
   await page.goto("/");
-  const parent = page.getByTestId("sidebar-page").filter({ hasText: "Plan de proyecto" });
+  const parent = sidebarRow(page, "Plan de proyecto");
   await parent.hover();
   await parent.getByRole("button", { name: "Añadir una subpágina" }).click();
   await page.getByTestId("page-title").fill("Tareas");
   await expect(page.getByTestId("save-status")).toHaveText("Guardado");
-  await expect(page.getByRole("navigation", { name: "Ruta" })).toContainText("Plan de proyecto");
-  await expect(page.getByRole("navigation", { name: "Ruta" })).toContainText("Tareas");
+  const crumbs = page.getByRole("navigation", { name: "Ruta" });
+  await expect(crumbs).toContainText("Plan de proyecto");
+  await expect(crumbs).toContainText("Tareas");
 
-  const child = page.getByTestId("sidebar-page").filter({ hasText: /^Tareas$/ });
+  const child = sidebarRow(page, /^Tareas$/);
   await expect(child).toBeVisible();
   await parent.getByRole("button", { name: "Contraer" }).click();
   await expect(child).toBeHidden();
@@ -47,9 +42,10 @@ test("subpáginas anidadas, expandir/contraer y ruta de navegación", async ({ p
   await expect(child).toBeVisible();
 });
 
-test("favoritos", async ({ page }) => {
+test("favoritos", async ({ page, request }) => {
+  await apiCreate(request, { title: "Plan de proyecto" });
   await page.goto("/");
-  await page.getByTestId("sidebar-page").filter({ hasText: "Plan de proyecto" }).click();
+  await sidebarRow(page, "Plan de proyecto").click();
   await page.getByRole("button", { name: "Añadir a favoritos" }).click();
   await expect(page.getByTestId("favorite-page")).toContainText("Plan de proyecto");
   await page.reload();
@@ -58,9 +54,11 @@ test("favoritos", async ({ page }) => {
   await expect(page.getByTestId("favorite-page")).toHaveCount(0);
 });
 
-test("papelera: mover, restaurar y eliminar definitivamente", async ({ page }) => {
+test("papelera: mover, restaurar y eliminar definitivamente", async ({ page, request }) => {
+  const parent = await apiCreate(request, { title: "Plan de proyecto" });
+  await apiCreate(request, { title: "Tareas", parentId: parent.id });
   await page.goto("/");
-  const row = page.getByTestId("sidebar-page").filter({ hasText: "Plan de proyecto" });
+  const row = sidebarRow(page, "Plan de proyecto");
   await row.hover();
   await row.getByRole("button", { name: "Más acciones" }).click();
   await page.getByRole("menuitem", { name: "Mover a la papelera" }).click();
@@ -68,12 +66,11 @@ test("papelera: mover, restaurar y eliminar definitivamente", async ({ page }) =
 
   await page.getByRole("button", { name: "Papelera" }).click();
   const item = page.getByTestId("trash-item");
-  await expect(item).toHaveCount(1);
-  await expect(item).toContainText("Plan de proyecto"); // solo la raíz eliminada; su subpágina viaja con ella
+  await expect(item).toHaveCount(1); // solo la raíz; su subpágina viaja con ella
+  await expect(item).toContainText("Plan de proyecto");
   await item.getByRole("button", { name: "Restaurar" }).click();
-  await expect(page.getByTestId("sidebar-page").filter({ hasText: "Plan de proyecto" })).toBeVisible();
+  await expect(sidebarRow(page, "Plan de proyecto")).toBeVisible();
 
-  // De nuevo a la papelera y eliminación definitiva.
   await row.hover();
   await row.getByRole("button", { name: "Más acciones" }).click();
   await page.getByRole("menuitem", { name: "Mover a la papelera" }).click();
