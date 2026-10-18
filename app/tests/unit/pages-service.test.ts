@@ -3,6 +3,10 @@ import { createDb, type Db } from "@/server/db";
 import {
   createPage,
   deletePagePermanently,
+  duplicatePage,
+  extractText,
+  movePage,
+  searchPages,
   InvalidMoveError,
   listPages,
   listTrash,
@@ -71,5 +75,46 @@ describe("pages-service", () => {
     await trashPage(db, a.id);
     await deletePagePermanently(db, a.id);
     expect(await listTrash(db)).toHaveLength(0);
+  });
+
+  it("mueve y reordena entre hermanas", async () => {
+    const a = await createPage(db, { title: "A" });
+    const b = await createPage(db, { title: "B" });
+    const c = await createPage(db, { title: "C" });
+    await movePage(db, c.id, { parentId: null, index: 0 });
+    expect((await listPages(db)).map((p) => p.title)).toEqual(["C", "A", "B"]);
+    await movePage(db, a.id, { parentId: null, index: 99 });
+    expect((await listPages(db)).map((p) => p.title)).toEqual(["C", "B", "A"]);
+    await movePage(db, b.id, { parentId: null, index: 1 });
+    expect((await listPages(db)).map((p) => p.title)).toEqual(["C", "B", "A"]);
+    const moved = await movePage(db, b.id, { parentId: a.id, index: 0 });
+    expect(moved.parentId).toBe(a.id);
+    await expect(movePage(db, a.id, { parentId: b.id, index: 0 })).rejects.toBeInstanceOf(InvalidMoveError);
+  });
+
+  it("duplica el subárbol justo después de la original", async () => {
+    const a = await createPage(db, { title: "A" });
+    await createPage(db, { title: "Z" });
+    const child = await createPage(db, { title: "hija", parentId: a.id });
+    await createPage(db, { title: "nieta", parentId: child.id });
+    const copy = await duplicatePage(db, a.id);
+    const all = await listPages(db);
+    expect(all).toHaveLength(7);
+    expect(all.filter((p) => !p.parentId).map((p) => p.title)).toEqual(["A", "A", "Z"]);
+    expect(all.filter((p) => p.parentId === copy.id)).toHaveLength(1);
+    expect(copy.id).not.toBe(a.id);
+  });
+
+  it("extrae texto y busca por título y contenido sin distinguir acentos", async () => {
+    const doc = { type: "doc", content: [{ type: "paragraph", content: [{ type: "text", text: "Reunión de equipo" }] }, { type: "paragraph", content: [{ type: "text", text: "presupuesto anual" }] }] };
+    expect(extractText(doc)).toBe("Reunión de equipo presupuesto anual");
+    const a = await createPage(db, { title: "Notas" });
+    await updatePage(db, a.id, { content: doc });
+    await createPage(db, { title: "Presupuesto 2026" });
+    const hits = await searchPages(db, "presupuesto");
+    expect(hits.map((h) => h.title)).toEqual(["Presupuesto 2026", "Notas"]); // título primero
+    expect(hits[1].snippet).toContain("presupuesto anual");
+    expect((await searchPages(db, "reunion")).map((h) => h.title)).toEqual(["Notas"]);
+    expect(await searchPages(db, "reunion", { titlesOnly: true })).toHaveLength(0);
   });
 });

@@ -1,17 +1,43 @@
 @import "tailwindcss";
 
 :root {
+  /* Medido en Notion (light): fondo #FFF, sidebar rgb(249,248,247), texto rgb(44,44,43), secundario rgb(95,94,89), hover rgba(33,27,23,.05) */
   --bg: #ffffff;
-  --bg-sidebar: #f7f7f5;
-  --bg-hover: rgba(55, 53, 47, 0.06);
-  --bg-active: rgba(55, 53, 47, 0.09);
-  --text: #37352f;
-  --text-secondary: rgba(55, 53, 47, 0.65);
-  --text-tertiary: rgba(55, 53, 47, 0.4);
-  --border: rgba(55, 53, 47, 0.09);
+  --bg-sidebar: #f9f8f7;
+  --bg-hover: rgba(33, 27, 23, 0.05);
+  --bg-active: rgba(33, 27, 23, 0.08); /* hipótesis: no medido */
+  --text: #2c2c2b;
+  --text-secondary: #5f5e59;
+  --text-tertiary: rgba(44, 44, 43, 0.45); /* hipótesis */
+  --border: rgba(33, 27, 23, 0.09); /* hipótesis */
   --accent: #2383e2;
   --danger: #eb5757;
+  --popover: #ffffff;
+  --code-bg: rgba(33, 27, 23, 0.05);
+  --code-text: #cf5148;
+  --pre-bg: #f7f6f3;
   --shadow-pop: rgba(15, 15, 15, 0.05) 0 0 0 1px, rgba(15, 15, 15, 0.1) 0 3px 6px, rgba(15, 15, 15, 0.2) 0 9px 24px;
+  --sidebar-w: 270px;
+  --topbar-h: 44px;
+  color-scheme: light;
+}
+
+/* Medido en Notion (dark): fondo rgb(25,25,25), sidebar rgb(32,32,32), texto rgb(240,239,237) */
+:root[data-theme="dark"] {
+  --bg: #191919;
+  --bg-sidebar: #202020;
+  --bg-hover: rgba(255, 255, 255, 0.055); /* hipótesis */
+  --bg-active: rgba(255, 255, 255, 0.09); /* hipótesis */
+  --text: #f0efed;
+  --text-secondary: rgba(240, 239, 237, 0.65); /* hipótesis */
+  --text-tertiary: rgba(240, 239, 237, 0.4); /* hipótesis */
+  --border: rgba(255, 255, 255, 0.094); /* hipótesis */
+  --popover: #252525;
+  --code-bg: rgba(255, 255, 255, 0.08);
+  --code-text: #ff7369;
+  --pre-bg: #252525;
+  --shadow-pop: rgba(0, 0, 0, 0.2) 0 0 0 1px, rgba(0, 0, 0, 0.3) 0 3px 6px, rgba(0, 0, 0, 0.4) 0 9px 24px;
+  color-scheme: dark;
 }
 
 @theme inline {
@@ -89,15 +115,15 @@ button {
 .nd-editor blockquote { border-left: 3px solid currentColor; padding-left: 14px; margin: 4px 0; }
 .nd-editor hr { border: none; border-top: 1px solid var(--border); margin: 6px 0; }
 .nd-editor code {
-  background: rgba(135, 131, 120, 0.15);
-  color: #eb5757;
+  background: var(--code-bg);
+  color: var(--code-text);
   border-radius: 4px;
   padding: 0.2em 0.4em;
   font-family: "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace;
   font-size: 85%;
 }
 .nd-editor pre {
-  background: #f7f6f3;
+  background: var(--pre-bg);
   border-radius: 4px;
   padding: 32px 16px;
   font-family: "SFMono-Regular", Menlo, Consolas, monospace;

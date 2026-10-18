@@ -3,6 +3,7 @@
 import {
   ChevronRight,
   Home,
+  Moon,
   MoreHorizontal,
   Plus,
   SquarePen,
@@ -16,6 +17,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { t } from "@/lib/strings";
+import { THEME_KEY, resolveTheme, type ThemeChoice } from "@/lib/theme";
 import { childrenOf, pathTo, type TreePage } from "@/lib/tree";
 import { PageIcon } from "./page-icon";
 import { PopoverMenu } from "./popover-menu";
@@ -49,7 +51,7 @@ function useExpanded() {
 }
 
 const rowBase =
-  "group/row relative flex h-[27px] items-center gap-1 rounded-[6px] pr-1 text-[14px] text-ink-2 hover:bg-hover";
+  "group/row relative flex h-[30px] items-center gap-1 rounded-[6px] pr-1 text-[16px] font-medium text-ink-2 hover:bg-hover";
 
 function SidebarNode({
   page,
@@ -186,7 +188,7 @@ function TrashPanel({ onClose }: { onClose: () => void }) {
     <div
       role="dialog"
       aria-label={t.trash}
-      className="absolute bottom-10 left-2 z-50 flex max-h-[420px] w-[360px] flex-col rounded-md bg-white text-sm shadow-[var(--shadow-pop)]"
+      className="absolute bottom-10 left-2 z-50 flex max-h-[420px] w-[360px] flex-col rounded-md bg-[var(--popover)] text-sm shadow-[var(--shadow-pop)]"
     >
       <div className="flex items-center justify-between border-b border-line px-3 py-2 font-medium">
         {t.trash}
@@ -218,6 +220,22 @@ function TrashPanel({ onClose }: { onClose: () => void }) {
   );
 }
 
+function ThemeToggle() {
+  const toggle = () => {
+    const next: ThemeChoice = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+    try {
+      localStorage.setItem(THEME_KEY, next);
+    } catch {}
+    document.documentElement.dataset.theme = resolveTheme(next);
+  };
+  return (
+    <button onClick={toggle} className={`${rowBase} w-full pl-[8px]`} data-testid="theme-toggle">
+      <Moon size={16} className="mr-1.5" />
+      {t.toggleTheme}
+    </button>
+  );
+}
+
 export function Sidebar() {
   const { pages, loaded, createPage } = useWorkspace();
   const params = useParams<{ pageId?: string }>();
@@ -237,7 +255,7 @@ export function Sidebar() {
   const newRootPage = async () => router.push(`/${await createPage(null)}`);
 
   return (
-    <aside className="relative flex h-full w-[240px] shrink-0 flex-col bg-sidebar text-ink" aria-label={t.sidebar}>
+    <aside className="relative flex h-full w-[var(--sidebar-w)] shrink-0 flex-col bg-sidebar text-ink" aria-label={t.sidebar}>
       <div className="flex h-[45px] items-center gap-2 px-3">
         <span className="flex size-[22px] items-center justify-center rounded bg-ink text-[13px] font-semibold text-white">
           N
@@ -297,6 +315,7 @@ export function Sidebar() {
       </nav>
 
       <div className="border-t border-line px-[6px] py-1.5">
+        <ThemeToggle />
         <button
           onClick={() => setTrashOpen((o) => !o)}
           className={`${rowBase} w-full pl-[8px]`}

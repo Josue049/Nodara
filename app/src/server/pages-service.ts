@@ -16,6 +16,20 @@ const summaryCols = {
   isFavorite: pages.isFavorite,
 };
 
+/** Texto plano de un documento TipTap/ProseMirror (bloques separados por espacio). */
+export function extractText(node: unknown): string {
+  const parts: string[] = [];
+  const walk = (n: unknown) => {
+    if (!n || typeof n !== "object") return;
+    const { text, content } = n as { text?: unknown; content?: unknown };
+    if (typeof text === "string") parts.push(text);
+    if (Array.isArray(content)) content.forEach(walk);
+    if (Array.isArray(content) && !("text" in (n as object))) parts.push(" ");
+  };
+  walk(node);
+  return parts.join("").replace(/\s+/g, " ").trim();
+}
+
 export class NotFoundError extends Error {}
 export class InvalidMoveError extends Error {}
 
@@ -83,7 +97,11 @@ export async function updatePage(
   }
   const [row] = await db
     .update(pages)
-    .set({ ...patch, updatedAt: new Date() })
+    .set({
+      ...patch,
+      ...(patch.content !== undefined ? { contentText: extractText(patch.content) } : {}),
+      updatedAt: new Date(),
+    })
     .where(and(eq(pages.id, id), isNull(pages.deletedAt)))
     .returning();
   if (!row) throw new NotFoundError("Página no encontrada");
@@ -145,4 +163,101 @@ export async function listTrash(db: Db): Promise<PageSummary[]> {
       position: r.position,
       isFavorite: r.isFavorite,
     }));
+}
+
+/** Mueve una página a `parentId` en la posición `index` entre sus hermanas (0 = primera). */
+export async function movePage(
+  db: Db,
+  id: string,
+  target: { parentId: string | null; index: number },
+): Promise<PageRow> {
+  const siblings = (
+    await db
+      .select({ id: pages.id, position: pages.position })
+      .from(pages)
+      .where(and(target.parentId ? eq(pages.parentId, target.parentId) : isNull(pages.parentId), isNull(pages.deletedAt)))
+      .orderBy(asc(pages.position), asc(pages.createdAt))
+  ).filter((p) => p.id !== id);
+  const i = Math.max(0, Math.min(target.index, siblings.length));
+  let position: number;
+  if (siblings.length === 0) position = 1;
+  else if (i === 0) position = siblings[0].position - 1;
+  else if (i >= siblings.length) position = siblings[siblings.length - 1].position + 1;
+  else position = (siblings[i - 1].position + siblings[i].position) / 2;
+  return updatePage(db, id, { parentId: target.parentId, position });
+}
+
+/** Copia la página y todo su subárbol activo; la copia queda justo después de la original. */
+export async function duplicatePage(db: Db, id: string): Promise<PageRow> {
+  const root = await getPage(db, id);
+  if (root.deletedAt) throw new NotFoundError("Página no encontrada");
+  const ids = await subtreeIds(db, id);
+  const rows = await db.select().from(pages).where(and(inArray(pages.id, ids), isNull(pages.deletedAt)));
+  const byParent = new Map<string | null, PageRow[]>();
+  for (const r of rows) byParent.set(r.parentId, [...(byParent.get(r.parentId) ?? []), r]);
+
+  const copy = async (src: PageRow, parentId: string | null, position: number): Promise<PageRow> => {
+    const [row] = await db
+      .insert(pages)
+      .values({ parentId, title: src.title, icon: src.icon, content: src.content, contentText: src.contentText, position })
+      .returning();
+    for (const child of (byParent.get(src.id) ?? []).sort((a, b) => a.position - b.position)) {
+      await copy(child, row.id, child.position);
+    }
+    return row;
+  };
+
+  const next = (
+    await db
+      .select({ position: pages.position })
+      .from(pages)
+      .where(and(root.parentId ? eq(pages.parentId, root.parentId) : isNull(pages.parentId), isNull(pages.deletedAt)))
+  )
+    .map((p) => p.position)
+    .filter((p) => p > root.position)
+    .sort((a, b) => a - b)[0];
+  return copy(root, root.parentId, next === undefined ? root.position + 1 : (root.position + next) / 2);
+}
+
+export type SearchResult = PageSummary & { snippet: string; path: string[] };
+
+const fold = (s: string) => s.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase();
+
+export async function searchPages(
+  db: Db,
+  query: string,
+  opts: { titlesOnly?: boolean; limit?: number } = {},
+): Promise<SearchResult[]> {
+  const q = fold(query.trim());
+  const rows = await db
+    .select({ ...summaryCols, contentText: pages.contentText })
+    .from(pages)
+    .where(isNull(pages.deletedAt))
+    .orderBy(desc(pages.updatedAt));
+  const byId = new Map(rows.map((r) => [r.id, r]));
+  const pathOf = (r: (typeof rows)[number]) => {
+    const out: string[] = [];
+    const seen = new Set<string>();
+    let cur = r.parentId ? byId.get(r.parentId) : undefined;
+    while (cur && !seen.has(cur.id)) {
+      seen.add(cur.id);
+      out.unshift(cur.title);
+      cur = cur.parentId ? byId.get(cur.parentId) : undefined;
+    }
+    return out;
+  };
+  const results: (SearchResult & { rank: number })[] = [];
+  for (const r of rows) {
+    const inTitle = q === "" ? true : fold(r.title).includes(q);
+    const at = q === "" || opts.titlesOnly ? -1 : fold(r.contentText).indexOf(q);
+    if (!inTitle && at < 0) continue;
+    let snippet = "";
+    if (at >= 0) {
+      const start = Math.max(0, at - 30);
+      snippet = (start > 0 ? "…" : "") + r.contentText.slice(start, at + q.length + 60);
+    }
+    const { contentText: _c, ...summary } = r;
+    results.push({ ...summary, snippet, path: pathOf(r), rank: inTitle ? 0 : 1 });
+  }
+  return results.sort((a, b) => a.rank - b.rank).slice(0, opts.limit ?? 20).map(({ rank: _r, ...x }) => x);
 }

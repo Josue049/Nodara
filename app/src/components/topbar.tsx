@@ -15,7 +15,7 @@ export function Topbar({ pageId, saveState }: { pageId: string; saveState: SaveS
   const current = trail.at(-1);
   const label = { idle: "", saving: t.saving, saved: t.saved, error: t.saveError }[saveState];
   return (
-    <header className="flex h-[45px] shrink-0 items-center gap-2 px-3 text-[14px]">
+    <header className="flex h-[var(--topbar-h)] shrink-0 items-center gap-2 px-3 text-[14px]">
       <nav aria-label="Ruta" className="flex min-w-0 items-center gap-1 text-ink-2">
         {trail.map((p, i) => (
           <span key={p.id} className="flex min-w-0 items-center gap-1">

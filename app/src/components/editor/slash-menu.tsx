@@ -48,7 +48,7 @@ export function SlashMenu({ state, index }: { state: SlashState; index: number }
       role="listbox"
       aria-label={t.insertBlock}
       data-testid="slash-menu"
-      className="nd-scroll fixed z-50 max-h-[330px] w-[320px] overflow-y-auto rounded-md bg-white p-1 text-sm shadow-[var(--shadow-pop)]"
+      className="nd-scroll fixed z-50 max-h-[330px] w-[320px] overflow-y-auto rounded-md bg-[var(--popover)] p-1 text-sm shadow-[var(--shadow-pop)]"
       style={{ top: rect.bottom + 6, left: rect.left }}
       onMouseDown={(e) => e.preventDefault()}
     >

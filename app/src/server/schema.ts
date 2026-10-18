@@ -20,6 +20,8 @@ export const pages = pgTable(
     title: text("title").notNull().default(""),
     icon: text("icon"),
     content: jsonb("content").notNull().default([]),
+    /** Texto plano del contenido, para búsqueda. */
+    contentText: text("content_text").notNull().default(""),
     position: doublePrecision("position").notNull().default(0),
     isFavorite: boolean("is_favorite").notNull().default(false),
     deletedAt: timestamp("deleted_at", { withTimezone: true }),

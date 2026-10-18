@@ -31,6 +31,7 @@ export const t = {
   pagesNav: "Páginas",
   recent: "Páginas recientes",
   titlePlaceholder: "Sin título",
+  toggleTheme: "Cambiar tema",
   welcome: "Bienvenido a Nodara",
   insertBlock: "Insertar bloque",
   noResults: "Sin resultados",

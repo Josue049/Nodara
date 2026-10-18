@@ -36,7 +36,7 @@ export function PopoverMenu({
     <div
       ref={ref}
       role="menu"
-      className={`z-50 min-w-[220px] rounded-md bg-white p-1 text-sm shadow-[var(--shadow-pop)] ${className}`}
+      className={`z-50 min-w-[220px] rounded-md bg-[var(--popover)] p-1 text-sm shadow-[var(--shadow-pop)] ${className}`}
     >
       {items.map((it) => (
         <button
