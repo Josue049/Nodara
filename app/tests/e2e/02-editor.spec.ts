@@ -24,7 +24,7 @@ test("menú / inserta encabezado, filtra y navega con teclado", async ({ page })
   await page.keyboard.type("/");
   const menu = page.getByTestId("slash-menu");
   await expect(menu).toBeVisible();
-  await expect(menu.getByRole("option")).toHaveCount(11);
+  await expect(menu.getByRole("option")).toHaveCount(12);
   await page.keyboard.type("encab");
   await expect(menu.getByRole("option")).toHaveCount(3);
   await page.keyboard.press("ArrowDown");

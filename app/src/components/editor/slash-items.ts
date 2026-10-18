@@ -27,6 +27,8 @@ export const slashItems: SlashItem[] = [
     run: (e, r) => base(e, r).toggleTaskList().run() },
   { id: "toggle", title: "Lista desplegable", hint: "Oculta contenido dentro de un bloque", keywords: ["toggle", "details", "desplegable"],
     run: (e, r) => base(e, r).setDetails().run() },
+  { id: "table", title: "Tabla", hint: "Tabla simple de 3×3", keywords: ["table", "tabla", "grid"],
+    run: (e, r) => base(e, r).insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run() },
   { id: "quote", title: "Cita", hint: "Captura una cita", keywords: ["quote", "cita", "blockquote"],
     run: (e, r) => base(e, r).toggleBlockquote().run() },
   { id: "code", title: "Código", hint: "Bloque de código", keywords: ["code", "codigo", "pre"],

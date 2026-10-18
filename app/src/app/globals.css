@@ -176,3 +176,16 @@ body {
 .nd-editor .nd-details > button { position: relative; z-index: 1; }
 .nd-editor summary { display: block; list-style: none; padding: 3px 2px; }
 .nd-editor summary::-webkit-details-marker { display: none; }
+
+/* Enlaces, resaltado y tablas */
+.nd-editor a { color: inherit; text-decoration: underline; text-decoration-color: var(--text-tertiary); text-underline-offset: 2px; cursor: pointer; }
+.nd-editor mark { border-radius: 3px; padding: 0 2px; color: inherit; }
+.nd-editor table { border-collapse: collapse; width: 100%; table-layout: fixed; margin: 6px 0; overflow: hidden; }
+.nd-editor th, .nd-editor td { border: 1px solid var(--border); padding: 4px 8px; vertical-align: top; position: relative; min-width: 1em; }
+.nd-editor th { background: var(--bg-hover); font-weight: 600; text-align: left; }
+.nd-editor td > p, .nd-editor th > p { padding: 1px 0; }
+.nd-editor .selectedCell::after { content: ""; position: absolute; inset: 0; background: rgba(35, 131, 226, 0.14); pointer-events: none; }
+.nd-editor .column-resize-handle { position: absolute; right: -2px; top: 0; bottom: 0; width: 4px; background: var(--accent); pointer-events: none; }
+.tableWrapper { overflow-x: auto; }
+.resize-cursor { cursor: col-resize; }
+.ProseMirror-selectednode { outline: 2px solid rgba(35, 131, 226, 0.4); }
