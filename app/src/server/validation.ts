@@ -12,5 +12,5 @@ export const updatePageSchema = z.object({
   isFavorite: z.boolean().optional(),
   parentId: z.uuid().nullable().optional(),
   position: z.number().finite().optional(),
-  content: z.array(z.unknown()).optional(),
+  content: z.looseObject({ type: z.literal("doc") }).optional(),
 });

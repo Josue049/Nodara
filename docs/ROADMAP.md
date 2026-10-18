@@ -1,7 +1,7 @@
 # Roadmap
 
 - [x] **Hito 1** — Shell, sidebar, páginas anidadas, título autoguardado, favoritos, papelera, API.
-- [ ] **Hito 2** — Editor de bloques (TipTap), comandos `/`, atajos, formatos, autoguardado de contenido.
+- [x] **Hito 2** (base) — Editor de bloques (TipTap), comandos `/`, atajos, formatos, autoguardado de contenido. Pendiente: menú flotante de formato, arrastrar bloques, menú de bloque, imágenes/tablas/colores.
 - [ ] **Hito 3** — Mover/reordenar (dnd-kit), búsqueda, duplicar, iconos, historial.
 - [ ] **Hito 4** — Bases de datos: propiedades, filtros, orden; vistas tabla, kanban, calendario, galería, lista.
 - [ ] **Hito 5** — Autenticación, workspaces, usuarios, permisos.

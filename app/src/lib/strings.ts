@@ -32,4 +32,9 @@ export const t = {
   recent: "Páginas recientes",
   titlePlaceholder: "Sin título",
   welcome: "Bienvenido a Nodara",
+  insertBlock: "Insertar bloque",
+  noResults: "Sin resultados",
+  toggleSummary: "Lista desplegable",
+  editorPlaceholder: "Escribe «/» para ver los comandos…",
+  pageContent: "Contenido de la página",
 } as const;

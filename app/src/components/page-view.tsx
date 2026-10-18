@@ -1,12 +1,18 @@
 "use client";
 
+import type { Editor } from "@tiptap/core";
 import Link from "next/link";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { t } from "@/lib/strings";
+import { BlockEditor, type DocJson } from "./editor/block-editor";
 import { Topbar, type SaveState } from "./topbar";
 import { useWorkspace } from "./workspace-provider";
 
-type Loaded = { id: string; title: string; deletedAt: string | null };
+type Loaded = { id: string; title: string; deletedAt: string | null; content: unknown };
+type Pending = { title?: string; content?: DocJson };
+
+const asDoc = (v: unknown): DocJson | null =>
+  v && typeof v === "object" && (v as { type?: string }).type === "doc" ? (v as DocJson) : null;
 
 const SAVE_DELAY_MS = 500;
 
@@ -17,21 +23,22 @@ export function PageView({ pageId }: { pageId: string }) {
   const [title, setTitle] = useState("");
   const [saveState, setSaveState] = useState<SaveState>("idle");
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const pending = useRef<string | null>(null);
+  const pending = useRef<Pending>({});
+  const editorRef = useRef<Editor | null>(null);
   const area = useRef<HTMLTextAreaElement>(null);
 
   const flush = useCallback(async () => {
     if (timer.current) clearTimeout(timer.current);
     timer.current = null;
     const value = pending.current;
-    if (value === null) return;
-    pending.current = null;
+    if (value.title === undefined && value.content === undefined) return;
+    pending.current = {};
     setSaveState("saving");
     try {
       const res = await fetch(`/api/pages/${pageId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title: value }),
+        body: JSON.stringify(value),
         keepalive: true,
       });
       setSaveState(res.ok ? "saved" : "error");
@@ -65,13 +72,16 @@ export function PageView({ pageId }: { pageId: string }) {
     el.style.height = `${el.scrollHeight}px`;
   }, [title, page]);
 
-  const onTitle = (value: string) => {
-    setTitle(value);
-    patchLocal(pageId, { title: value });
-    pending.current = value;
+  const schedule = (patch: Pending) => {
+    pending.current = { ...pending.current, ...patch };
     setSaveState("saving");
     if (timer.current) clearTimeout(timer.current);
     timer.current = setTimeout(() => void flush(), SAVE_DELAY_MS);
+  };
+  const onTitle = (value: string) => {
+    setTitle(value);
+    patchLocal(pageId, { title: value });
+    schedule({ title: value });
   };
 
   if (missing) {
@@ -117,8 +127,23 @@ export function PageView({ pageId }: { pageId: string }) {
             aria-label="Título de la página"
             data-testid="page-title"
             onChange={(e) => onTitle(e.target.value.replace(/\n/g, " "))}
-            onKeyDown={(e) => e.key === "Enter" && e.preventDefault()}
+            onKeyDown={(e) => {
+              if (e.key !== "Enter") return;
+              e.preventDefault();
+              editorRef.current?.commands.focus("start");
+            }}
             className="w-full resize-none overflow-hidden bg-transparent text-[40px] font-bold leading-[1.2] tracking-[-0.01em] outline-none placeholder:text-ink-3"
+          />
+          <BlockEditor
+            initial={asDoc(page.content)}
+            editable={!inTrash}
+            onChange={(doc) => schedule({ content: doc })}
+            onReady={(ed) => (editorRef.current = ed)}
+          />
+          <div
+            aria-hidden
+            className="min-h-[30vh] cursor-text"
+            onClick={() => editorRef.current?.commands.focus("end")}
           />
         </div>
       </div>
