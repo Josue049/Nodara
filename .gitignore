@@ -10,3 +10,4 @@ research/screenshots/rea-*.json
 node_modules/
 research/screenshots/notion-app-*.png
 research/captures/*.json
+backups/

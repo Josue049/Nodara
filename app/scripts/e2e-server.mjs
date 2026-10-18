@@ -10,7 +10,7 @@ rmSync(dataDir, { recursive: true, force: true });
 const child = spawn(
   process.execPath,
   [path.join("node_modules", "next", "dist", "bin", "next"), "dev", "-p", port, "-H", "127.0.0.1"],
-  { stdio: "inherit", env: { ...process.env, NODARA_DATA_DIR: dataDir, NODARA_E2E: "1" } },
+  { stdio: "inherit", env: { ...process.env, DATABASE_URL: "", NODARA_DATA_DIR: dataDir, NODARA_E2E: "1" } },
 );
 child.on("exit", (code) => process.exit(code ?? 0));
 process.on("SIGTERM", () => child.kill());

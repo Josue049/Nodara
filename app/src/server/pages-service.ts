@@ -35,14 +35,14 @@ export class InvalidMoveError extends Error {}
 
 /** Ids de la página y todos sus descendientes. */
 async function subtreeIds(db: Db, rootId: string): Promise<string[]> {
-  const res = await db.execute<{ id: string }>(sql`
+  const res = (await db.execute(sql`
     WITH RECURSIVE tree AS (
       SELECT id FROM pages WHERE id = ${rootId}
       UNION ALL
       SELECT p.id FROM pages p JOIN tree t ON p.parent_id = t.id
     )
     SELECT id FROM tree
-  `);
+  `)) as unknown as { rows: { id: string }[] };
   return res.rows.map((r) => r.id);
 }
 
@@ -109,7 +109,7 @@ export async function updatePage(
 }
 
 /** Envía la página y sus descendientes a la papelera con el mismo sello temporal. */
-export async function trashPage(db: Db, id: string): Promise<void> {
+async function trashPageTx(db: Db, id: string): Promise<void> {
   const page = await getPage(db, id);
   if (page.deletedAt) return;
   const ids = await subtreeIds(db, id);
@@ -119,7 +119,7 @@ export async function trashPage(db: Db, id: string): Promise<void> {
     .where(and(inArray(pages.id, ids), isNull(pages.deletedAt)));
 }
 
-export async function restorePage(db: Db, id: string): Promise<PageRow> {
+async function restorePageTx(db: Db, id: string): Promise<PageRow> {
   const page = await getPage(db, id);
   if (!page.deletedAt) return page;
   const stamp = page.deletedAt;
@@ -166,7 +166,7 @@ export async function listTrash(db: Db): Promise<PageSummary[]> {
 }
 
 /** Mueve una página a `parentId` en la posición `index` entre sus hermanas (0 = primera). */
-export async function movePage(
+async function movePageTx(
   db: Db,
   id: string,
   target: { parentId: string | null; index: number },
@@ -188,7 +188,7 @@ export async function movePage(
 }
 
 /** Copia la página y todo su subárbol activo; la copia queda justo después de la original. */
-export async function duplicatePage(db: Db, id: string): Promise<PageRow> {
+async function duplicatePageTx(db: Db, id: string): Promise<PageRow> {
   const root = await getPage(db, id);
   if (root.deletedAt) throw new NotFoundError("Página no encontrada");
   const ids = await subtreeIds(db, id);
@@ -263,3 +263,10 @@ export async function searchPages(
   }
   return results.sort((a, b) => a.rank - b.rank).slice(0, opts.limit ?? 20).map((x) => ({ id: x.id, parentId: x.parentId, title: x.title, icon: x.icon, position: x.position, isFavorite: x.isFavorite, snippet: x.snippet, path: x.path }));
 }
+
+// Operaciones de varios pasos: se ejecutan en una transacción para no dejar árboles a medias.
+export const trashPage = (db: Db, id: string) => db.transaction((tx) => trashPageTx(tx, id));
+export const restorePage = (db: Db, id: string) => db.transaction((tx) => restorePageTx(tx, id));
+export const movePage = (db: Db, id: string, target: { parentId: string | null; index: number }) =>
+  db.transaction((tx) => movePageTx(tx, id, target));
+export const duplicatePage = (db: Db, id: string) => db.transaction((tx) => duplicatePageTx(tx, id));
