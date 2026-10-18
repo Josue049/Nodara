@@ -1,0 +1,28 @@
+export type TreePage = {
+  id: string;
+  parentId: string | null;
+  title: string;
+  icon: string | null;
+  position: number;
+  isFavorite: boolean;
+};
+
+export function childrenOf(pages: TreePage[], parentId: string | null): TreePage[] {
+  return pages
+    .filter((p) => p.parentId === parentId)
+    .sort((a, b) => a.position - b.position);
+}
+
+/** Cadena de ancestros desde la raíz hasta la página (incluida). */
+export function pathTo(pages: TreePage[], id: string): TreePage[] {
+  const byId = new Map(pages.map((p) => [p.id, p]));
+  const out: TreePage[] = [];
+  let cur = byId.get(id);
+  const seen = new Set<string>();
+  while (cur && !seen.has(cur.id)) {
+    seen.add(cur.id);
+    out.unshift(cur);
+    cur = cur.parentId ? byId.get(cur.parentId) : undefined;
+  }
+  return out;
+}
