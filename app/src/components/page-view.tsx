@@ -4,6 +4,8 @@ import type { Editor } from "@tiptap/core";
 import Link from "next/link";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { t } from "@/lib/strings";
+import { SmilePlus } from "lucide-react";
+import { EmojiPicker } from "./emoji-picker";
 import { BlockEditor, type DocJson } from "./editor/block-editor";
 import { Topbar, type SaveState } from "./topbar";
 import { useWorkspace } from "./workspace-provider";
@@ -17,7 +19,9 @@ const asDoc = (v: unknown): DocJson | null =>
 const SAVE_DELAY_MS = 500;
 
 export function PageView({ pageId }: { pageId: string }) {
-  const { patchLocal, restore, refreshPages, pages } = useWorkspace();
+  const { patchLocal, restore, refreshPages, pages, updatePage } = useWorkspace();
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const icon = pages.find((p) => p.id === pageId)?.icon ?? null;
   const [page, setPage] = useState<Loaded | null>(null);
   const [missing, setMissing] = useState(false);
   const [title, setTitle] = useState("");
@@ -117,7 +121,37 @@ export function PageView({ pageId }: { pageId: string }) {
         </div>
       )}
       <div className="nd-scroll flex-1 overflow-y-auto">
-        <div className="mx-auto w-full max-w-[900px] px-24 pt-[84px] max-[900px]:px-6">
+        <div className="mx-auto w-full max-w-[816px] px-12 pt-[84px] max-[900px]:px-6">
+          <div className="group/icon relative">
+            {icon ? (
+              <button
+                aria-label={t.changeIcon}
+                data-testid="page-icon"
+                onClick={() => !inTrash && setPickerOpen((o) => !o)}
+                className="mb-2 flex size-[78px] items-center justify-center rounded-md text-[72px] leading-none hover:bg-hover"
+              >
+                {icon}
+              </button>
+            ) : (
+              !inTrash && (
+                <button
+                  onClick={() => setPickerOpen((o) => !o)}
+                  data-testid="add-icon"
+                  className="mb-1 flex items-center gap-1.5 rounded-md px-2 py-1 text-[14px] text-ink-3 opacity-0 hover:bg-hover focus-visible:opacity-100 group-hover/icon:opacity-100"
+                >
+                  <SmilePlus size={16} /> {t.addIcon}
+                </button>
+              )
+            )}
+            {pickerOpen && (
+              <EmojiPicker
+                onClose={() => setPickerOpen(false)}
+                onPick={(e) => {
+                  setPickerOpen(false);
+                  void updatePage(pageId, { icon: e });
+                }}
+              />
+            )}
           <textarea
             ref={area}
             value={title}
@@ -134,6 +168,7 @@ export function PageView({ pageId }: { pageId: string }) {
             }}
             className="w-full resize-none overflow-hidden bg-transparent text-[40px] font-bold leading-[1.2] tracking-[-0.01em] outline-none placeholder:text-ink-3"
           />
+          </div>
           <BlockEditor
             initial={asDoc(page.content)}
             editable={!inTrash}

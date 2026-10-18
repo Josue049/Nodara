@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import type { TreePage } from "@/lib/tree";
 
@@ -11,12 +12,24 @@ type Ctx = {
   loaded: boolean;
   createPage: (parentId?: string | null) => Promise<string>;
   patchLocal: (id: string, patch: Patch) => void;
+  /** Cambia título/icono en memoria y en el servidor. */
+  updatePage: (id: string, patch: Pick<Patch, "title" | "icon">) => Promise<void>;
   toggleFavorite: (id: string) => Promise<void>;
   moveToTrash: (id: string) => Promise<void>;
   restore: (id: string) => Promise<void>;
   deleteForever: (id: string) => Promise<void>;
+  movePage: (id: string, parentId: string | null, index: number) => Promise<void>;
+  duplicatePage: (id: string) => Promise<string>;
   refreshTrash: () => Promise<void>;
   refreshPages: () => Promise<void>;
+  searchOpen: boolean;
+  setSearchOpen: (open: boolean) => void;
+  /** Página para la que está abierto el diálogo «Mover a». */
+  moveTarget: string | null;
+  setMoveTarget: (id: string | null) => void;
+  /** Página cuyo nombre se edita en la barra lateral. */
+  renaming: string | null;
+  setRenaming: (id: string | null) => void;
 };
 
 const WorkspaceContext = createContext<Ctx | null>(null);
@@ -37,9 +50,13 @@ async function api<T>(url: string, init?: RequestInit): Promise<T> {
 }
 
 export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
+  const router = useRouter();
   const [pages, setPages] = useState<TreePage[]>([]);
   const [trash, setTrash] = useState<TreePage[]>([]);
   const [loaded, setLoaded] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [moveTarget, setMoveTarget] = useState<string | null>(null);
+  const [renaming, setRenaming] = useState<string | null>(null);
 
   const refreshPages = useCallback(async () => {
     setPages(await api<TreePage[]>("/api/pages"));
@@ -60,21 +77,28 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
-  const createPage = useCallback(
-    async (parentId: string | null = null) => {
-      const row = await api<TreePage>("/api/pages", {
-        method: "POST",
-        body: JSON.stringify({ parentId }),
-      });
-      setPages((p) => [...p, row]);
-      return row.id;
-    },
-    [],
-  );
+  const createPage = useCallback(async (parentId: string | null = null) => {
+    const row = await api<TreePage>("/api/pages", { method: "POST", body: JSON.stringify({ parentId }) });
+    setPages((p) => [...p, row]);
+    return row.id;
+  }, []);
 
   const patchLocal = useCallback((id: string, patch: Patch) => {
     setPages((p) => p.map((x) => (x.id === id ? { ...x, ...patch } : x)));
   }, []);
+
+  const updatePage = useCallback(
+    async (id: string, patch: Pick<Patch, "title" | "icon">) => {
+      patchLocal(id, patch);
+      try {
+        await api(`/api/pages/${id}`, { method: "PATCH", body: JSON.stringify(patch) });
+      } catch (e) {
+        await refreshPages();
+        throw e;
+      }
+    },
+    [patchLocal, refreshPages],
+  );
 
   const toggleFavorite = useCallback(
     async (id: string) => {
@@ -115,12 +139,35 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
     [refreshTrash],
   );
 
+  const movePage = useCallback(
+    async (id: string, parentId: string | null, index: number) => {
+      try {
+        await api(`/api/pages/${id}/move`, { method: "POST", body: JSON.stringify({ parentId, index }) });
+      } finally {
+        await refreshPages();
+      }
+    },
+    [refreshPages],
+  );
+
+  const duplicatePage = useCallback(
+    async (id: string) => {
+      const row = await api<TreePage>(`/api/pages/${id}/duplicate`, { method: "POST" });
+      await refreshPages();
+      router.push(`/${row.id}`);
+      return row.id;
+    },
+    [refreshPages, router],
+  );
+
   const value = useMemo(
     () => ({
-      pages, trash, loaded, createPage, patchLocal, toggleFavorite,
-      moveToTrash, restore, deleteForever, refreshTrash, refreshPages,
+      pages, trash, loaded, createPage, patchLocal, updatePage, toggleFavorite, moveToTrash, restore,
+      deleteForever, movePage, duplicatePage, refreshTrash, refreshPages,
+      searchOpen, setSearchOpen, moveTarget, setMoveTarget, renaming, setRenaming,
     }),
-    [pages, trash, loaded, createPage, patchLocal, toggleFavorite, moveToTrash, restore, deleteForever, refreshTrash, refreshPages],
+    [pages, trash, loaded, createPage, patchLocal, updatePage, toggleFavorite, moveToTrash, restore,
+      deleteForever, movePage, duplicatePage, refreshTrash, refreshPages, searchOpen, moveTarget, renaming],
   );
 
   return <WorkspaceContext.Provider value={value}>{children}</WorkspaceContext.Provider>;

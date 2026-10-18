@@ -256,8 +256,10 @@ export async function searchPages(
       const start = Math.max(0, at - 30);
       snippet = (start > 0 ? "…" : "") + r.contentText.slice(start, at + q.length + 60);
     }
-    const { contentText: _c, ...summary } = r;
-    results.push({ ...summary, snippet, path: pathOf(r), rank: inTitle ? 0 : 1 });
+    results.push({
+      id: r.id, parentId: r.parentId, title: r.title, icon: r.icon, position: r.position, isFavorite: r.isFavorite,
+      snippet, path: pathOf(r), rank: inTitle ? 0 : 1,
+    });
   }
-  return results.sort((a, b) => a.rank - b.rank).slice(0, opts.limit ?? 20).map(({ rank: _r, ...x }) => x);
+  return results.sort((a, b) => a.rank - b.rank).slice(0, opts.limit ?? 20).map((x) => ({ id: x.id, parentId: x.parentId, title: x.title, icon: x.icon, position: x.position, isFavorite: x.isFavorite, snippet: x.snippet, path: x.path }));
 }
