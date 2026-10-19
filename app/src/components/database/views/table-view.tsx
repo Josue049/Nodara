@@ -20,6 +20,9 @@ const TITLE_W = 280;
 const COL_W = 200;
 
 /** Propiedades visibles en el orden de la vista. */
+/** Filas que se pintan de golpe en la tabla; «Mostrar más filas» añade otro bloque. */
+const PAGE_ROWS = 100;
+
 export function visibleProps(db: Database): PropertyDef[] {
   const order = db.view?.config.visibleProperties;
   if (!order) return db.props;
@@ -92,6 +95,8 @@ export function TableView({ db }: { db: Database }) {
   const [addAnchor, setAddAnchor] = useState<Anchor | null>(null);
   const [calc, setCalc] = useState<{ prop: PropertyDef | null; anchor: Anchor } | null>(null);
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
+  // Con miles de filas solo se pintan las primeras (el resto se carga a petición): mantiene ligera la página.
+  const [shown, setShown] = useState(PAGE_ROWS);
   const [resizing, setResizing] = useState<{ id: string; width: number } | null>(null);
   const showIcon = cfg.showPageIcon !== false;
   const vlines = cfg.showVerticalLines !== false;
@@ -267,7 +272,16 @@ export function TableView({ db }: { db: Database }) {
                 </div>
               );
             })
-          : db.rows.map(renderRow)}
+          : db.rows.slice(0, shown).map(renderRow)}
+        {!groups && db.rows.length > shown && (
+          <div role="row">
+            <div role="gridcell">
+              <button type="button" data-testid="load-more" onClick={() => setShown((n) => n + PAGE_ROWS)} className="nd-db-cell flex h-[32px] items-center gap-2 px-2 text-[14px] text-ink-2 hover:bg-hover" style={{ width: totalW }}>
+                Mostrar más filas ({db.rows.length - shown} restantes)
+              </button>
+            </div>
+          </div>
+        )}
         {!groups && addRowButton()}
         {footer}
       </div>
