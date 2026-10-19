@@ -43,6 +43,13 @@
       "when": 1792380461289,
       "tag": "0005_page_settings_templates_audit",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1792382093710,
+      "tag": "0006_password_resets",
+      "breakpoints": true
     }
   ]
 }

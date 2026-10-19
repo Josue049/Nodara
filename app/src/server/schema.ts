@@ -326,3 +326,18 @@ export const pageViews = pgTable(
   },
   (t) => [primaryKey({ columns: [t.pageId, t.userId, t.day] })],
 );
+
+/** Enlaces de restablecimiento de contraseña de un solo uso, generados por un administrador del espacio (no requieren correo). */
+export const passwordResets = pgTable(
+  "password_resets",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    tokenHash: text("token_hash").notNull().unique(),
+    createdBy: uuid("created_by").references(() => users.id, { onDelete: "set null" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    usedAt: timestamp("used_at", { withTimezone: true }),
+  },
+  (t) => [index("password_resets_user_idx").on(t.userId)],
+);

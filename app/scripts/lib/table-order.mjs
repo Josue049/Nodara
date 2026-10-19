@@ -22,4 +22,5 @@ export const TABLE_ORDER = [
   "page_templates",
   "audit_log",
   "page_views",
+  "password_resets",
 ];

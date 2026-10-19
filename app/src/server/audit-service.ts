@@ -22,6 +22,7 @@ export const AUDIT_LABELS: Record<string, string> = {
   "member.invite": "Invitación creada",
   "member.role": "Rol de miembro cambiado",
   "member.remove": "Miembro eliminado",
+  "member.reset_password": "Enlace de restablecimiento de contraseña generado",
   "workspace.export": "Copia de seguridad exportada",
   "workspace.update": "Espacio de trabajo modificado",
   "import": "Contenido importado",

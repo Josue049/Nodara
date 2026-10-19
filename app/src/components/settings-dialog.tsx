@@ -1,6 +1,6 @@
 "use client";
 
-import { Copy, Trash2, X } from "lucide-react";
+import { Copy, KeyRound, Trash2, X } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { call } from "./database/api";
 import { hardNavigate, useAuth, type WorkspaceInfo } from "./auth-provider";
@@ -104,6 +104,7 @@ const AUDIT_LABELS: Record<string, string> = {
   "member.invite": "Invitación creada",
   "member.role": "Rol de miembro cambiado",
   "member.remove": "Miembro eliminado",
+  "member.reset_password": "Enlace de restablecimiento de contraseña generado",
   "workspace.export": "Copia de seguridad exportada",
   import: "Contenido importado",
 };
@@ -226,6 +227,7 @@ function MembersTab() {
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<Role>("member");
   const [link, setLink] = useState("");
+  const [resetLink, setResetLink] = useState<{ email: string; url: string } | null>(null);
   const [error, setError] = useState("");
   const admin = workspace.role === "owner" || workspace.role === "admin";
 
@@ -327,6 +329,26 @@ function MembersTab() {
               ) : (
                 <span className="text-[14px] text-ink-2">{ROLE_LABELS[m.role]}</span>
               )}
+              {admin && m.userId !== user.id && (
+                <button
+                  type="button"
+                  aria-label={`Restablecer la contraseña de ${m.name}`}
+                  title="Generar enlace para restablecer la contraseña"
+                  data-testid="reset-password"
+                  onClick={async () => {
+                    try {
+                      const r = await call<{ path: string; email: string }>(`/api/workspaces/${workspace.id}/members/${m.userId}/reset`, "POST");
+                      setResetLink({ email: r.email, url: `${window.location.origin}${r.path}` });
+                      setError("");
+                    } catch (err) {
+                      setError(err instanceof Error ? err.message : "Error");
+                    }
+                  }}
+                  className="rounded p-1 text-ink-3 hover:bg-hover"
+                >
+                  <KeyRound size={14} />
+                </button>
+              )}
               {(admin && m.userId !== user.id) || (m.userId === user.id && members.length > 1) ? (
                 <button
                   type="button"
@@ -349,6 +371,17 @@ function MembersTab() {
           ))}
         </ul>
         {error && !admin && <p role="alert" className="text-[14px] text-danger">{error}</p>}
+        {resetLink && (
+          <div className="mt-2 rounded-md bg-hover p-2 text-[13px]" data-testid="reset-link-box">
+            <p className="mb-1">Enlace de un solo uso (caduca en 1 hora) para que {resetLink.email} defina una contraseña nueva. Compártelo por un canal seguro:</p>
+            <div className="flex items-center gap-2">
+              <span className="min-w-0 flex-1 truncate" data-testid="reset-link">{resetLink.url}</span>
+              <button type="button" aria-label="Copiar enlace de restablecimiento" onClick={() => void navigator.clipboard?.writeText(resetLink.url)} className="rounded p-1 hover:bg-active">
+                <Copy size={14} />
+              </button>
+            </div>
+          </div>
+        )}
       </section>
       {admin && pending.length > 0 && (
         <section>
