@@ -18,6 +18,7 @@
   --pre-bg: #f7f6f3;
   --shadow-pop: rgba(15, 15, 15, 0.05) 0 0 0 1px, rgba(15, 15, 15, 0.1) 0 3px 6px, rgba(15, 15, 15, 0.2) 0 9px 24px;
   --db-header: #7d7a75; /* medido: encabezado de tabla */
+  --callout-gray: #f9f8f7; /* medido: caja de «callout» */
   --sidebar-w: 270px;
   --topbar-h: 44px;
   color-scheme: light;
@@ -38,6 +39,7 @@
   --code-text: #cf5148; /* medido: igual que en light */
   --pre-bg: #252525;
   --db-header: #ada9a3; /* medido */
+  --callout-gray: #383836; /* medido: caja de «callout» */
   --shadow-pop: rgba(0, 0, 0, 0.2) 0 0 0 1px, rgba(0, 0, 0, 0.3) 0 3px 6px, rgba(0, 0, 0, 0.4) 0 9px 24px;
   color-scheme: dark;
 }
@@ -253,8 +255,9 @@ body {
 .nd-editor .nd-comment.nd-comment-active { background: rgba(255, 212, 0, 0.5); }
 
 /* Bloques avanzados: llamada, imagen, archivo, marcador, ecuaciones, índice y columnas */
-.nd-editor .nd-callout { display: flex; gap: 8px; padding: 16px 16px 16px 12px; margin: 4px 0; border-radius: 6px; background: var(--opt-gray-bg); color: var(--text); position: relative; }
-.nd-editor .nd-callout[data-color="gray"] { background: var(--bg-hover); }
+/* Medido en Notion (research/features/notion-blocks-*.json): caja gris #f9f8f7 / #383836, radio 10 px, relleno 12 px, icono 24 px, separación 8 px. */
+.nd-editor .nd-callout { display: flex; gap: 8px; padding: 12px; margin: 4px 0; border-radius: 10px; background: var(--callout-gray); color: var(--text); position: relative; }
+.nd-editor .nd-callout[data-color="gray"] { background: var(--callout-gray); }
 .nd-editor .nd-callout[data-color="brown"] { background: var(--opt-brown-bg); }
 .nd-editor .nd-callout[data-color="orange"] { background: var(--opt-orange-bg); }
 .nd-editor .nd-callout[data-color="yellow"] { background: var(--opt-yellow-bg); }
@@ -263,7 +266,7 @@ body {
 .nd-editor .nd-callout[data-color="purple"] { background: var(--opt-purple-bg); }
 .nd-editor .nd-callout[data-color="pink"] { background: var(--opt-pink-bg); }
 .nd-editor .nd-callout[data-color="red"] { background: var(--opt-red-bg); }
-.nd-editor .nd-callout-icon { width: 28px; height: 28px; font-size: 20px; line-height: 28px; text-align: center; border-radius: 4px; background: none; border: none; flex: none; }
+.nd-editor .nd-callout-icon { width: 24px; height: 24px; font-size: 20px; line-height: 24px; text-align: center; border-radius: 4px; background: none; border: none; flex: none; }
 .nd-editor button.nd-callout-icon:hover:not(:disabled) { background: var(--bg-hover); }
 .nd-editor .nd-callout-body { flex: 1; min-width: 0; }
 .nd-editor .nd-callout-colors { position: absolute; right: 8px; top: 6px; display: none; gap: 3px; }
