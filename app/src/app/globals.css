@@ -251,3 +251,48 @@ body {
 .nd-editor .nd-mention { background: var(--bg-hover); color: var(--accent); border-radius: 4px; padding: 0 3px; font-weight: 500; }
 .nd-editor .nd-comment { background: rgba(255, 212, 0, 0.28); border-bottom: 2px solid rgba(255, 212, 0, 0.7); cursor: pointer; }
 .nd-editor .nd-comment.nd-comment-active { background: rgba(255, 212, 0, 0.5); }
+
+/* Bloques avanzados: llamada, imagen, archivo, marcador, ecuaciones, índice y columnas */
+.nd-editor .nd-callout { display: flex; gap: 8px; padding: 16px 16px 16px 12px; margin: 4px 0; border-radius: 6px; background: var(--opt-gray-bg); color: var(--text); position: relative; }
+.nd-editor .nd-callout[data-color="gray"] { background: var(--bg-hover); }
+.nd-editor .nd-callout[data-color="brown"] { background: var(--opt-brown-bg); }
+.nd-editor .nd-callout[data-color="orange"] { background: var(--opt-orange-bg); }
+.nd-editor .nd-callout[data-color="yellow"] { background: var(--opt-yellow-bg); }
+.nd-editor .nd-callout[data-color="green"] { background: var(--opt-green-bg); }
+.nd-editor .nd-callout[data-color="blue"] { background: var(--opt-blue-bg); }
+.nd-editor .nd-callout[data-color="purple"] { background: var(--opt-purple-bg); }
+.nd-editor .nd-callout[data-color="pink"] { background: var(--opt-pink-bg); }
+.nd-editor .nd-callout[data-color="red"] { background: var(--opt-red-bg); }
+.nd-editor .nd-callout-icon { width: 28px; height: 28px; font-size: 20px; line-height: 28px; text-align: center; border-radius: 4px; background: none; border: none; flex: none; }
+.nd-editor button.nd-callout-icon:hover:not(:disabled) { background: var(--bg-hover); }
+.nd-editor .nd-callout-body { flex: 1; min-width: 0; }
+.nd-editor .nd-callout-colors { position: absolute; right: 8px; top: 6px; display: none; gap: 3px; }
+.nd-editor .nd-callout:hover .nd-callout-colors, .nd-editor .nd-callout:focus-within .nd-callout-colors { display: flex; }
+.nd-editor .nd-callout-swatch { width: 12px; height: 12px; border-radius: 50%; border: 1px solid var(--border); }
+.nd-editor .nd-callout-swatch[aria-pressed="true"] { outline: 2px solid var(--accent); outline-offset: 1px; }
+.nd-editor .nd-callout-swatch[data-color="gray"] { background: var(--opt-gray-bg); }
+.nd-editor .nd-callout-swatch[data-color="brown"] { background: var(--opt-brown-bg); }
+.nd-editor .nd-callout-swatch[data-color="orange"] { background: var(--opt-orange-bg); }
+.nd-editor .nd-callout-swatch[data-color="yellow"] { background: var(--opt-yellow-bg); }
+.nd-editor .nd-callout-swatch[data-color="green"] { background: var(--opt-green-bg); }
+.nd-editor .nd-callout-swatch[data-color="blue"] { background: var(--opt-blue-bg); }
+.nd-editor .nd-callout-swatch[data-color="purple"] { background: var(--opt-purple-bg); }
+.nd-editor .nd-callout-swatch[data-color="pink"] { background: var(--opt-pink-bg); }
+.nd-editor .nd-callout-swatch[data-color="red"] { background: var(--opt-red-bg); }
+.nd-editor .nd-image-view { margin: 6px 0; }
+.nd-editor .nd-resize { position: absolute; top: 50%; width: 6px; height: 48px; margin-top: -24px; border-radius: 3px; background: rgba(255,255,255,0.9); border: 1px solid var(--border); cursor: col-resize; opacity: 0; transition: opacity 0.15s; }
+.nd-editor .nd-image-view:hover .nd-resize { opacity: 1; }
+.nd-editor .nd-file-view, .nd-editor .nd-bookmark-view { display: flex; align-items: center; gap: 8px; margin: 4px 0; padding: 8px 12px; border: 1px solid var(--border); border-radius: 6px; }
+.nd-editor .nd-file-view:hover, .nd-editor .nd-bookmark-view:hover { background: var(--bg-hover); }
+.nd-editor .nd-file-view a, .nd-editor .nd-bookmark-view a { text-decoration: none; }
+.nd-editor .nd-math-view { margin: 4px 0; }
+.nd-editor .nd-math-inline-view { display: inline-block; vertical-align: baseline; }
+.nd-editor .nd-math-inline-view .nd-math-editor { display: inline-block; min-width: 240px; padding: 6px; background: var(--popover); border-radius: 6px; box-shadow: var(--shadow-pop); position: relative; z-index: 30; }
+.nd-editor .nd-math-view .nd-math-editor { padding: 8px; border: 1px solid var(--border); border-radius: 6px; }
+.nd-editor .nd-toc-view { margin: 4px 0; padding: 6px 2px; }
+.nd-editor .nd-toc-view ul { list-style: none; padding: 0; }
+.nd-editor .nd-toc-view li { padding: 2px 0; }
+.nd-editor .nd-columns { display: flex; gap: 32px; margin: 4px 0; }
+.nd-editor .nd-column { flex: 1 1 0; min-width: 0; }
+@media (max-width: 700px) { .nd-editor .nd-columns { flex-direction: column; gap: 8px; } }
+.nd-editor .ProseMirror-selectednode > .nd-image-view, .nd-editor .ProseMirror-selectednode.nd-file-view { outline: 2px solid var(--accent); }

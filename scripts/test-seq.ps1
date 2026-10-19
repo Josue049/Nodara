@@ -31,6 +31,8 @@ if (-not $SkipStatic) {
   if (-not (Step "build-produccion" { & $node node_modules\next\dist\bin\next build })) { $failed = $true }
 }
 # Build de pruebas: una sola vez
+# La caché de Turbopack puede conservar CSS antiguo: el build de pruebas parte siempre de cero.
+Remove-Item -Recurse -Force "$global:Rootpp\.next-e2e" -ErrorAction SilentlyContinue
 $env:NODARA_E2E = "1"; $env:NODARA_DIST_DIR = ".next-e2e"; $env:DATABASE_URL = ""
 if (-not (Step "build-e2e" { & $node node_modules\next\dist\bin\next build })) { $failed = $true; $results | Format-Table | Out-Host; exit 1 }
 Remove-Item Env:NODARA_E2E, Env:NODARA_DIST_DIR -ErrorAction SilentlyContinue
