@@ -13,6 +13,8 @@ import { Anchor, anchorOf, MenuRow, Popover } from "./popover";
 
 export type CellCtx = {
   refs: NonNullable<QueryResult["refs"]>;
+  people: NonNullable<QueryResult["people"]>;
+  members: NonNullable<QueryResult["members"]>;
   /** Crea una opción nueva en una propiedad select/multi_select/status. */
   createOption: (propertyId: string, name: string) => Promise<SelectOption>;
 };
@@ -82,6 +84,23 @@ export function CellValue({ prop, value, ctx }: { prop: PropertyDef; value: unkn
               <span className="truncate">{f.name}</span>
             </a>
           ))}
+        </span>
+      );
+    case "person":
+    case "created_by":
+      return (
+        <span className="flex flex-wrap gap-1.5" data-testid="person-chips">
+          {(value as string[]).map((id) => {
+            const who = ctx.people[id] ?? ctx.members.find((m) => m.id === id);
+            return (
+              <span key={id} className="inline-flex max-w-full items-center gap-1 text-[14px]" data-testid="person-chip">
+                <span className="flex size-[18px] shrink-0 items-center justify-center rounded-full text-[10px] font-medium" style={{ background: `var(--opt-${who?.color ?? "gray"}-bg)`, color: `var(--opt-${who?.color ?? "gray"}-fg)` }} aria-hidden>
+                  {(who?.name ?? "?").charAt(0).toUpperCase()}
+                </span>
+                <span className="truncate">{who?.name ?? "Desconocido"}</span>
+              </span>
+            );
+          })}
         </span>
       );
     case "relation":
@@ -306,6 +325,38 @@ function FilesPicker({ value, anchor, onChange, onClose, label }: { value: FileV
   );
 }
 
+function PersonPicker({ prop, value, anchor, ctx, onChange, onClose }: { prop: PropertyDef; value: string[]; anchor: Anchor; ctx: CellCtx; onChange: (v: string[]) => void; onClose: () => void }) {
+  const [q, setQ] = useState("");
+  const sel = new Set(value);
+  const shown = ctx.members.filter((m) => m.name.toLowerCase().includes(q.trim().toLowerCase()));
+  return (
+    <Popover anchor={anchor} onClose={onClose} label={prop.name} testId="person-picker" width={260}>
+      <input autoFocus value={q} onChange={(e) => setQ(e.target.value)} placeholder="Buscar personas…" aria-label="Buscar personas" className="mb-1 w-full rounded-md border border-line bg-transparent px-2 py-1 outline-none focus:border-accent" />
+      {shown.map((m) => (
+        <MenuRow
+          key={m.id}
+          testId="person-item"
+          right={sel.has(m.id) ? <Check size={14} /> : null}
+          icon={
+            <span className="flex size-[18px] items-center justify-center rounded-full text-[10px] font-medium" style={{ background: `var(--opt-${m.color}-bg)`, color: `var(--opt-${m.color}-fg)` }}>
+              {m.name.charAt(0).toUpperCase()}
+            </span>
+          }
+          onClick={() => {
+            const next = new Set(sel);
+            if (next.has(m.id)) next.delete(m.id);
+            else next.add(m.id);
+            onChange([...next]);
+          }}
+        >
+          {m.name}
+        </MenuRow>
+      ))}
+      {shown.length === 0 && <p className="px-2 py-2 text-ink-3">{t.noResults}</p>}
+    </Popover>
+  );
+}
+
 function RelationPicker({ prop, value, anchor, onChange, onClose }: { prop: PropertyDef; value: string[]; anchor: Anchor; onChange: (v: string[]) => void; onClose: () => void }) {
   const [rows, setRows] = useState<{ id: string; title: string; icon: string | null }[]>([]);
   const [q, setQ] = useState("");
@@ -436,6 +487,7 @@ export function EditableCell({
       )}
       {anchor && prop.type === "date" && <DatePicker value={(value as DateValue) ?? null} anchor={anchor} onChange={onChange} onClose={closePicker} label={prop.name} />}
       {anchor && prop.type === "files" && <FilesPicker value={(value as FileValue[]) ?? []} anchor={anchor} onChange={onChange} onClose={closePicker} label={prop.name} />}
+      {anchor && prop.type === "person" && <PersonPicker prop={prop} value={(value as string[]) ?? []} anchor={anchor} ctx={ctx} onChange={onChange} onClose={closePicker} />}
       {anchor && prop.type === "relation" && <RelationPicker prop={prop} value={(value as string[]) ?? []} anchor={anchor} onChange={onChange} onClose={closePicker} />}
     </div>
   );

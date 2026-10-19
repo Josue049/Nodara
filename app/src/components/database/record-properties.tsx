@@ -8,7 +8,7 @@ import { call, dbApi } from "./api";
 import { EditableCell, type CellCtx } from "./cells";
 import { PropertyIcon } from "./property-icon";
 
-type Data = { bundle: CollectionBundle; row: RecordRow | null; refs: NonNullable<QueryResult["refs"]> };
+type Data = { bundle: CollectionBundle; row: RecordRow | null; refs: NonNullable<QueryResult["refs"]>; people: NonNullable<QueryResult["people"]>; members: NonNullable<QueryResult["members"]> };
 
 /** Panel de propiedades de un registro (arriba de su contenido), con edición real de cada valor. */
 export function RecordProperties({ pageId }: { pageId: string }) {
@@ -29,13 +29,15 @@ export function RecordProperties({ pageId }: { pageId: string }) {
   const ctx: CellCtx = useMemo(
     () => ({
       refs: data?.refs ?? {},
+      people: data?.people ?? {},
+      members: data?.members ?? [],
       createOption: async (propertyId: string, name: string): Promise<SelectOption> => {
         const { option } = await dbApi.addOption(propertyId, name);
         await reload();
         return option;
       },
     }),
-    [data?.refs, reload],
+    [data?.refs, data?.people, data?.members, reload],
   );
 
   if (!data?.row) return null;

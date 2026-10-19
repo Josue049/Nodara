@@ -79,6 +79,8 @@ export function operatorsFor(p: PropertyDef | null): OpDef[] {
     case "status":
       return SELECT_OPS;
     case "multi_select":
+    case "person":
+    case "created_by":
       return MULTI_OPS;
     case "checkbox":
       return CHECK_OPS;
@@ -91,12 +93,13 @@ export function operatorsFor(p: PropertyDef | null): OpDef[] {
   }
 }
 
-function defaultCondition(p: PropertyDef | null): FilterCondition {
+function defaultCondition(p: PropertyDef | null, members: { id: string }[] = []): FilterCondition {
   const op = operatorsFor(p)[0];
   let value: FilterCondition["value"] = "";
   if (p?.type === "number") value = 0;
   else if (p?.type === "checkbox") value = true;
   else if (p && ["select", "status", "multi_select"].includes(p.type)) value = p.config.options?.[0]?.id ?? "";
+  else if (p && ["person", "created_by"].includes(p.type)) value = members[0]?.id ?? "";
   else if (p && ["date", "created_time", "last_edited_time"].includes(p.type)) value = "today";
   return { propertyId: p?.id ?? TITLE_ID, operator: op.op, value: op.needsValue ? value : null };
 }
@@ -104,9 +107,20 @@ function defaultCondition(p: PropertyDef | null): FilterCondition {
 const isGroup = (x: FilterCondition | FilterGroup): x is FilterGroup => "conditions" in x;
 const inputCls = "h-8 min-w-0 rounded-md border border-line bg-transparent px-2 outline-none focus:border-accent";
 
-function ValueInput({ p, c, onChange }: { p: PropertyDef | null; c: FilterCondition; onChange: (v: FilterCondition["value"]) => void }) {
+function ValueInput({ p, c, onChange, members }: { p: PropertyDef | null; c: FilterCondition; onChange: (v: FilterCondition["value"]) => void; members: { id: string; name: string }[] }) {
   if (!operatorsFor(p).find((o) => o.op === c.operator)?.needsValue) return null;
   const type = p?.type ?? "text";
+  if (type === "person" || type === "created_by") {
+    return (
+      <select aria-label="Valor del filtro" value={String(c.value ?? "")} onChange={(e) => onChange(e.target.value)} className={inputCls}>
+        {members.map((m) => (
+          <option key={m.id} value={m.id}>
+            {m.name}
+          </option>
+        ))}
+      </select>
+    );
+  }
   if (type === "select" || type === "status" || type === "multi_select") {
     return (
       <select aria-label="Valor del filtro" value={String(c.value ?? "")} onChange={(e) => onChange(e.target.value)} className={inputCls}>
@@ -199,7 +213,7 @@ export function FilterPopover({ anchor, db, onClose }: { anchor: Anchor; db: Dat
               <select
                 aria-label="Propiedad del filtro"
                 value={c.propertyId}
-                onChange={(e) => setCond(i, defaultCondition(propOf(e.target.value)))}
+                onChange={(e) => setCond(i, defaultCondition(propOf(e.target.value), db.members))}
                 className={`${inputCls} w-36`}
               >
                 {filterable.map((f) => (
@@ -213,7 +227,7 @@ export function FilterPopover({ anchor, db, onClose }: { anchor: Anchor; db: Dat
                 value={c.operator}
                 onChange={(e) => {
                   const def = ops.find((o) => o.op === e.target.value)!;
-                  setCond(i, { ...c, operator: def.op, value: def.needsValue ? (c.value ?? defaultCondition(p).value) : null });
+                  setCond(i, { ...c, operator: def.op, value: def.needsValue ? (c.value ?? defaultCondition(p, db.members).value) : null });
                 }}
                 className={`${inputCls} w-40`}
               >
@@ -223,7 +237,7 @@ export function FilterPopover({ anchor, db, onClose }: { anchor: Anchor; db: Dat
                   </option>
                 ))}
               </select>
-              <ValueInput p={p} c={c} onChange={(v) => setCond(i, { ...c, value: v })} />
+              <ValueInput p={p} c={c} members={db.members} onChange={(v) => setCond(i, { ...c, value: v })} />
               <button type="button" aria-label="Quitar filtro" onClick={() => save({ ...filter, conditions: filter.conditions.filter((_, j) => j !== i) })} className="ml-auto rounded p-1 hover:bg-active">
                 <Trash2 size={14} />
               </button>

@@ -16,7 +16,7 @@ export const GET = api(async (_req, p, user, db) => {
   const page = await getPage(db, id);
   if (!page.collectionId) return Response.json({ error: "Registro no encontrado" }, { status: 404 });
   const q = await queryCollection(db, page.collectionId, { config: {} });
-  return { page, bundle: q.bundle, row: q.rows.find((r) => r.id === id) ?? null, refs: q.refs ?? {} };
+  return { page, bundle: q.bundle, row: q.rows.find((r) => r.id === id) ?? null, refs: q.refs ?? {}, people: q.people ?? {}, members: q.members ?? [] };
 });
 export const PATCH = api(async (req, p, user, db) => {
   const id = rid(p.id);

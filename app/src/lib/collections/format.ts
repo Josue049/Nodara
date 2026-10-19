@@ -40,6 +40,7 @@ export const TYPE_LABELS: Record<PropertyType, string> = {
   multi_select: "Selección múltiple",
   status: "Estado",
   date: "Fecha",
+  person: "Persona",
   checkbox: "Casilla",
   url: "URL",
   email: "Correo electrónico",
@@ -49,6 +50,7 @@ export const TYPE_LABELS: Record<PropertyType, string> = {
   rollup: "Rollup",
   formula: "Fórmula",
   created_time: "Fecha de creación",
+  created_by: "Creado por",
   last_edited_time: "Última edición",
 };
 

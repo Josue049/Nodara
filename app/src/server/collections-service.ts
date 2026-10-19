@@ -20,7 +20,7 @@ import {
   type ViewType,
 } from "@/lib/collections/types";
 import type { Db } from "./db";
-import { collectionProperties, collectionTemplates, collections, collectionViews, pages, type PageRow } from "./schema";
+import { collectionProperties, collectionTemplates, collectionViews, collections, pages, type PageRow, users, workspaceMembers } from "./schema";
 
 export class CollectionError extends Error {}
 export class CollectionNotFound extends Error {}
@@ -254,6 +254,8 @@ export async function addOption(db: Db, propertyId: string, option: { name: stri
 
 const ISO_DAY = /^\d{4}-\d{2}-\d{2}/;
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 function coerce(p: PropertyDef, raw: unknown): PropValue {
   if (raw === null || raw === undefined) return p.type === "checkbox" ? false : p.type === "multi_select" || p.type === "relation" || p.type === "files" ? [] : null;
   switch (p.type) {
@@ -292,6 +294,9 @@ function coerce(p: PropertyDef, raw: unknown): PropValue {
     }
     case "relation":
       if (!Array.isArray(raw) || raw.some((x) => typeof x !== "string")) throw new CollectionError(`«${p.name}» espera una lista de páginas`);
+      return [...new Set(raw as string[])];
+    case "person":
+      if (!Array.isArray(raw) || raw.length > 50 || raw.some((x) => typeof x !== "string" || !UUID_RE.test(x))) throw new CollectionError(`«${p.name}» espera una lista de personas`);
       return [...new Set(raw as string[])];
     default:
       throw new CollectionError(`«${p.name}» se calcula automáticamente y no se puede editar`);
@@ -405,12 +410,12 @@ async function loadData(db: Db, collectionId: string): Promise<CollectionData> {
   const [props, rows] = await Promise.all([
     loadProps(db, collectionId),
     db
-      .select({ id: pages.id, title: pages.title, icon: pages.icon, createdAt: pages.createdAt, updatedAt: pages.updatedAt, properties: pages.properties, position: pages.position })
+      .select({ id: pages.id, title: pages.title, icon: pages.icon, createdAt: pages.createdAt, updatedAt: pages.updatedAt, properties: pages.properties, position: pages.position, creatorId: pages.creatorId })
       .from(pages)
       .where(and(eq(pages.collectionId, collectionId), isNull(pages.deletedAt)))
       .orderBy(asc(pages.position), asc(pages.createdAt)),
   ]);
-  const records: StoredRecord[] = rows.map((r) => ({ id: r.id, title: r.title, icon: r.icon, createdAt: r.createdAt, updatedAt: r.updatedAt, properties: r.properties as Record<string, unknown> }));
+  const records: StoredRecord[] = rows.map((r) => ({ id: r.id, title: r.title, icon: r.icon, createdAt: r.createdAt, updatedAt: r.updatedAt, properties: r.properties as Record<string, unknown>, creatorId: r.creatorId }));
   return { props, records };
 }
 
@@ -431,7 +436,7 @@ export async function loadWorld(db: Db, collectionId: string): Promise<World> {
 export async function queryCollection(
   db: Db,
   collectionId: string,
-  opts: { viewId?: string; config?: ViewConfig; search?: string } = {},
+  opts: { viewId?: string; config?: ViewConfig; search?: string; includeMembers?: boolean } = {},
 ): Promise<QueryResult & { bundle: CollectionBundle }> {
   const bundle = await getBundle(db, collectionId);
   const view = opts.viewId ? bundle.views.find((v) => v.id === opts.viewId) : bundle.views[0];
@@ -449,7 +454,17 @@ export async function queryCollection(
       }
     }
   }
-  return { ...result, refs, bundle };
+  // Personas citadas en propiedades «Persona» y «Creado por», más los miembros del espacio (para elegir y filtrar).
+  const personProps = bundle.properties.filter((p) => p.type === "person" || p.type === "created_by");
+  const ids = new Set<string>();
+  for (const row of result.rows) for (const p of personProps) for (const id of (row.values[p.id] as string[] | null) ?? []) ids.add(id);
+  const [host] = await db.select({ workspaceId: pages.workspaceId }).from(pages).where(eq(pages.id, bundle.collection.hostPageId));
+  const memberRows = host?.workspaceId
+    ? await db.select({ id: users.id, name: users.name, color: users.avatarColor }).from(workspaceMembers).innerJoin(users, eq(users.id, workspaceMembers.userId)).where(eq(workspaceMembers.workspaceId, host.workspaceId))
+    : [];
+  const people: NonNullable<QueryResult["people"]> = {};
+  for (const m of memberRows) if (ids.has(m.id)) people[m.id] = { name: m.name, color: m.color };
+  return { ...result, refs, people, members: opts.includeMembers === false ? [] : memberRows, bundle };
 }
 
 // ── Vistas ───────────────────────────────────────────────────────────

@@ -231,7 +231,7 @@ export function useDatabase(collectionId: string) {
 
   // Falso positivo de react-hooks/refs: `createOption` solo usa el ref `seq` dentro de eventos, nunca al renderizar.
   // eslint-disable-next-line react-hooks/refs
-  const ctx: CellCtx = useMemo(() => ({ refs: data?.refs ?? {}, createOption }), [data?.refs, createOption]);
+  const ctx: CellCtx = useMemo(() => ({ refs: data?.refs ?? {}, people: data?.people ?? {}, members: data?.members ?? [], createOption }), [data?.refs, data?.people, data?.members, createOption]);
 
   return {
     data,
@@ -245,6 +245,7 @@ export function useDatabase(collectionId: string) {
     calculations: data?.calculations ?? {},
     total: data?.total ?? 0,
     ctx,
+    members: data?.members ?? [],
     search,
     setSearch,
     selectView,

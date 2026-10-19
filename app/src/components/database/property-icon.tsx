@@ -1,21 +1,4 @@
-import {
-  AlignLeft,
-  ArrowUpRight,
-  AtSign,
-  Calendar,
-  CircleChevronDown,
-  Clock,
-  Hash,
-  Link2,
-  List,
-  Loader,
-  Paperclip,
-  Phone,
-  Sigma,
-  SquareCheck,
-  SquareFunction,
-  Type,
-} from "lucide-react";
+import { AlignLeft, ArrowUpRight, AtSign, Calendar, CircleChevronDown, Clock, Hash, Link2, List, Loader, Paperclip, Phone, Sigma, SquareCheck, SquareFunction, Type, User, UserPlus } from "lucide-react";
 import { TITLE_ID, type PropertyType } from "@/lib/collections/types";
 
 const ICONS: Record<PropertyType | typeof TITLE_ID, React.ComponentType<{ size?: number; strokeWidth?: number; className?: string }>> = {
@@ -34,6 +17,8 @@ const ICONS: Record<PropertyType | typeof TITLE_ID, React.ComponentType<{ size?:
   relation: ArrowUpRight,
   rollup: Sigma,
   formula: SquareFunction,
+  person: User,
+  created_by: UserPlus,
   created_time: Clock,
   last_edited_time: Clock,
 };

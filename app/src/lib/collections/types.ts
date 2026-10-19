@@ -13,6 +13,7 @@ export const PROPERTY_TYPES = [
   "multi_select",
   "status",
   "date",
+  "person",
   "checkbox",
   "url",
   "email",
@@ -22,12 +23,13 @@ export const PROPERTY_TYPES = [
   "rollup",
   "formula",
   "created_time",
+  "created_by",
   "last_edited_time",
 ] as const;
 export type PropertyType = (typeof PROPERTY_TYPES)[number];
 
 /** Propiedades calculadas: no se escriben, se derivan al consultar. */
-export const COMPUTED_TYPES: PropertyType[] = ["rollup", "formula", "created_time", "last_edited_time"];
+export const COMPUTED_TYPES: PropertyType[] = ["rollup", "formula", "created_time", "created_by", "last_edited_time"];
 
 export const TITLE_ID = "title";
 
@@ -213,6 +215,10 @@ export type QueryResult = {
   total: number;
   /** Páginas referenciadas por propiedades de relación: id → título e icono. */
   refs?: Record<string, { title: string; icon: string | null }>;
+  /** Personas citadas en propiedades «Persona»/«Creado por», por id de usuario. */
+  people?: Record<string, { name: string; color: string }>;
+  /** Miembros del espacio de trabajo (para elegir personas y filtrar). Vacío en enlaces públicos. */
+  members?: { id: string; name: string; color: string }[];
 };
 
 export type TemplateDef = {

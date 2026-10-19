@@ -36,7 +36,7 @@ export async function exportPage(db: Db, pageId: string, format: ExportFormat): 
 
 // ── Exportar bases de datos (CSV) ───────────────────────────────────
 
-function cellText(p: PropertyDef, v: unknown, refs: Record<string, { title: string }>): string {
+function cellText(p: PropertyDef, v: unknown, refs: Record<string, { title: string }>, people: Record<string, { name: string }> = {}): string {
   if (v === null || v === undefined) return "";
   switch (p.type) {
     case "select":
@@ -50,6 +50,9 @@ function cellText(p: PropertyDef, v: unknown, refs: Record<string, { title: stri
       return typeof v === "object" && v && "start" in v ? formatDate(v as DateValue) : String(v);
     case "checkbox":
       return v === true ? "Sí" : "No";
+    case "person":
+    case "created_by":
+      return Array.isArray(v) ? v.map((id) => people[String(id)]?.name ?? "").filter(Boolean).join(", ") : "";
     case "relation":
       return Array.isArray(v) ? v.map((id) => refs[String(id)]?.title ?? "").filter(Boolean).join(", ") : "";
     case "files":
@@ -64,7 +67,7 @@ export async function exportCollectionCsv(db: Db, collectionId: string): Promise
   const props = res.bundle.properties;
   const [host] = await db.select({ title: pages.title }).from(pages).where(eq(pages.id, res.bundle.collection.hostPageId));
   const header = ["Nombre", ...props.map((p) => p.name)];
-  const rows = res.rows.map((r) => [r.title, ...props.map((p) => cellText(p, r.values[p.id], res.refs ?? {}))]);
+  const rows = res.rows.map((r) => [r.title, ...props.map((p) => cellText(p, r.values[p.id], res.refs ?? {}, res.people ?? {}))]);
   return { body: toCsv([header, ...rows]), filename: `${safeFileName(res.bundle.collection.title || host?.title || "Base de datos")}.csv` };
 }
 

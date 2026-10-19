@@ -29,6 +29,8 @@ export type StoredRecord = {
   createdAt: Date | string;
   updatedAt: Date | string;
   properties: Record<string, unknown>;
+  /** Autor de la página (propiedad «Creado por»). */
+  creatorId?: string | null;
 };
 export type CollectionData = { props: PropertyDef[]; records: StoredRecord[] };
 /** Acceso a otras colecciones (relaciones y rollups). */
@@ -144,6 +146,7 @@ class Computer {
   }
 
   private compute(collectionId: string, data: CollectionData, record: StoredRecord, p: PropertyDef): PropValue | CalcValue {
+    if (p.type === "created_by") return record.creatorId ? [record.creatorId] : [];
     if (p.type === "created_time") return { start: iso(record.createdAt), time: true };
     if (p.type === "last_edited_time") return { start: iso(record.updatedAt), time: true };
     if (p.type === "rollup") {
@@ -184,6 +187,7 @@ export function normalizeStored(p: PropertyDef, raw: unknown): PropValue {
       return raw === true;
     case "multi_select":
     case "relation":
+    case "person":
       return Array.isArray(raw) ? raw.filter((x): x is string => typeof x === "string") : [];
     case "date":
       return isDateValue(raw) ? raw : null;
