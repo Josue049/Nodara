@@ -77,7 +77,7 @@ export function AppShell({ children, extras }: { children: React.ReactNode; extr
         {sidebarOpen && <button type="button" aria-label="Cerrar menú lateral" onClick={closeSidebar} className="nd-fade fixed inset-0 z-40 bg-black/30 md:hidden" tabIndex={-1} />}
         <div
           data-testid="sidebar-container"
-          className={`nd-sidebar-wrap h-full shrink-0 max-md:fixed max-md:inset-y-0 max-md:left-0 max-md:z-50 max-md:shadow-[var(--shadow-pop)] ${sidebarOpen ? "" : "max-md:-translate-x-full md:hidden"}`}
+          className={`nd-sidebar-wrap h-full shrink-0 max-md:fixed max-md:inset-y-0 max-md:left-0 max-md:z-50 ${sidebarOpen ? "max-md:shadow-[var(--shadow-pop)]" : "max-md:-translate-x-full md:hidden"}`}
           aria-hidden={!sidebarOpen}
           inert={!sidebarOpen}
           onClick={(e) => {

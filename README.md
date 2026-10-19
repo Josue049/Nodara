@@ -6,6 +6,15 @@ Implementación independiente —sin código, logotipos ni activos de Notion— 
 
 > Estado detallado, límites y matriz de funcionalidades: [`docs/STATUS.md`](docs/STATUS.md) · [`docs/FEATURE_MATRIX.md`](docs/FEATURE_MATRIX.md)
 
+<p align="center">
+  <img src="docs/images/pagina-clara.png" alt="Página con portada, llamada, columnas, ecuación y código (tema claro)" width="49%">
+  <img src="docs/images/pagina-oscura.png" alt="La misma página en tema oscuro" width="49%">
+</p>
+<p align="center">
+  <img src="docs/images/base-de-datos.png" alt="Base de datos en vista de tabla" width="49%">
+  <img src="docs/images/busqueda.png" alt="Búsqueda avanzada con filtros y resaltado" width="49%">
+</p>
+
 ## Qué incluye
 | Área | Funcionalidades |
 |---|---|
