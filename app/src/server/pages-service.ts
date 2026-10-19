@@ -1,3 +1,4 @@
+import { makeSnippet, markTerms, parseQuery, scoreDocument } from "@/lib/search";
 import { and, asc, desc, eq, inArray, isNotNull, isNull, max, sql } from "drizzle-orm";
 import { cloneCollectionsForCopy } from "./collections-service";
 import type { Db } from "./db";
@@ -250,18 +251,28 @@ async function duplicatePageTx(db: Db, id: string, creatorId?: string | null): P
   return created;
 }
 
-export type SearchResult = PageSummary & { snippet: string; path: string[] };
+export type SearchResult = PageSummary & { snippet: string; path: string[]; titleMarked: string; updatedAt: string; creatorId: string | null };
 
-const fold = (s: string) => s.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase();
+export type SearchOptions = {
+  titlesOnly?: boolean;
+  limit?: number;
+  workspaceId?: string;
+  allowed?: Set<string>;
+  /** Solo páginas creadas por esta persona. */
+  createdBy?: string;
+  /** Solo páginas editadas en los últimos N días. */
+  editedWithinDays?: number;
+  /** Solo la página indicada y sus descendientes. */
+  inside?: string;
+  /** «page» (páginas normales), «database» (páginas de base de datos) o «record» (filas de bases de datos). */
+  kind?: "page" | "database" | "record";
+  sort?: "relevance" | "edited";
+};
 
-export async function searchPages(
-  db: Db,
-  query: string,
-  opts: { titlesOnly?: boolean; limit?: number; workspaceId?: string; allowed?: Set<string> } = {},
-): Promise<SearchResult[]> {
-  const q = fold(query.trim());
+export async function searchPages(db: Db, query: string, opts: SearchOptions = {}): Promise<SearchResult[]> {
+  const terms = parseQuery(query);
   const rows = await db
-    .select({ ...summaryCols, contentText: pages.contentText, collectionId: pages.collectionId })
+    .select({ ...summaryCols, contentText: pages.contentText, collectionId: pages.collectionId, creatorId: pages.creatorId, updatedAt: pages.updatedAt })
     .from(pages)
     .where(opts.workspaceId ? and(isNull(pages.deletedAt), eq(pages.workspaceId, opts.workspaceId)) : isNull(pages.deletedAt))
     .orderBy(desc(pages.updatedAt));
@@ -277,24 +288,35 @@ export async function searchPages(
     }
     return out;
   };
-  const results: (SearchResult & { rank: number })[] = [];
+  const isInside = (r: (typeof rows)[number]) => {
+    if (!opts.inside) return true;
+    const seen = new Set<string>();
+    for (let cur: (typeof rows)[number] | undefined = r; cur && !seen.has(cur.id); cur = cur.parentId ? byId.get(cur.parentId) : undefined) {
+      if (cur.id === opts.inside) return true;
+      seen.add(cur.id);
+    }
+    return false;
+  };
+  const since = opts.editedWithinDays ? Date.now() - opts.editedWithinDays * 86_400_000 : 0;
+  const results: (SearchResult & { score: number })[] = [];
   for (const r of rows) {
     // Con control de acceso: un registro es visible si lo es su base de datos anfitriona.
     if (opts.allowed && !opts.allowed.has((r.collectionId ? r.parentId : r.id) ?? "")) continue;
-    const inTitle = q === "" ? true : fold(r.title).includes(q);
-    const at = q === "" || opts.titlesOnly ? -1 : fold(r.contentText).indexOf(q);
-    if (!inTitle && at < 0) continue;
-    let snippet = "";
-    if (at >= 0) {
-      const start = Math.max(0, at - 30);
-      snippet = (start > 0 ? "…" : "") + r.contentText.slice(start, at + q.length + 60);
-    }
+    if (opts.createdBy && r.creatorId !== opts.createdBy) continue;
+    if (since && r.updatedAt.getTime() < since) continue;
+    if (opts.kind === "record" ? !r.collectionId : opts.kind === "database" ? r.kind !== "database" : opts.kind === "page" ? r.kind !== "page" || !!r.collectionId : false) continue;
+    if (!isInside(r)) continue;
+    const sc = scoreDocument(r.title, r.contentText, terms, opts.titlesOnly);
+    if (!sc) continue;
     results.push({
       id: r.id, parentId: r.parentId, title: r.title, icon: r.icon, position: r.position, isFavorite: r.isFavorite, kind: r.kind,
-      snippet, path: pathOf(r), rank: inTitle ? 0 : 1,
+      snippet: makeSnippet(r.contentText, terms, sc.firstContentAt), titleMarked: markTerms(r.title, terms), path: pathOf(r),
+      updatedAt: r.updatedAt.toISOString(), creatorId: r.creatorId, score: sc.score,
     });
   }
-  return results.sort((a, b) => a.rank - b.rank).slice(0, opts.limit ?? 20).map((x) => ({ id: x.id, parentId: x.parentId, title: x.title, icon: x.icon, position: x.position, isFavorite: x.isFavorite, kind: x.kind, snippet: x.snippet, path: x.path }));
+  if (opts.sort === "edited" || terms.length === 0) results.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+  else results.sort((a, b) => b.score - a.score || b.updatedAt.localeCompare(a.updatedAt));
+  return results.slice(0, opts.limit ?? 30).map(({ score, ...rest }) => (void score, rest));
 }
 
 // Operaciones de varios pasos: se ejecutan en una transacción para no dejar árboles a medias.

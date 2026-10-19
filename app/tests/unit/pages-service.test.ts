@@ -113,7 +113,7 @@ describe("pages-service", () => {
     await createPage(db, { title: "Presupuesto 2026" });
     const hits = await searchPages(db, "presupuesto");
     expect(hits.map((h) => h.title)).toEqual(["Presupuesto 2026", "Notas"]); // título primero
-    expect(hits[1].snippet).toContain("presupuesto anual");
+    expect(hits[1].snippet.replace(/[]/g, "")).toContain("presupuesto anual");
     expect((await searchPages(db, "reunion")).map((h) => h.title)).toEqual(["Notas"]);
     expect(await searchPages(db, "reunion", { titlesOnly: true })).toHaveLength(0);
   });
