@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect } from "react";
 
 /** Límite de error de la aplicación: ofrece reintentar sin perder la sesión. */
@@ -17,9 +18,9 @@ export default function ErrorPage({ error, reset }: { error: Error & { digest?: 
           <button type="button" onClick={reset} className="h-9 rounded-md bg-accent px-4 text-white">
             Reintentar
           </button>
-          <a href="/" className="flex h-9 items-center rounded-md border border-line px-4 hover:bg-hover">
+          <Link href="/" className="flex h-9 items-center rounded-md border border-line px-4 hover:bg-hover">
             Ir al inicio
-          </a>
+          </Link>
         </div>
       </div>
     </main>

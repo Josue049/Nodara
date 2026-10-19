@@ -70,6 +70,12 @@ export async function replyToThread(db: Db, user: SessionUser, threadId: string,
   return { id };
 }
 
+/** Página a la que pertenece un hilo o comentario (para avisar en vivo a quienes la tienen abierta). */
+export async function pageIdOfComment(db: Db, commentId: string): Promise<string | null> {
+  const [c] = await db.select({ pageId: comments.pageId }).from(comments).where(eq(comments.id, commentId));
+  return c?.pageId ?? null;
+}
+
 export async function setResolved(db: Db, user: SessionUser, threadId: string, resolved: boolean): Promise<void> {
   const [root] = await db.select().from(comments).where(and(eq(comments.id, threadId), eq(comments.threadId, threadId)));
   if (!root) throw new HttpError(404, "Hilo no encontrado");

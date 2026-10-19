@@ -82,4 +82,21 @@ test.describe("comentarios y notificaciones", () => {
     await expect.poll(async () => (await (await ana.request.get("/api/notifications")).json()).items.map((n: { type: string }) => n.type)).toContain("reply");
     await ana.context.close();
   });
+
+  test("los comentarios de otra persona aparecen al instante, sin esperar al sondeo", async ({ page, browser, request }) => {
+    const ana = await newUser(browser, "ana@nodara.test", "Ana");
+    const doc = await sharedPage(request, "ana@nodara.test", "comment");
+    await gotoReady(ana.page, `/${doc.id}`);
+    await ana.page.getByTestId("comments-btn").click();
+    await expect(ana.page.getByTestId("no-threads")).toBeVisible();
+    await gotoReady(page, `/${doc.id}`); // el autor también tiene la página abierta (sala colaborativa)
+    const { id } = await (await request.post(`/api/pages/${doc.id}/comments`, { data: { body: "Comentario en vivo" } })).json();
+    // el sondeo del panel es de 5 s: en menos de 3 s solo puede llegar por el canal en vivo
+    await expect(ana.page.getByTestId("thread")).toContainText("Comentario en vivo", { timeout: 3000 });
+    await request.post(`/api/comments/${id}`, { data: { body: "Respuesta en vivo" } });
+    await expect(ana.page.getByTestId("comment")).toHaveCount(2, { timeout: 3000 });
+    await request.patch(`/api/comments/${id}`, { data: { resolved: true } });
+    await expect(ana.page.getByTestId("no-threads")).toBeVisible({ timeout: 3000 });
+    await ana.context.close();
+  });
 });

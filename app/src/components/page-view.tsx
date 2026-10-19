@@ -133,6 +133,7 @@ export function PageView({ pageId, peek = false }: { pageId: string; /** Dentro 
       user: me,
       onReset: () => hardNavigate(`/${pageId}`),
       onMeta: (m) => {
+        if (typeof m.comments === "number") setThreadsVersion((n) => n + 1); // alguien comentó, respondió o resolvió
         // Cambio de título hecho por otra persona: se aplica si no se está escribiendo aquí.
         if (typeof m.title === "string" && !titleFocused.current) {
           setTitle(m.title);
