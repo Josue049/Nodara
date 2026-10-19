@@ -402,7 +402,7 @@ test("tema oscuro: la tabla usa los colores medidos en Notion", async ({ page, r
   const db = await seedTasks(request);
   await gotoReady(page, `/${db.pageId}`);
   const header = page.getByTestId("col-header").first();
-  await expect(header).toHaveCSS("color", "rgb(125, 122, 117)");
+  await expect(header).toHaveCSS("color", "rgb(114, 111, 106)");
   await page.getByTestId("theme-toggle").click();
   await expect(header).toHaveCSS("color", "rgb(173, 169, 163)");
   await expect(page.getByTestId("db-row").first().getByTestId("row-title")).toHaveCSS("color", "rgb(240, 239, 237)");

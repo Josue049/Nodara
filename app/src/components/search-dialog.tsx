@@ -155,8 +155,8 @@ function SearchBody({ onClose }: { onClose: () => void }) {
             <option value="edited">Última edición</option>
           </select>
         </div>
-        <ul role="listbox" className="nd-scroll min-h-[120px] overflow-y-auto border-t border-line p-2">
-          {results.length === 0 && <li className="px-3 py-6 text-center text-ink-3">{t.noResults}</li>}
+        {results.length === 0 && <p className="min-h-[120px] border-t border-line px-3 py-6 text-center text-ink-3">{t.noResults}</p>}
+        <ul role="listbox" aria-label="Resultados" hidden={results.length === 0} className="nd-scroll min-h-[120px] overflow-y-auto border-t border-line p-2">
           {results.map((r, i) => (
             <li key={r.id} role="option" aria-selected={i === active}>
               <button

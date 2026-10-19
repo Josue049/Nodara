@@ -343,7 +343,7 @@ function MathBlockView({ node, updateAttributes, editor, deleteNode }: NodeViewP
           }}
         />
       ) : (
-        <button type="button" disabled={!editor.isEditable} onClick={() => setEditing(true)} className="block w-full rounded-md p-2 text-center hover:bg-hover disabled:hover:bg-transparent" aria-label="Editar ecuación">
+        <button type="button" disabled={!editor.isEditable} onClick={() => setEditing(true)} className="block w-full rounded-md p-2 text-center hover:bg-hover disabled:hover:bg-transparent" title="Editar ecuación">
           {out.error ? <span className="text-danger">Expresión no válida: {latex}</span> : <span dangerouslySetInnerHTML={{ __html: out.html }} />}
         </button>
       )}
@@ -370,7 +370,7 @@ function MathInlineView({ node, updateAttributes, editor, deleteNode }: NodeView
           }}
         />
       ) : (
-        <span role="button" tabIndex={0} aria-label="Editar ecuación" onClick={() => editor.isEditable && setEditing(true)} onKeyDown={(e) => e.key === "Enter" && editor.isEditable && setEditing(true)}>
+        <span role="button" tabIndex={0} title="Editar ecuación" onClick={() => editor.isEditable && setEditing(true)} onKeyDown={(e) => e.key === "Enter" && editor.isEditable && setEditing(true)}>
           {out.error ? <span className="text-danger">{latex}</span> : <span dangerouslySetInnerHTML={{ __html: out.html }} />}
         </span>
       )}

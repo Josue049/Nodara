@@ -400,7 +400,7 @@ export function Sidebar() {
             {team.length > 0 && (
               <section className="mb-3" data-testid="section-team">
                 <h2 className="px-[8px] py-1 text-[12px] font-medium text-ink-3">{t.teamspace}</h2>
-                <ul role="tree">
+                <ul>
                   {team.map((p) => (
                     <SidebarNode key={p.id} page={p} depth={0} expanded={expanded} toggle={toggle} activeId={activeId} />
                   ))}
@@ -411,7 +411,7 @@ export function Sidebar() {
             {shared.length > 0 && (
               <section className="mb-3" data-testid="section-shared">
                 <h2 className="px-[8px] py-1 text-[12px] font-medium text-ink-3">{t.sharedWithMe}</h2>
-                <ul role="tree">
+                <ul>
                   {shared.map((p) => (
                     <SidebarNode key={p.id} page={p} depth={0} expanded={expanded} toggle={toggle} activeId={activeId} />
                   ))}
@@ -442,7 +442,7 @@ export function Sidebar() {
                   </button>
                 </div>
               </div>
-              <ul role="tree">
+              <ul>
                 {mine.map((p) => (
                   <SidebarNode key={p.id} page={p} depth={0} expanded={expanded} toggle={toggle} activeId={activeId} />
                 ))}

@@ -8,16 +8,16 @@
   --bg-active: rgba(33, 27, 23, 0.08); /* hipótesis: no medido */
   --text: #2c2c2b;
   --text-secondary: #5f5e59;
-  --text-tertiary: rgba(44, 44, 43, 0.45); /* hipótesis */
+  --text-tertiary: rgba(44, 44, 43, 0.72); /* accesibilidad: ≥ 4,5:1 sobre #fff, #f9f8f7 y #f1f0ee (Notion usa un gris más tenue, no medido) */
   --border: rgba(33, 27, 23, 0.09); /* hipótesis */
-  --accent: #2383e2;
-  --danger: #eb5757;
+  --accent: #1a6fc4; /* accesibilidad: texto blanco sobre el acento = 5,1:1 (#2383e2 daba 3,9:1) */
+  --danger: #c9302c; /* accesibilidad: texto de error ≥ 4,5:1 sobre blanco y #f9f8f7 */
   --popover: #ffffff;
   --code-bg: rgba(33, 27, 23, 0.05);
   --code-text: #cf5148;
   --pre-bg: #f7f6f3;
   --shadow-pop: rgba(15, 15, 15, 0.05) 0 0 0 1px, rgba(15, 15, 15, 0.1) 0 3px 6px, rgba(15, 15, 15, 0.2) 0 9px 24px;
-  --db-header: #7d7a75; /* medido: encabezado de tabla */
+  --db-header: #726f6a; /* encabezado de tabla: Notion usa #7d7a75 (4,3:1); se oscurece lo justo para llegar a 4,5:1 */
   --callout-gray: #f9f8f7; /* medido: caja de «callout» */
   --sidebar-w: 270px;
   --topbar-h: 44px;
@@ -32,7 +32,8 @@
   --bg-active: rgba(255, 255, 255, 0.09); /* hipótesis */
   --text: #f0efed;
   --text-secondary: rgba(240, 239, 237, 0.65); /* hipótesis */
-  --text-tertiary: rgba(240, 239, 237, 0.4); /* hipótesis */
+  --text-tertiary: rgba(240, 239, 237, 0.58); /* accesibilidad: ≥ 4,5:1 sobre #191919–#252525 */
+  --accent: #3d94ea; /* texto del acento sobre fondo oscuro = 5,5:1; el texto sobre botones de acento pasa a oscuro (ver .bg-accent) */
   --border: rgba(255, 255, 255, 0.094); /* hipótesis */
   --popover: #252525;
   --code-bg: rgba(255, 255, 255, 0.08);
@@ -40,6 +41,7 @@
   --pre-bg: #252525;
   --db-header: #ada9a3; /* medido */
   --callout-gray: #383836; /* medido: caja de «callout» */
+  --danger: #f07070; /* accesibilidad sobre #191919–#252525 */
   --shadow-pop: rgba(0, 0, 0, 0.2) 0 0 0 1px, rgba(0, 0, 0, 0.3) 0 3px 6px, rgba(0, 0, 0, 0.4) 0 9px 24px;
   color-scheme: dark;
 }
@@ -353,3 +355,7 @@ body {
 
 @keyframes nd-slide-in { from { transform: translateX(32px); opacity: 0; } to { transform: none; opacity: 1; } }
 .nd-slide { animation: nd-slide-in 0.2s ease-out; }
+
+/* Botones de acento en tema oscuro: texto oscuro para mantener contraste AA (el acento claro no admite texto blanco). */
+:root[data-theme="dark"] .bg-accent.text-white { color: #0f1419; }
+:root[data-theme="dark"] .bg-accent\/70, :root[data-theme="dark"] .bg-accent\/80 { color: #0f1419; }

@@ -79,7 +79,7 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
         </button>
         <p className="text-center text-[14px] text-ink-2">
           {signup ? "¿Ya tienes cuenta? " : "¿No tienes cuenta? "}
-          <Link href={`${signup ? "/login" : "/signup"}${next ? `?next=${encodeURIComponent(next)}` : ""}`} className="text-accent hover:underline">
+          <Link href={`${signup ? "/login" : "/signup"}${next ? `?next=${encodeURIComponent(next)}` : ""}`} className="text-accent underline underline-offset-2">
             {signup ? "Inicia sesión" : "Regístrate"}
           </Link>
         </p>

@@ -281,7 +281,8 @@ export function DatabaseView({ collectionId, inline = false, header }: { collect
       {header}
       {inline && <InlineTitle db={db} />}
       <div className="flex min-h-[40px] items-center gap-1 pb-1" data-testid="db-toolbar">
-        <div role="tablist" aria-label={t.views} className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto">
+        <div className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto">
+        <div role="tablist" aria-label={t.views} className="flex items-center gap-1">
           {views.map((v) => {
             const activeTab = v.id === view.id;
             return (
@@ -301,6 +302,7 @@ export function DatabaseView({ collectionId, inline = false, header }: { collect
               </div>
             );
           })}
+        </div>
           {db.canEdit && <button type="button" aria-label={t.addView} data-testid="add-view" onClick={(e) => open("addview", e.currentTarget)} className={iconBtn}>
             <Plus size={16} />
           </button>}

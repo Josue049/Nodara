@@ -157,15 +157,19 @@ export function TableView({ db }: { db: Database }) {
 
   const addRowButton = (groupKey?: string) =>
     !db.canEdit ? null : (
-    <button
-      type="button"
-      onClick={() => void newRow(groupKey)}
-      data-testid="add-row"
-      className="nd-db-cell flex h-[28px] items-center gap-2 px-2 text-[14px] text-ink-3 hover:bg-hover"
-      style={{ width: totalW }}
-    >
-      <Plus size={14} /> {t.newPage}
-    </button>
+    <div role="row">
+      <div role="gridcell">
+        <button
+          type="button"
+          onClick={() => void newRow(groupKey)}
+          data-testid="add-row"
+          className="nd-db-cell flex h-[28px] items-center gap-2 px-2 text-[14px] text-ink-3 hover:bg-hover"
+          style={{ width: totalW }}
+        >
+          <Plus size={14} /> {t.newPage}
+        </button>
+      </div>
+    </div>
   );
 
   const groups = db.groups;
@@ -176,7 +180,7 @@ export function TableView({ db }: { db: Database }) {
         const fn = cfg.calculations?.[id] ?? "none";
         const value = db.calculations[id];
         return (
-          <div key={id} className="flex h-[32px] items-center justify-end px-2 text-[12px]" style={{ width: p ? widthOf(id) : widthOf(TITLE_ID), flex: "none" }}>
+          <div key={id} role="gridcell" className="flex h-[32px] items-center justify-end px-2 text-[12px]" style={{ width: p ? widthOf(id) : widthOf(TITLE_ID), flex: "none" }}>
             <button
               type="button"
               aria-label={`Calcular ${p?.name ?? "Nombre"}`}
@@ -224,7 +228,7 @@ export function TableView({ db }: { db: Database }) {
               </div>
             );
           })}
-          <div className="nd-db-cell flex h-[36px] items-center justify-center" style={{ width: 40, flex: "none" }}>
+          <div role="columnheader" aria-label={t.addProperty} className="nd-db-cell flex h-[36px] items-center justify-center" style={{ width: 40, flex: "none" }}>
             {db.canEdit && <button
               type="button"
               aria-label={t.addProperty}
@@ -243,8 +247,9 @@ export function TableView({ db }: { db: Database }) {
               const gp = db.props.find((p) => p.id === cfg.group?.propertyId);
               const opt = gp?.config.options?.find((o) => o.id === g.key);
               return (
-                <div key={g.key} data-testid="group" data-group={g.key}>
-                  <div className="flex h-[36px] items-center gap-1.5 px-1" style={{ width: totalW }}>
+                <div key={g.key} role="rowgroup" data-testid="group" data-group={g.key}>
+                  <div role="row" className="flex h-[36px] items-center gap-1.5 px-1" style={{ width: totalW }}>
+                    <div role="gridcell" className="flex items-center gap-1.5">
                     <button
                       type="button"
                       aria-label={open ? t.collapse : t.expand}
@@ -255,6 +260,7 @@ export function TableView({ db }: { db: Database }) {
                     </button>
                     {opt ? <Tag option={opt} status={gp?.type === "status"} /> : <span className="font-medium text-ink-2">{g.label || t.noValue}</span>}
                     <span className="text-[14px] text-ink-3" data-testid="group-count">{g.rowIds.length}</span>
+                    </div>
                   </div>
                   {open && g.rowIds.map((id) => rowsById.get(id)).filter((r): r is RecordRow => !!r).map(renderRow)}
                   {open && addRowButton(g.key)}
