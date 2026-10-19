@@ -23,16 +23,15 @@ test.describe("restablecer contraseña con enlace de administrador", () => {
     expect(path).toMatch(/^\/reset\/[\w-]{20,}$/);
 
     // el enlace muestra a qué cuenta pertenece y acepta una contraseña válida
-    await gotoReady(page, path);
+    await page.goto(path); // página pública: no pasa por AuthGate
     await expect(page.getByText("Cuenta: ana@nodara.test")).toBeVisible();
-    await page.getByLabel("Contraseña nueva").fill("corta");
-    await page.getByLabel("Repite la contraseña").fill("corta");
-    await page.getByTestId("reset-submit").click();
-    await expect(page.getByRole("alert")).toBeVisible(); // validación del navegador o del servidor
+    // una contraseña corta ni siquiera se envía (validación del navegador); el servidor la rechaza igualmente
+    const short = await page.request.post(path.replace("/reset/", "/api/auth/reset/"), { data: { password: "corta" } });
+    expect(short.status()).toBe(400);
     await page.getByLabel("Contraseña nueva").fill("clave-nueva-2026");
     await page.getByLabel("Repite la contraseña").fill("otra-distinta-1");
     await page.getByTestId("reset-submit").click();
-    await expect(page.getByRole("alert")).toContainText("no coinciden");
+    await expect(page.getByTestId("reset-page").getByRole("alert")).toContainText("no coinciden");
     await page.getByLabel("Repite la contraseña").fill("clave-nueva-2026");
     await page.getByTestId("reset-submit").click();
     await expect(page.getByTestId("reset-login")).toBeVisible();
