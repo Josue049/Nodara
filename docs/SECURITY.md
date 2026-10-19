@@ -11,4 +11,14 @@
 - **Archivos**: solo descargables por miembros del espacio al que pertenecen; `X-Content-Type-Options: nosniff`; tipos desconocidos se sirven como descarga.
 - **Pruebas**: `/api/test/reset` solo existe con `NODARA_E2E=1` + token aleatorio por ejecución + base desechable.
 
-Pendiente: verificación de correo y restablecimiento de contraseña (requieren envío de correo), 2FA, registro de auditoría, límite de tamaño de peticiones JSON.
+- **Restablecimiento de contraseña**: un propietario/administrador genera un enlace de un solo uso (hash en base, caduca en 1 hora, un enlace vigente por persona). Al usarlo se cierran todas las sesiones de la cuenta. Un administrador no restablece a propietarios ni a sí mismo. Limitado por IP.
+- **Auditoría**: `audit_log` registra compartir, permisos, alcance, publicar, bloquear, exportar, eliminar, restaurar versión, invitaciones, cambios de rol y restablecimientos; visible solo para propietarios/administradores y exportable a CSV (con neutralización de fórmulas).
+- **Cabeceras**: CSP (`default-src 'self'`, `frame-ancestors 'none'`, `object-src 'none'`; `unsafe-inline` solo por los scripts/estilos en línea de Next.js), `X-Frame-Options: DENY`, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`, COOP; sin `X-Powered-By`.
+- **Entradas**: validación con Zod en todas las rutas; límite de 20 MB en subidas y 5 MB en importaciones; URLs de imágenes/enlaces/portadas solo `http(s)` o `/api/files/` (nunca `javascript:`); KaTeX con `trust:false`; resaltado de búsqueda sin HTML (se pinta como nodos de React).
+- **Páginas bloqueadas**: el servidor degrada el nivel efectivo a «comentar»; vale también para la edición colaborativa y los enlaces públicos.
+- **Enlaces públicos**: no revelan la lista de miembros del espacio (propiedades «Persona»).
+- **Verificación continua** (`tests/e2e/17-security-sweep.spec.ts`): todas las operaciones con sesión devuelven 401 sin ella (el barrido lee los `route.ts`, así que una ruta nueva entra sola); Más de 40 intentos de acceso cruzado (IDOR) entre espacios no obtienen ningún 2xx; cookies HttpOnly/SameSite; Origin ajeno rechazado; descargas con `nosniff` y HTML/SVG como adjunto; reinicio de pruebas inaccesible sin token.
+- **Dependencias**: `npm audit --omit=dev` → 0 vulnerabilidades (KaTeX 0.19). Quedan avisos solo en dependencias de **desarrollo** (cadena de ESLint y servidor de desarrollo de esbuild/drizzle-kit); no se incluyen en la imagen de producción.
+
+## Pendiente
+Verificación de correo y restablecimiento autoservicio (requieren SMTP), 2FA/SSO, límite de tamaño de peticiones JSON a nivel de servidor (hoy solo subidas e importaciones), almacenamiento de límites de intentos compartido entre instancias, escaneo antivirus de archivos subidos.

@@ -30,3 +30,22 @@ Operaciones de varios pasos (papelera, restaurar, mover, duplicar) usan transacc
 | `collection_templates` | Plantillas de fila (título, valores, contenido). |
 
 Relaciones: `pages.collection_id → collections` y `collections.host_page_id → pages` (cascada). Las operaciones multipaso (papelera, mover, duplicar, altas y ediciones de registros con relaciones recíprocas, creación de bases y propiedades) corren en transacciones. Archivos subidos: `.data/uploads` (`NODARA_UPLOAD_DIR`), servidos por `/api/files/<uuid>` con `nosniff`; **inclúyelos en tus respaldos**: `pg_dump` solo cubre la base.
+
+## Tablas de usuarios, colaboración y administración (Hitos 5–7)
+| Tabla | Rol |
+|---|---|
+| `users`, `sessions` | Cuentas (hash scrypt) y sesiones (solo hash SHA-256 del token) |
+| `workspaces`, `workspace_members` | Espacios de trabajo y roles (`owner`/`admin`/`member`/`guest`) |
+| `invitations`, `password_resets` | Enlaces de un solo uso (hash del token, caducidad) |
+| `page_permissions`, `page_shares`, `favorites` | Permisos explícitos por página y persona, enlaces públicos, favoritos por usuario |
+| `page_versions` | Instantáneas del historial (título + contenido) |
+| `page_ydocs` | Estado binario del documento Yjs de cada página (`bytea`) |
+| `comments`, `notifications` | Hilos y respuestas anclados a texto; bandeja de entrada |
+| `files` | Metadatos de archivos subidos (el contenido está en disco) |
+| `page_templates` | Plantillas de página propias de cada espacio (las integradas viven en el código) |
+| `audit_log` | Eventos de seguridad y administración (índice por espacio y fecha) |
+| `page_views` | Visitas por página, persona y día (`PRIMARY KEY (page_id, user_id, day)`) para las analíticas |
+
+Columnas añadidas a `pages` en el Hito 7: `cover`, `font_style`, `small_text`, `full_width`, `locked`.
+
+Migraciones: `app/drizzle/0000…0006` (`0005_page_settings_templates_audit`, `0006_password_resets`). Todas son aditivas y se aplican al arrancar. `app/scripts/lib/table-order.mjs` lista las tablas en orden de dependencias para la migración PGlite → PostgreSQL (una prueba unitaria comprueba que cubre todo el esquema).
