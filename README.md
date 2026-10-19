@@ -57,10 +57,10 @@ La primera cuenta creada adopta el espacio de trabajo y es propietaria. Guía co
 La suite completa se ejecuta con `scripts/test-seq.ps1 -All`: ESLint, TypeScript, pruebas unitarias/integración (Vitest, incluyendo el driver `pg` y la migración desde PGlite) y pruebas E2E (Playwright sobre un **build de producción** con base desechable, una prueba = un estado limpio). Los números vigentes están en [`docs/STATUS.md`](docs/STATUS.md). Las comparaciones con Notion (estilos medidos con Playwright/CDP) están en [`research/comparisons/`](research/comparisons/) y [`research/features/`](research/features/).
 
 ## Documentación
-[`STATUS`](docs/STATUS.md) · [`ROADMAP`](docs/ROADMAP.md) · [`FEATURE_MATRIX`](docs/FEATURE_MATRIX.md) · [`ARCHITECTURE`](docs/ARCHITECTURE.md) · [`DATABASE`](docs/DATABASE.md) · [`SECURITY`](docs/SECURITY.md) · [`DEPLOYMENT`](docs/DEPLOYMENT.md) · [`API`](docs/API.md) · [`CONTRIBUTING`](CONTRIBUTING.md)
+[`STATUS`](docs/STATUS.md) · [`ROADMAP`](docs/ROADMAP.md) · [`FEATURE_MATRIX`](docs/FEATURE_MATRIX.md) · [`ARCHITECTURE`](docs/ARCHITECTURE.md) · [`DATABASE`](docs/DATABASE.md) · [`SECURITY`](docs/SECURITY.md) · [`LIMITATIONS`](docs/LIMITATIONS.md) · [`DEPLOYMENT`](docs/DEPLOYMENT.md) · [`API`](docs/API.md) · [`CONTRIBUTING`](CONTRIBUTING.md)
 
 ## Límites conocidos
-Una sola instancia de aplicación (salas colaborativas en memoria), sin envío de correo (enlaces de un solo uso), archivos en disco local, sin vistas vinculadas entre bases ni «última edición por» en propiedades. Lista completa y honesta en `docs/STATUS.md`.
+Una sola instancia de aplicación (salas colaborativas en memoria), sin envío de correo (enlaces de un solo uso), archivos en disco local, sin vistas vinculadas entre bases ni «última edición por» en propiedades. Lista completa y honesta en [`docs/LIMITATIONS.md`](docs/LIMITATIONS.md).
 
 ## Licencia
 MIT. Notion es una marca de sus propietarios; este proyecto no está afiliado a Notion Labs.
