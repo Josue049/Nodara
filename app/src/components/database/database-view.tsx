@@ -382,7 +382,15 @@ export function DatabaseView({ collectionId, inline = false, header }: { collect
         </Popover>
       )}
       {pop?.kind === "templates" && <TemplateMenu db={db} anchor={pop.anchor} onClose={() => setPop(null)} onCreated={() => {}} />}
-      {peekId && <RecordPeek id={peekId} onClose={() => setPeekId(null)} />}
+      {peekId && (
+        <RecordPeek
+          id={peekId}
+          onClose={() => {
+            setPeekId(null);
+            void db.reload(); // lo editado en el panel se ve al instante en la vista
+          }}
+        />
+      )}
     </div>
     </PeekProvider>
   );
