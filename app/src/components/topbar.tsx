@@ -1,6 +1,6 @@
 "use client";
 
-import { History, Link2, Lock, MoreHorizontal, Star, Users } from "lucide-react";
+import { History, Link2, Lock, MessageSquare, MoreHorizontal, Star, Users } from "lucide-react";
 import Link from "next/link";
 import { useRef, useState } from "react";
 import { t } from "@/lib/strings";
@@ -22,7 +22,13 @@ export function Topbar({
   level = "full",
   scope = "private",
   onAccessChanged,
+  presence = [],
+  offline = false,
+  onToggleComments,
+  commentsOpen = false,
 }: {
+  onToggleComments?: () => void;
+  commentsOpen?: boolean;
   pageId: string;
   saveState: SaveState;
   record?: RecordInfo;
@@ -30,6 +36,10 @@ export function Topbar({
   scope?: string;
   /** Se llama tras cambiar permisos o alcance desde «Compartir» (para recargar el nivel de acceso). */
   onAccessChanged?: () => void;
+  /** Otras personas con la página abierta ahora mismo. */
+  presence?: { id: string; name: string; color: string }[];
+  /** Sin conexión con el servidor: los cambios se guardan localmente y se sincronizan al volver. */
+  offline?: boolean;
 }) {
   const { pages, toggleFavorite, refreshPages } = useWorkspace();
   const [share, setShare] = useState<Anchor | null>(null);
@@ -71,6 +81,20 @@ export function Topbar({
         </span>
       )}
       <div className="ml-auto flex items-center gap-1">
+        {offline && (
+          <span className="mr-1 rounded bg-[#fdebec] px-1.5 text-[12px] text-[#5d1715]" data-testid="offline-badge" title="Tus cambios se sincronizarán al recuperar la conexión">
+            Sin conexión
+          </span>
+        )}
+        {presence.length > 0 && (
+          <div className="mr-1 flex -space-x-1.5" data-testid="presence" aria-label="Personas en esta página">
+            {presence.slice(0, 5).map((u, i) => (
+              <span key={`${u.id}-${i}`} title={u.name} data-testid="presence-avatar" className="flex size-6 items-center justify-center rounded-full border-2 border-[var(--bg)] text-[11px] font-medium text-white" style={{ background: u.color }}>
+                {u.name.charAt(0).toUpperCase()}
+              </span>
+            ))}
+          </div>
+        )}
         <span role="status" aria-live="polite" className="mr-1 text-[12px] text-ink-3" data-testid="save-status">
           {label}
         </span>
@@ -83,6 +107,19 @@ export function Topbar({
             className="flex h-7 items-center rounded-md px-2 hover:bg-hover"
           >
             {t.share}
+          </button>
+        )}
+        {!record && onToggleComments && (
+          <button
+            type="button"
+            aria-label="Comentarios"
+            title="Comentarios"
+            aria-pressed={commentsOpen}
+            data-testid="comments-btn"
+            onClick={onToggleComments}
+            className={`flex size-7 items-center justify-center rounded hover:bg-hover ${commentsOpen ? "bg-active" : ""}`}
+          >
+            <MessageSquare size={16} className="text-ink-2" />
           </button>
         )}
         <button

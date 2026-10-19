@@ -1,20 +1,18 @@
 "use client";
 
-import type { Editor, JSONContent } from "@tiptap/core";
-import { Details, DetailsContent, DetailsSummary } from "@tiptap/extension-details";
+import type { Editor, Extensions, JSONContent } from "@tiptap/core";
+import Collaboration from "@tiptap/extension-collaboration";
+import CollaborationCaret from "@tiptap/extension-collaboration-caret";
 import Placeholder from "@tiptap/extension-placeholder";
-import { Color, TextStyle } from "@tiptap/extension-text-style";
-import { Highlight } from "@tiptap/extension-highlight";
-import { TableKit } from "@tiptap/extension-table";
-import { TaskItem } from "@tiptap/extension-task-item";
-import { TaskList } from "@tiptap/extension-task-list";
 import { EditorContent, useEditor } from "@tiptap/react";
-import StarterKit from "@tiptap/starter-kit";
 import { useEffect } from "react";
+import { schemaExtensions, PersonMention } from "@/lib/editor/schema";
+import type { NodaraProvider } from "@/lib/collab/provider";
 import { t } from "@/lib/strings";
 import { BlockHandle } from "./block-handle";
 import { DatabaseBlock, NodaraContext } from "./database-node";
 import { FormatMenu } from "./format-menu";
+import { MentionMenu, mentionSuggestion, useMentionBridge, type MentionMember } from "./mention-menu";
 import { SlashCommand } from "./slash-extension";
 import { SlashMenu, useSlashBridge } from "./slash-menu";
 
@@ -26,42 +24,66 @@ export function BlockEditor({
   editable,
   onChange,
   onReady,
+  collab,
+  members = [],
+  onComment,
 }: {
-  /** Página que contiene el editor (para crear bases de datos integradas). */
+  /** Página que contiene el editor (para crear bases de datos integradas y comentarios). */
   pageId?: string;
   initial: DocJson | null;
   editable: boolean;
   onChange: (doc: DocJson) => void;
   onReady?: (editor: Editor) => void;
+  /** Con proveedor, el contenido vive en el documento Yjs compartido y se ignoran `initial`/`onChange`. */
+  collab?: NodaraProvider;
+  /** Personas mencionables con @. */
+  members?: MentionMember[];
+  /** Se llama al pulsar «Comentar» con texto seleccionado. */
+  onComment?: (range: { from: number; to: number; text: string }) => void;
 }) {
   const { bridge, state, index } = useSlashBridge();
+  const mention = useMentionBridge();
   const editor = useEditor({
     immediatelyRender: false,
     editable,
-    content: initial ?? undefined,
+    content: collab ? undefined : (initial ?? undefined),
     extensions: [
-      StarterKit.configure({
-        heading: { levels: [1, 2, 3] },
-        link: { openOnClick: false, autolink: true, HTMLAttributes: { rel: "noopener noreferrer nofollow", target: "_blank" } },
+      ...schemaExtensions({ collaborative: !!collab }).map((e) => {
+        if (e.name === "databaseBlock") return DatabaseBlock;
+        if (e.name === "mention") return PersonMention.configure({ suggestion: mentionSuggestion(members, mention.bridge) });
+        return e;
       }),
-      TextStyle,
-      Color,
-      Highlight.configure({ multicolor: true }),
-      TableKit.configure({ table: { resizable: true } }),
-      TaskList,
-      TaskItem.configure({ nested: true }),
-      Details.configure({ persist: true, HTMLAttributes: { class: "nd-details" } }),
-      DetailsSummary,
-      DetailsContent,
       Placeholder.configure({
         placeholder: ({ node }) => (node.type.name === "detailsSummary" ? t.toggleSummary : t.editorPlaceholder),
       }),
       NodaraContext.configure({ pageId: pageId ?? null }),
-      DatabaseBlock,
       SlashCommand.configure({ bridge }),
+      ...(collab
+        ? ([
+            Collaboration.configure({ document: collab.doc, field: "default" }),
+            CollaborationCaret.configure({
+              provider: collab,
+              user: (collab.awareness.getLocalState() as { user: { name: string; color: string } } | null)?.user ?? { name: "Anónimo", color: "#787774" },
+              render: (user) => {
+                const caret = document.createElement("span");
+                caret.className = "nd-caret";
+                caret.style.borderColor = user.color;
+                caret.setAttribute("data-testid", "remote-caret");
+                const label = document.createElement("div");
+                label.className = "nd-caret-label";
+                label.style.backgroundColor = user.color;
+                label.textContent = user.name;
+                caret.append(label);
+                return caret;
+              },
+            }),
+          ] satisfies Extensions)
+        : []),
     ],
     editorProps: { attributes: { class: "nd-editor", "aria-label": t.pageContent, "data-testid": "editor" } },
-    onUpdate: ({ editor }) => onChange(editor.getJSON() as DocJson),
+    onUpdate: ({ editor }) => {
+      if (!collab) onChange(editor.getJSON() as DocJson);
+    },
   });
 
   useEffect(() => {
@@ -74,9 +96,10 @@ export function BlockEditor({
   return (
     <>
       <EditorContent editor={editor} />
-      {editor && editable && <FormatMenu editor={editor} />}
+      {editor && editable && <FormatMenu editor={editor} onComment={onComment} />}
       {editor && editable && <BlockHandle editor={editor} />}
       <SlashMenu state={state} index={index} />
+      <MentionMenu state={mention.state} index={mention.index} />
     </>
   );
 }

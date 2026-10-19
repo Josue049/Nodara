@@ -50,7 +50,7 @@ export async function migratePgliteToPostgres({ sourceDir, targetUrl, backupRoot
             row.collection_id = null;
           }
           const cols = Object.keys(row);
-          const vals = cols.map((c) => (row[c] !== null && typeof row[c] === "object" && !(row[c] instanceof Date) ? JSON.stringify(row[c]) : row[c]));
+          const vals = cols.map((c) => (ArrayBuffer.isView(row[c]) ? Buffer.from(row[c].buffer, row[c].byteOffset, row[c].byteLength) : row[c] !== null && typeof row[c] === "object" && !(row[c] instanceof Date) ? JSON.stringify(row[c]) : row[c]));
           await pool.query(`insert into ${q(t)} (${cols.map(q).join(", ")}) values (${cols.map((_, i) => `$${i + 1}`).join(", ")})`, vals);
         }
         const [a, b] = [await count(srcRun, t), await count(dstRun, t)];

@@ -1,7 +1,8 @@
 "use client";
 
-import { Extension, mergeAttributes, Node, type Editor } from "@tiptap/core";
+import { Extension, type Editor } from "@tiptap/core";
 import { NodeViewWrapper, ReactNodeViewRenderer, type NodeViewProps } from "@tiptap/react";
+import { DatabaseBlockBase } from "@/lib/editor/schema";
 import { DatabaseView } from "../database/database-view";
 
 /** Guarda el id de la página que contiene el editor, para crear bases de datos integradas desde el menú /. */
@@ -22,28 +23,8 @@ function DatabaseNodeView({ node }: NodeViewProps) {
   );
 }
 
-/** Bloque de base de datos integrada: referencia una colección por id. */
-export const DatabaseBlock = Node.create({
-  name: "databaseBlock",
-  group: "block",
-  atom: true,
-  draggable: true,
-  selectable: true,
-  addAttributes() {
-    return {
-      collectionId: {
-        default: null,
-        parseHTML: (el) => el.getAttribute("data-collection-id"),
-        renderHTML: (attrs) => (attrs.collectionId ? { "data-collection-id": attrs.collectionId } : {}),
-      },
-    };
-  },
-  parseHTML() {
-    return [{ tag: 'div[data-type="database-block"]' }];
-  },
-  renderHTML({ HTMLAttributes }) {
-    return ["div", mergeAttributes(HTMLAttributes, { "data-type": "database-block" })];
-  },
+/** Bloque de base de datos integrada con su vista React (el esquema vive en lib/editor/schema). */
+export const DatabaseBlock = DatabaseBlockBase.extend({
   addNodeView() {
     return ReactNodeViewRenderer(DatabaseNodeView);
   },

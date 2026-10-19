@@ -16,4 +16,7 @@ export const TABLE_ORDER = [
   "favorites",
   "page_versions",
   "files",
+  "page_ydocs",
+  "comments",
+  "notifications",
 ];

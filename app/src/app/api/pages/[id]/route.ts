@@ -4,6 +4,7 @@ import { assertPage } from "@/server/authz";
 import { api, readJson } from "@/server/http";
 import { deletePagePermanently, getPage, trashPage, updatePage } from "@/server/pages-service";
 import { favorites } from "@/server/schema";
+import { broadcastMeta, invalidateRoom } from "@/server/collab-service";
 import { maybeSnapshot, setFavorite } from "@/server/sharing-service";
 import { updatePageSchema } from "@/server/validation";
 
@@ -31,6 +32,8 @@ export const PATCH = api(async (req, p, user, db) => {
   if (Object.keys(patch).length > 0) {
     if (patch.parentId) await assertPage(db, user, patch.parentId, "edit");
     await updatePage(db, id, patch);
+    if (patch.content !== undefined) await invalidateRoom(db, id); // el contenido cambió fuera de la edición colaborativa
+    if (patch.title !== undefined) broadcastMeta(id, { title: patch.title });
     if (patch.content !== undefined || patch.title !== undefined) await maybeSnapshot(db, id, user.id);
   }
   return describe(db, user.id, id, a.level, a.scope);

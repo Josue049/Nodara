@@ -24,6 +24,8 @@ export function useDatabase(collectionId: string) {
   });
   const [search, setSearch] = useState("");
   const seq = useRef(0);
+  // Los cambios de configuración de la vista se envían en orden: dos PATCH concurrentes podrían guardarse al revés.
+  const saveChain = useRef<Promise<unknown>>(Promise.resolve());
 
   const reload = useCallback(
     async (opts?: { viewId?: string; search?: string }) => {
@@ -77,7 +79,9 @@ export function useDatabase(collectionId: string) {
         return;
       }
       patchBundle((b) => ({ ...b, views: b.views.map((v) => (v.id === view.id ? { ...v, config } : v)) }));
-      await dbApi.updateView(view.id, { config });
+      const job = saveChain.current.catch(() => {}).then(() => dbApi.updateView(view.id, { config }));
+      saveChain.current = job;
+      await job;
       await reload();
     },
     [view, reload, localConfig, canEdit],
@@ -96,7 +100,9 @@ export function useDatabase(collectionId: string) {
         if (d) config = { ...view.config, dateProperty: d.id };
       }
       patchBundle((b) => ({ ...b, views: b.views.map((v) => (v.id === view.id ? { ...v, ...patch, ...(config ? { config } : {}) } : v)) }));
-      await dbApi.updateView(view.id, { ...patch, ...(config ? { config } : {}) });
+      const job = saveChain.current.catch(() => {}).then(() => dbApi.updateView(view.id, { ...patch, ...(config ? { config } : {}) }));
+      saveChain.current = job;
+      await job;
       await reload();
     },
     [view, reload, props],

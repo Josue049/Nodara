@@ -3,7 +3,7 @@
 import type { Editor } from "@tiptap/core";
 import { useEditorState } from "@tiptap/react";
 import { BubbleMenu } from "@tiptap/react/menus";
-import { Bold, ChevronDown, Code, Italic, Link2, RemoveFormatting, Strikethrough, Underline } from "lucide-react";
+import { Bold, ChevronDown, Code, Italic, Link2, MessageSquarePlus, RemoveFormatting, Strikethrough, Underline } from "lucide-react";
 import { useState } from "react";
 import { t } from "@/lib/strings";
 import { SWATCHES } from "./colors";
@@ -37,7 +37,7 @@ const normalizeHref = (v: string) => (/^[a-z][a-z0-9+.-]*:/i.test(v) ? v : `http
 type Panel = null | "turn" | "color" | "link";
 
 /** Menú flotante de formato al seleccionar texto (equivalente observado en Notion: convertir en, B/I/U, enlace, tachado, código, color). */
-export function FormatMenu({ editor }: { editor: Editor }) {
+export function FormatMenu({ editor, onComment }: { editor: Editor; onComment?: (range: { from: number; to: number; text: string }) => void }) {
   const [panel, setPanel] = useState<Panel>(null);
   const [href, setHref] = useState("");
   const state = useEditorState({
@@ -110,6 +110,19 @@ export function FormatMenu({ editor }: { editor: Editor }) {
               </li>
             ))}
           </ul>
+        )}
+        {onComment && (
+          <button
+            type="button"
+            data-testid="comment-btn"
+            onClick={() => {
+              const { from, to } = editor.state.selection;
+              onComment({ from, to, text: editor.state.doc.textBetween(from, to, " ").slice(0, 500) });
+            }}
+            className="mt-1 flex h-8 w-full items-center gap-2 rounded-md px-2 hover:bg-hover"
+          >
+            <MessageSquarePlus size={16} /> Comentar
+          </button>
         )}
         <div className="mt-1 grid grid-cols-6 gap-0.5 border-t border-line pt-1.5">
           {btn(t.bold, state.bold, () => editor.chain().focus().toggleBold().run(), <Bold size={16} />)}

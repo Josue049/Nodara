@@ -21,8 +21,11 @@ const env = {
 };
 const next = [path.join("node_modules", "next", "dist", "bin", "next")];
 
-const build = spawnSync(process.execPath, [...next, "build"], { stdio: "inherit", env });
-if (build.status !== 0) process.exit(build.status ?? 1);
+// NODARA_E2E_SKIP_BUILD=1 reutiliza el build de .next-e2e (scripts/test-seq.ps1 lo compila una sola vez y ejecuta la suite por lotes).
+if (process.env.NODARA_E2E_SKIP_BUILD !== "1") {
+  const build = spawnSync(process.execPath, [...next, "build"], { stdio: "inherit", env });
+  if (build.status !== 0) process.exit(build.status ?? 1);
+}
 
 const child = spawn(process.execPath, [...next, "start", "-p", port, "-H", "127.0.0.1"], { stdio: "inherit", env });
 child.on("exit", (code) => process.exit(code ?? 0));

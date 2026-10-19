@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { HttpError } from "@/server/auth";
 import { publicApi, readJson } from "@/server/http";
+import { invalidateRoom } from "@/server/collab-service";
 import { updatePage } from "@/server/pages-service";
 import { isWithinShared, resolveShare } from "@/server/sharing-service";
 import { updatePageSchema } from "@/server/validation";
@@ -16,5 +17,6 @@ export const PATCH = publicApi(async (req, p, _u, db) => {
   if (!(await isWithinShared(db, id, share.pageId))) throw new HttpError(404, "Página no encontrada");
   const { title, content } = updatePageSchema.pick({ title: true, content: true }).parse(await readJson(req));
   await updatePage(db, id, { title, content });
+  if (content !== undefined) await invalidateRoom(db, id);
   return null;
 });

@@ -402,10 +402,11 @@ test.describe("historial de versiones", () => {
     await gotoReady(page, `/${doc.id}`);
     await page.getByTestId("editor").click();
     await page.keyboard.type("Primera versión");
-    await expect(page.getByTestId("save-status")).toHaveText("Guardado");
+    // el servidor consolida los cambios con un pequeño retardo y entonces crea la versión
+    const count = async () => (await (await request.get(`/api/pages/${doc.id}/versions`)).json()).length;
+    await expect.poll(count).toBe(1);
     await page.keyboard.type(" y segunda");
-    await expect(page.getByTestId("save-status")).toHaveText("Guardado");
-    await expect.poll(async () => (await (await request.get(`/api/pages/${doc.id}/versions`)).json()).length).toBeGreaterThanOrEqual(2);
+    await expect.poll(count).toBe(2);
     await page.getByTestId("page-more").click();
     await page.getByTestId("open-history").click();
     const items = page.getByTestId("version-item");

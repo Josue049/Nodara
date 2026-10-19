@@ -1,5 +1,6 @@
 import {
   boolean,
+  customType,
   doublePrecision,
   index,
   integer,
@@ -224,3 +225,52 @@ export const files = pgTable("files", {
   createdBy: uuid("created_by").references(() => users.id, { onDelete: "set null" }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
+
+// ── Colaboración, comentarios y notificaciones (Hito 6) ─────────────
+
+const bytea = customType<{ data: Uint8Array; driverData: Uint8Array | Buffer }>({
+  dataType: () => "bytea",
+  toDriver: (v) => Buffer.from(v),
+  fromDriver: (v) => new Uint8Array(v),
+});
+
+/** Estado Yjs (CRDT) del contenido de una página: fuente de verdad mientras se edita en colaboración. */
+export const pageYdocs = pgTable("page_ydocs", {
+  pageId: uuid("page_id").primaryKey().references((): AnyPgColumn => pages.id, { onDelete: "cascade" }),
+  state: bytea("state").notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const comments = pgTable(
+  "comments",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    pageId: uuid("page_id").notNull().references((): AnyPgColumn => pages.id, { onDelete: "cascade" }),
+    /** Comentario raíz del hilo (el propio id en el comentario raíz). */
+    threadId: uuid("thread_id").notNull(),
+    authorId: uuid("author_id").references(() => users.id, { onDelete: "set null" }),
+    body: text("body").notNull(),
+    /** Solo en el comentario raíz: texto seleccionado al que se ancla el hilo (vacío = comentario de página). */
+    anchorText: text("anchor_text").notNull().default(""),
+    resolved: boolean("resolved").notNull().default(false),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("comments_page_idx").on(t.pageId), index("comments_thread_idx").on(t.threadId)],
+);
+
+export const notifications = pgTable(
+  "notifications",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    /** mention | comment | reply */
+    type: text("type").notNull(),
+    actorId: uuid("actor_id").references(() => users.id, { onDelete: "set null" }),
+    pageId: uuid("page_id").notNull().references((): AnyPgColumn => pages.id, { onDelete: "cascade" }),
+    commentId: uuid("comment_id"),
+    preview: text("preview").notNull().default(""),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    readAt: timestamp("read_at", { withTimezone: true }),
+  },
+  (t) => [index("notifications_user_idx").on(t.userId, t.createdAt)],
+);

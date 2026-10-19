@@ -1,5 +1,6 @@
 "use client";
 
+import { Inbox } from "./inbox";
 import {
   DndContext,
   DragOverlay,
@@ -364,6 +365,7 @@ export function Sidebar() {
           {t.search}
           <span className="ml-auto text-[12px] text-ink-3">Ctrl+K</span>
         </button>
+        <Inbox rowClass={rowBase} />
         <Link href="/" className={`${rowBase} mb-2 pl-[8px] ${activeId === null ? "bg-active text-ink" : ""}`}>
           <Home size={16} className="mr-1.5" />
           {t.home}

@@ -6,4 +6,4 @@
 - **Capas**: `server/pages-service.ts` (lógica, probada con Vitest en memoria) → `app/api/*` (validación Zod, mapeo de errores) → `components/workspace-provider.tsx` (estado cliente con actualización optimista) → UI.
 - **Modelo**: `pages` (árbol por `parent_id`, `position`, `is_favorite`, `deleted_at`, `content jsonb` reservado al editor). La papelera marca la página y sus descendientes con el mismo `deleted_at`, lo que permite restaurar el subárbol exacto.
 - **Pruebas**: Vitest (`tests/unit`), Playwright con Chrome del sistema (`tests/e2e`, base desechable en `.data/e2e`).
-- **Pendiente de decidir**: autenticación (Hito 5), Yjs/WebSockets (Hito 6; requiere servidor propio fuera de Next).
+- **Pendiente de decidir**: autenticación (Hito 5), Yjs: resuelto en el Hito 6 con SSE + POST (sin servidor propio); ver STATUS.

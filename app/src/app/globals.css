@@ -244,3 +244,10 @@ body {
 .nd-db-vline { border-right: 0.8px solid rgba(42, 28, 0, 0.07); }
 :root[data-theme="dark"] .nd-db-vline { border-right-color: rgba(255, 255, 243, 0.082); }
 .nd-tag { display: inline-flex; align-items: center; max-width: 100%; padding: 0 6px; border-radius: 3px; font-size: 14px; line-height: 20px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* Colaboración: cursores remotos, menciones y comentarios */
+.nd-caret { position: relative; margin-left: -1px; margin-right: -1px; border-left: 2px solid; border-right: 0; pointer-events: none; word-break: normal; }
+.nd-caret-label { position: absolute; top: -1.45em; left: -2px; padding: 1px 6px; border-radius: 4px 4px 4px 0; font-size: 11px; font-weight: 600; line-height: 1.3; color: #fff; white-space: nowrap; user-select: none; opacity: 0.95; }
+.nd-editor .nd-mention { background: var(--bg-hover); color: var(--accent); border-radius: 4px; padding: 0 3px; font-weight: 500; }
+.nd-editor .nd-comment { background: rgba(255, 212, 0, 0.28); border-bottom: 2px solid rgba(255, 212, 0, 0.7); cursor: pointer; }
+.nd-editor .nd-comment.nd-comment-active { background: rgba(255, 212, 0, 0.5); }
