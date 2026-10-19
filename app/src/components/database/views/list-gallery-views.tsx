@@ -1,7 +1,7 @@
 "use client";
 
 import { Plus } from "lucide-react";
-import Link from "next/link";
+import { RecordLink as Link } from "../peek";
 import type { FileValue, PropertyDef, RecordRow } from "@/lib/collections/types";
 import { t } from "@/lib/strings";
 import { PageIcon } from "../../page-icon";

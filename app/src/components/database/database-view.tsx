@@ -1,5 +1,6 @@
 "use client";
 
+import { PeekProvider, RecordPeek } from "./peek";
 import {
   Calendar as CalendarIcon,
   ChevronDown,
@@ -156,6 +157,13 @@ function SettingsPopover({ db, anchor, onClose, openFilter, openSort }: { db: Da
           </MenuRow>
         ))}
 
+        <label className="flex items-center justify-between px-2 pt-2">
+          Abrir páginas en
+          <select aria-label="Abrir páginas en" data-testid="open-pages-in" value={cfg.openPagesIn === "side" ? "side" : "full"} onChange={(e) => void db.updateViewConfig({ openPagesIn: e.target.value as "side" | "full" })} className="h-8 rounded-md border border-line bg-transparent px-2">
+            <option value="full">Página completa</option>
+            <option value="side">Ventana lateral</option>
+          </select>
+        </label>
         {view.type === "table" && (
           <>
             <p className="px-2 pt-2 text-[12px] font-medium text-ink-3">{t.tableOptions}</p>
@@ -245,6 +253,7 @@ export function DatabaseView({ collectionId, inline = false, header }: { collect
   const db = useDatabase(collectionId);
   const [pop, setPop] = useState<{ kind: "filter" | "sort" | "settings" | "view" | "addview" | "templates"; anchor: Anchor } | null>(null);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [peekId, setPeekId] = useState<string | null>(null);
   const searchRef = useRef<HTMLInputElement>(null);
   const filterBtn = useRef<HTMLButtonElement>(null);
   const sortBtn = useRef<HTMLButtonElement>(null);
@@ -267,6 +276,7 @@ export function DatabaseView({ collectionId, inline = false, header }: { collect
   };
 
   return (
+    <PeekProvider value={{ openIn: view.config.openPagesIn === "side" ? "side" : "full", open: setPeekId }}>
     <div data-testid="database" data-collection={collectionId} data-view-type={view.type} className="relative">
       {header}
       {inline && <InlineTitle db={db} />}
@@ -372,6 +382,8 @@ export function DatabaseView({ collectionId, inline = false, header }: { collect
         </Popover>
       )}
       {pop?.kind === "templates" && <TemplateMenu db={db} anchor={pop.anchor} onClose={() => setPop(null)} onCreated={() => {}} />}
+      {peekId && <RecordPeek id={peekId} onClose={() => setPeekId(null)} />}
     </div>
+    </PeekProvider>
   );
 }

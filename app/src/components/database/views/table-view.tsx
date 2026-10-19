@@ -1,7 +1,7 @@
 "use client";
 
 import { BookmarkPlus, ChevronDown, ChevronRight, Copy, ExternalLink, Plus, Trash2 } from "lucide-react";
-import Link from "next/link";
+import { RecordLink as Link, usePeek } from "../peek";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { CALC_LABELS, formatCalc } from "@/lib/collections/format";
@@ -81,6 +81,7 @@ function TitleCell({ db, row, editing, setEditing, showIcon }: { db: Database; r
 
 export function TableView({ db }: { db: Database }) {
   const router = useRouter();
+  const peek = usePeek();
   const cfg = db.view?.config ?? {};
   const props = visibleProps(db);
   const widths = cfg.columnWidths ?? {};
@@ -270,7 +271,7 @@ export function TableView({ db }: { db: Database }) {
           at={menu.at}
           onClose={() => setMenu(null)}
           items={[
-            { label: t.open, icon: <ExternalLink size={16} />, onSelect: () => router.push(`/${menu.row.id}`) },
+            { label: t.open, icon: <ExternalLink size={16} />, onSelect: () => (peek.openIn === "side" ? peek.open(menu.row.id) : router.push(`/${menu.row.id}`)) },
             ...(db.canEdit
               ? [
                   { label: t.duplicate, icon: <Copy size={16} />, onSelect: () => void db.duplicateRow(menu.row.id) },

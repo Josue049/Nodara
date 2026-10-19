@@ -350,3 +350,6 @@ body {
 :root[data-theme="dark"] .hljs-number, :root[data-theme="dark"] .hljs-symbol, :root[data-theme="dark"] .hljs-bullet, :root[data-theme="dark"] .hljs-variable { color: #e5a35a; }
 :root[data-theme="dark"] .hljs-title, :root[data-theme="dark"] .hljs-section, :root[data-theme="dark"] .hljs-built_in, :root[data-theme="dark"] .hljs-type { color: #79b8f2; }
 :root[data-theme="dark"] .hljs-name, :root[data-theme="dark"] .hljs-tag, :root[data-theme="dark"] .hljs-selector-id, :root[data-theme="dark"] .hljs-selector-class { color: #f08a7e; }
+
+@keyframes nd-slide-in { from { transform: translateX(32px); opacity: 0; } to { transform: none; opacity: 1; } }
+.nd-slide { animation: nd-slide-in 0.2s ease-out; }

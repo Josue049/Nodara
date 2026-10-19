@@ -48,7 +48,7 @@ const SAVE_DELAY_MS = 500;
 /** Color de cursor/presencia por color de avatar (los mismos tonos de texto de las paletas de bloques). */
 const USER_HEX: Record<string, string> = { gray: "#787774", brown: "#9f6b53", orange: "#d9730d", yellow: "#cb912f", green: "#448361", blue: "#337ea9", purple: "#9065b0", pink: "#c14c8a", red: "#d44c47" };
 
-export function PageView({ pageId }: { pageId: string }) {
+export function PageView({ pageId, peek = false }: { pageId: string; /** Dentro de la ventana lateral de una base de datos: sin barra superior ni comentarios. */ peek?: boolean }) {
   const { patchLocal, restore, refreshPages, pages, updatePage } = useWorkspace();
   const [pickerOpen, setPickerOpen] = useState(false);
   const [iconOverride, setIconOverride] = useState<string | null | undefined>(undefined);
@@ -229,7 +229,7 @@ export function PageView({ pageId }: { pageId: string }) {
 
   return (
     <AccessContext.Provider value={{ level: page.level }}>
-      <Topbar onToggleComments={() => setCommentsOpen((o) => !o)} commentsOpen={commentsOpen} settings={{ fontStyle: page.fontStyle, smallText: page.smallText, fullWidth: page.fullWidth, locked: page.locked }} onSettings={patchSettings} canUnlock={page.canUnlock} isDatabase={isDatabase} collectionId={dbId} title={title} pageId={pageId} saveState={effectiveSave} presence={presence.map((p) => p.user)} offline={offline} level={page.level} scope={page.scope} onAccessChanged={reloadAccess} record={isRecord ? { id: pageId, title, icon, parentId: page.parentId } : undefined} />
+      {!peek && <Topbar onToggleComments={() => setCommentsOpen((o) => !o)} commentsOpen={commentsOpen} settings={{ fontStyle: page.fontStyle, smallText: page.smallText, fullWidth: page.fullWidth, locked: page.locked }} onSettings={patchSettings} canUnlock={page.canUnlock} isDatabase={isDatabase} collectionId={dbId} title={title} pageId={pageId} saveState={effectiveSave} presence={presence.map((p) => p.user)} offline={offline} level={page.level} scope={page.scope} onAccessChanged={reloadAccess} record={isRecord ? { id: pageId, title, icon, parentId: page.parentId } : undefined} />}
       {inTrash && (
         <div role="alert" className="flex items-center gap-3 bg-[#fdebec] px-4 py-2 text-[14px] text-[#5d1715]">
           {t.inTrashBanner}
@@ -245,7 +245,7 @@ export function PageView({ pageId }: { pageId: string }) {
           </button>
         </div>
       )}
-      {commentsOpen && !isDatabase && (
+      {commentsOpen && !isDatabase && !peek && (
         <CommentsPanel
           pageId={pageId}
           userId={user.id}

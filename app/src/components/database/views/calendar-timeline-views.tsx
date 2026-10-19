@@ -2,7 +2,7 @@
 
 import { DndContext, DragOverlay, PointerSensor, useDraggable, useDroppable, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
-import Link from "next/link";
+import { RecordLink as Link } from "../peek";
 import { useMemo, useState } from "react";
 import type { DateValue, PropertyDef, RecordRow } from "@/lib/collections/types";
 import { t } from "@/lib/strings";

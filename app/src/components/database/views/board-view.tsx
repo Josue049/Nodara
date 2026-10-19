@@ -2,7 +2,7 @@
 
 import { DndContext, DragOverlay, PointerSensor, useDraggable, useDroppable, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
 import { Plus } from "lucide-react";
-import Link from "next/link";
+import { RecordLink as Link } from "../peek";
 import { useState } from "react";
 import type { PropertyDef, RecordRow } from "@/lib/collections/types";
 import { t } from "@/lib/strings";
