@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { formatDate, formatNumber, optionById, tagVar } from "@/lib/collections/format";
 import { COMPUTED_TYPES, type DateValue, type FileValue, type PropertyDef, type QueryResult, type SelectOption } from "@/lib/collections/types";
 import { t } from "@/lib/strings";
+import { useAccess } from "../access-context";
 import { PageIcon } from "../page-icon";
 import { dbApi } from "./api";
 import { Anchor, anchorOf, MenuRow, Popover } from "./popover";
@@ -368,7 +369,8 @@ export function EditableCell({
   const [anchor, setAnchor] = useState<Anchor | null>(null);
   const [draft, setDraft] = useState("");
   const ref = useRef<HTMLDivElement>(null);
-  const locked = readOnly || isReadOnlyType(prop);
+  const { canEdit } = useAccess();
+  const locked = readOnly || !canEdit || isReadOnlyType(prop);
   const inlineText = ["text", "number", "url", "email", "phone"].includes(prop.type);
 
   const open = () => {

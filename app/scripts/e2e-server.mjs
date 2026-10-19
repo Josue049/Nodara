@@ -16,6 +16,7 @@ const env = {
   NODARA_DATA_DIR: dataDir,
   NODARA_UPLOAD_DIR: uploadDir,
   NODARA_E2E: "1",
+  NODARA_VERSION_INTERVAL_MS: "0", // una versión por guardado (determinista)
   NODARA_DIST_DIR: ".next-e2e",
 };
 const next = [path.join("node_modules", "next", "dist", "bin", "next")];

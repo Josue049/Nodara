@@ -48,14 +48,14 @@ export function ListView({ db }: { db: Database }) {
           {g.rowIds.map((id) => byId.get(id)).filter((r): r is RecordRow => !!r).map((r) => (
             <ListRow key={r.id} db={db} row={r} props={props.filter((p) => p.id !== gp?.id)} />
           ))}
-          <button
+          {db.canEdit && <button
             type="button"
             data-testid="add-row"
             onClick={() => void db.addRow({ properties: gp && g.key !== "__all__" && g.key !== "__empty__" ? { [gp.id]: gp.type === "multi_select" ? [g.key] : gp.type === "checkbox" ? g.key === "true" : g.key } : {} })}
             className="flex h-[30px] items-center gap-2 rounded-md px-2 text-[14px] text-ink-3 hover:bg-hover"
           >
             <Plus size={14} /> {t.newPage}
-          </button>
+          </button>}
         </div>
       ))}
     </div>
@@ -111,14 +111,14 @@ export function GalleryView({ db }: { db: Database }) {
                 </Link>
               );
             })}
-            <button
+            {db.canEdit && <button
               type="button"
               data-testid="add-row"
               onClick={() => void db.addRow()}
               className="flex min-h-[120px] items-center justify-center gap-2 rounded-lg border border-dashed border-line text-[14px] text-ink-3 hover:bg-hover"
             >
               <Plus size={14} /> {t.newPage}
-            </button>
+            </button>}
           </div>
         </div>
       ))}

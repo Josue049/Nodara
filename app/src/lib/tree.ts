@@ -6,6 +6,11 @@ export type TreePage = {
   position: number;
   isFavorite: boolean;
   kind: string;
+  /** Nivel de acceso del usuario actual: none | view | comment | edit | full. */
+  level?: string;
+  /** Alcance efectivo: private | workspace. */
+  scope?: string;
+  creatorId?: string | null;
 };
 
 export function childrenOf(pages: TreePage[], parentId: string | null): TreePage[] {

@@ -7,6 +7,7 @@ import { useMemo, useState } from "react";
 import type { DateValue, PropertyDef, RecordRow } from "@/lib/collections/types";
 import { t } from "@/lib/strings";
 import { PageIcon } from "../../page-icon";
+import { useAccess } from "../../access-context";
 import type { Database } from "../use-database";
 
 const DAY = 864e5;
@@ -51,7 +52,8 @@ const range = (row: RecordRow, p: PropertyDef): { start: string; end: string } |
 };
 
 function DayChip({ row, dateId }: { row: RecordRow; dateId: string }) {
-  const { setNodeRef, listeners, isDragging } = useDraggable({ id: row.id, data: { dateId } });
+  const { canEdit } = useAccess();
+  const { setNodeRef, listeners, isDragging } = useDraggable({ id: row.id, data: { dateId }, disabled: !canEdit });
   return (
     <Link
       ref={setNodeRef}
@@ -68,15 +70,15 @@ function DayChip({ row, dateId }: { row: RecordRow; dateId: string }) {
   );
 }
 
-function DayCell({ day, inMonth, today, rows, dateId, onAdd }: { day: string; inMonth: boolean; today: boolean; rows: RecordRow[]; dateId: string; onAdd: () => void }) {
+function DayCell({ day, inMonth, today, rows, dateId, onAdd, canAdd }: { day: string; inMonth: boolean; today: boolean; rows: RecordRow[]; dateId: string; onAdd: () => void; canAdd: boolean }) {
   const { setNodeRef, isOver } = useDroppable({ id: `day:${day}` });
   return (
     <div ref={setNodeRef} data-testid="calendar-day" data-day={day} className={`group/day relative min-h-[110px] border-b border-r border-line p-1 ${inMonth ? "" : "bg-hover/40 text-ink-3"} ${isOver ? "bg-accent/10" : ""}`}>
       <div className="flex items-center justify-between">
         <span className={`inline-flex size-6 items-center justify-center rounded-full text-[13px] ${today ? "bg-accent text-white" : ""}`}>{Number(day.slice(8))}</span>
-        <button type="button" aria-label={`${t.newPage} ${day}`} onClick={onAdd} data-testid="calendar-add" className="rounded p-0.5 text-ink-3 opacity-0 hover:bg-active group-hover/day:opacity-100 focus-visible:opacity-100">
+        {canAdd && <button type="button" aria-label={`${t.newPage} ${day}`} onClick={onAdd} data-testid="calendar-add" className="rounded p-0.5 text-ink-3 opacity-0 hover:bg-active group-hover/day:opacity-100 focus-visible:opacity-100">
           <Plus size={14} />
-        </button>
+        </button>}
       </div>
       <div className="mt-0.5 flex flex-col gap-0.5">
         {rows.map((r) => (
@@ -153,6 +155,7 @@ export function CalendarView({ db }: { db: Database }) {
               today={d === todayIso}
               rows={byDay.get(d) ?? []}
               dateId={dp.id}
+              canAdd={db.canEdit}
               onAdd={() => void db.addRow({ properties: { [dp.id]: { start: d } } })}
             />
           ))}
@@ -224,9 +227,11 @@ export function TimelineView({ db }: { db: Database }) {
             </div>
           </div>
         ))}
-        <button type="button" data-testid="add-row" onClick={() => void db.addRow({ properties: { [dp.id]: { start: todayIso } } })} className="flex h-[30px] items-center gap-2 px-2 text-[14px] text-ink-3 hover:bg-hover">
-          <Plus size={14} /> {t.newPage}
-        </button>
+        {db.canEdit && (
+          <button type="button" data-testid="add-row" onClick={() => void db.addRow({ properties: { [dp.id]: { start: todayIso } } })} className="flex h-[30px] items-center gap-2 px-2 text-[14px] text-ink-3 hover:bg-hover">
+            <Plus size={14} /> {t.newPage}
+          </button>
+        )}
       </div>
     </div>
   );

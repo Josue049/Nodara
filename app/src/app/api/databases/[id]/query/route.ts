@@ -1,13 +1,14 @@
 import { z } from "zod";
-import { getDb } from "@/server/db";
+import { assertCollection } from "@/server/authz";
+import { queryCollection } from "@/server/collections-service";
 import { api, readJson } from "@/server/http";
-import * as C from "@/server/collections-service";
-import * as V from "@/server/validation";
+import { querySchema } from "@/server/validation";
 
 export const dynamic = "force-dynamic";
-const uuid = (v: string) => z.uuid().parse(v);
 
-export const POST = api(async (req, p) => {
-  const q = V.querySchema.parse(await readJson(req));
-  return C.queryCollection(await getDb(), uuid(p.id), q as Parameters<typeof C.queryCollection>[2]);
+export const POST = api(async (req, p, user, db) => {
+  const id = z.uuid().parse(p.id);
+  await assertCollection(db, user, id, "view");
+  const q = querySchema.parse(await readJson(req));
+  return queryCollection(db, id, q as Parameters<typeof queryCollection>[2]);
 });

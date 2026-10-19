@@ -1,14 +1,18 @@
 import { z } from "zod";
-import { getDb } from "@/server/db";
+import { assertCollection } from "@/server/authz";
+import { createTemplate, listTemplates } from "@/server/collections-service";
 import { api, readJson } from "@/server/http";
-import * as C from "@/server/collections-service";
-import * as V from "@/server/validation";
+import { templateSchema } from "@/server/validation";
 
 export const dynamic = "force-dynamic";
-const uuid = (v: string) => z.uuid().parse(v);
 
-export const GET = api(async (_req, p) => C.listTemplates(await getDb(), uuid(p.id)));
-export const POST = api(async (req, p) => {
-  const input = V.templateSchema.parse(await readJson(req));
-  return Response.json(await C.createTemplate(await getDb(), uuid(p.id), input), { status: 201 });
+export const GET = api(async (_req, p, user, db) => {
+  const id = z.uuid().parse(p.id);
+  await assertCollection(db, user, id, "view");
+  return listTemplates(db, id);
+});
+export const POST = api(async (req, p, user, db) => {
+  const id = z.uuid().parse(p.id);
+  await assertCollection(db, user, id, "edit");
+  return Response.json(await createTemplate(db, id, templateSchema.parse(await readJson(req))), { status: 201 });
 });

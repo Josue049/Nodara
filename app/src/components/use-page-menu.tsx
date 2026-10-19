@@ -1,6 +1,6 @@
 "use client";
 
-import { Copy, CopyPlus, FolderInput, Pencil, Star, StarOff, Trash2 } from "lucide-react";
+import { Copy, CopyPlus, FolderInput, Lock, Pencil, Star, StarOff, Trash2, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback } from "react";
 import { t } from "@/lib/strings";
@@ -10,7 +10,14 @@ import { useWorkspace } from "./workspace-provider";
 
 /** Acciones de página compartidas por el menú contextual de la barra lateral y los atajos. */
 export function usePageMenu(activeId: string | null) {
-  const { pages, toggleFavorite, duplicatePage, setRenaming, setMoveTarget, moveToTrash } = useWorkspace();
+  const { pages, toggleFavorite, duplicatePage, setRenaming, setMoveTarget, moveToTrash, refreshPages } = useWorkspace();
+  const setScope = useCallback(
+    async (id: string, scope: "private" | "workspace") => {
+      await fetch(`/api/pages/${id}/scope`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ scope }) });
+      await refreshPages();
+    },
+    [refreshPages],
+  );
   const router = useRouter();
 
   const copyLink = useCallback((id: string) => {
@@ -46,9 +53,16 @@ export function usePageMenu(activeId: string | null) {
       { label: t.duplicate, icon: <CopyPlus size={16} />, shortcut: "Ctrl+D", onSelect: () => void duplicatePage(page.id) },
       { label: t.rename, icon: <Pencil size={16} />, shortcut: "Ctrl+⇧+R", onSelect: () => setRenaming(page.id) },
       { label: t.moveTo, icon: <FolderInput size={16} />, shortcut: "Ctrl+⇧+P", onSelect: () => setMoveTarget(page.id) },
+      ...(page.level === "full" && !page.parentId
+        ? [
+            page.scope === "workspace"
+              ? { label: "Hacer privada", icon: <Lock size={16} />, onSelect: () => void setScope(page.id, "private") }
+              : { label: "Compartir con el espacio de trabajo", icon: <Users size={16} />, onSelect: () => void setScope(page.id, "workspace") },
+          ]
+        : []),
       { label: t.moveToTrash, icon: <Trash2 size={16} />, danger: true, onSelect: () => void trash(page.id) },
     ],
-    [toggleFavorite, copyLink, duplicatePage, setRenaming, setMoveTarget, trash],
+    [toggleFavorite, copyLink, duplicatePage, setRenaming, setMoveTarget, trash, setScope],
   );
 
   return { itemsFor };

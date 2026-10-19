@@ -24,7 +24,7 @@ export function groupValue(p: PropertyDef, key: string): unknown {
 }
 
 function Card({ db, row, props, dragging }: { db: Database; row: RecordRow; props: PropertyDef[]; dragging?: boolean }) {
-  const { setNodeRef, listeners, isDragging } = useDraggable({ id: row.id });
+  const { setNodeRef, listeners, isDragging } = useDraggable({ id: row.id, disabled: !db.canEdit });
   return (
     <div
       ref={setNodeRef}
@@ -60,14 +60,14 @@ function Column({ db, groupKey, label, prop, rows, cardProps }: { db: Database; 
       {rows.map((r) => (
         <Card key={r.id} db={db} row={r} props={cardProps} />
       ))}
-      <button
+      {db.canEdit && <button
         type="button"
         data-testid="board-add"
         onClick={() => void db.addRow({ properties: groupKey === "__empty__" ? {} : { [prop.id]: groupValue(prop, groupKey) } })}
         className="flex h-[30px] items-center gap-2 rounded-md px-2 text-[14px] text-ink-3 hover:bg-hover"
       >
         <Plus size={14} /> {t.newPage}
-      </button>
+      </button>}
     </section>
   );
 }

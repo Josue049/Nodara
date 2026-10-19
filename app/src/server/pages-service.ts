@@ -64,12 +64,15 @@ export async function getPage(db: Db, id: string): Promise<PageRow> {
 
 export async function createPage(
   db: Db,
-  input: { parentId?: string | null; title?: string; icon?: string | null },
+  input: { parentId?: string | null; title?: string; icon?: string | null; workspaceId?: string | null; creatorId?: string | null; scope?: "private" | "workspace" | null },
 ): Promise<PageRow> {
   const parentId = input.parentId ?? null;
+  let workspaceId = input.workspaceId ?? null;
   if (parentId) {
     const parent = await getPage(db, parentId);
     if (parent.deletedAt) throw new NotFoundError("La página padre está en la papelera");
+    if (parent.collectionId) throw new InvalidMoveError("No se pueden crear páginas dentro de un registro de base de datos");
+    workspaceId = parent.workspaceId; // el árbol siempre pertenece a un único espacio
   }
   const [{ last }] = await db
     .select({ last: max(pages.position) })
@@ -82,6 +85,9 @@ export async function createPage(
       title: input.title ?? "",
       icon: input.icon ?? null,
       position: (last ?? 0) + 1,
+      workspaceId,
+      creatorId: input.creatorId ?? null,
+      scope: parentId ? (input.scope ?? null) : (input.scope ?? (workspaceId ? "private" : null)),
     })
     .returning();
   return row;
@@ -145,11 +151,11 @@ export async function deletePagePermanently(db: Db, id: string): Promise<void> {
 }
 
 /** Raíces de la papelera: páginas eliminadas cuyo padre no fue eliminado en el mismo momento. */
-export async function listTrash(db: Db): Promise<PageSummary[]> {
+export async function listTrash(db: Db, workspaceId?: string): Promise<PageSummary[]> {
   const rows = await db
     .select({ ...summaryCols, deletedAt: pages.deletedAt })
     .from(pages)
-    .where(isNotNull(pages.deletedAt))
+    .where(workspaceId ? and(isNotNull(pages.deletedAt), eq(pages.workspaceId, workspaceId)) : isNotNull(pages.deletedAt))
     .orderBy(desc(pages.deletedAt));
   const byId = new Map(rows.map((r) => [r.id, r]));
   return rows
@@ -187,11 +193,16 @@ async function movePageTx(
   else if (i === 0) position = siblings[0].position - 1;
   else if (i >= siblings.length) position = siblings[siblings.length - 1].position + 1;
   else position = (siblings[i - 1].position + siblings[i].position) / 2;
+  if (target.parentId) {
+    const [me, parent] = await Promise.all([getPage(db, id), getPage(db, target.parentId)]);
+    if (parent.collectionId) throw new InvalidMoveError("No se pueden mover páginas dentro de un registro");
+    if (parent.workspaceId !== me.workspaceId) throw new InvalidMoveError("No se puede mover una página a otro espacio de trabajo");
+  }
   return updatePage(db, id, { parentId: target.parentId, position });
 }
 
 /** Copia la página y todo su subárbol activo; la copia queda justo después de la original. */
-async function duplicatePageTx(db: Db, id: string): Promise<PageRow> {
+async function duplicatePageTx(db: Db, id: string, creatorId?: string | null): Promise<PageRow> {
   const root = await getPage(db, id);
   if (root.deletedAt) throw new NotFoundError("Página no encontrada");
   const ids = await subtreeIds(db, id);
@@ -212,6 +223,9 @@ async function duplicatePageTx(db: Db, id: string): Promise<PageRow> {
         kind: src.kind,
         collectionId: src.collectionId,
         properties: src.properties,
+        workspaceId: src.workspaceId,
+        creatorId: creatorId ?? src.creatorId,
+        scope: src.scope,
         position,
       })
       .returning();
@@ -243,13 +257,13 @@ const fold = (s: string) => s.normalize("NFD").replace(/\p{Diacritic}/gu, "").to
 export async function searchPages(
   db: Db,
   query: string,
-  opts: { titlesOnly?: boolean; limit?: number } = {},
+  opts: { titlesOnly?: boolean; limit?: number; workspaceId?: string; allowed?: Set<string> } = {},
 ): Promise<SearchResult[]> {
   const q = fold(query.trim());
   const rows = await db
-    .select({ ...summaryCols, contentText: pages.contentText })
+    .select({ ...summaryCols, contentText: pages.contentText, collectionId: pages.collectionId })
     .from(pages)
-    .where(isNull(pages.deletedAt))
+    .where(opts.workspaceId ? and(isNull(pages.deletedAt), eq(pages.workspaceId, opts.workspaceId)) : isNull(pages.deletedAt))
     .orderBy(desc(pages.updatedAt));
   const byId = new Map(rows.map((r) => [r.id, r]));
   const pathOf = (r: (typeof rows)[number]) => {
@@ -265,6 +279,8 @@ export async function searchPages(
   };
   const results: (SearchResult & { rank: number })[] = [];
   for (const r of rows) {
+    // Con control de acceso: un registro es visible si lo es su base de datos anfitriona.
+    if (opts.allowed && !opts.allowed.has((r.collectionId ? r.parentId : r.id) ?? "")) continue;
     const inTitle = q === "" ? true : fold(r.title).includes(q);
     const at = q === "" || opts.titlesOnly ? -1 : fold(r.contentText).indexOf(q);
     if (!inTitle && at < 0) continue;
@@ -286,4 +302,4 @@ export const trashPage = (db: Db, id: string) => db.transaction((tx) => trashPag
 export const restorePage = (db: Db, id: string) => db.transaction((tx) => restorePageTx(tx, id));
 export const movePage = (db: Db, id: string, target: { parentId: string | null; index: number }) =>
   db.transaction((tx) => movePageTx(tx, id, target));
-export const duplicatePage = (db: Db, id: string) => db.transaction((tx) => duplicatePageTx(tx, id));
+export const duplicatePage = (db: Db, id: string, creatorId?: string | null) => db.transaction((tx) => duplicatePageTx(tx, id, creatorId));

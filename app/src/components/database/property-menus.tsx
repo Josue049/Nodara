@@ -254,7 +254,7 @@ export function PropertyMenu({ anchor, db, prop, onClose }: { anchor: Anchor; db
             <PropertyIcon type={prop?.type ?? "title"} />
             <input
               value={name}
-              disabled={!prop}
+              disabled={!prop || !db.canEdit}
               aria-label="Nombre de la propiedad"
               onChange={(e) => setName(e.target.value)}
               onBlur={rename}
@@ -268,7 +268,7 @@ export function PropertyMenu({ anchor, db, prop, onClose }: { anchor: Anchor; db
               {error}
             </p>
           )}
-          {prop?.type === "number" && (
+          {db.canEdit && prop?.type === "number" && (
             <label className="flex flex-col gap-1 px-1 pb-2 text-[12px] text-ink-3">
               Formato de número
               <select value={prop.config.format ?? "number"} onChange={(e) => void saveConfig({ format: e.target.value as PropertyConfig["format"] })} className={field} aria-label="Formato de número">
@@ -280,8 +280,8 @@ export function PropertyMenu({ anchor, db, prop, onClose }: { anchor: Anchor; db
               </select>
             </label>
           )}
-          {prop && ["select", "multi_select", "status"].includes(prop.type) && <OptionsEditor prop={prop} onSave={(options) => void saveConfig({ options })} />}
-          {prop?.type === "formula" && (
+          {db.canEdit && prop && ["select", "multi_select", "status"].includes(prop.type) && <OptionsEditor prop={prop} onSave={(options) => void saveConfig({ options })} />}
+          {db.canEdit && prop?.type === "formula" && (
             <div className="flex flex-col gap-1 p-1">
               <textarea value={expr} onChange={(e) => setExpr(e.target.value)} aria-label="Fórmula" rows={3} className="w-full rounded-md border border-line bg-transparent p-2 font-mono text-[13px] outline-none focus:border-accent" />
               <button type="button" onClick={() => void saveConfig({ expression: expr })} className="h-8 rounded-md bg-accent text-white">
@@ -319,7 +319,7 @@ export function PropertyMenu({ anchor, db, prop, onClose }: { anchor: Anchor; db
                 Ocultar en la vista
               </MenuRow>
             )}
-            {prop && (
+            {db.canEdit && prop && (
               <MenuRow icon={<Trash2 size={14} />} danger onClick={() => (onClose(), void db.deleteProperty(prop.id))} testId="delete-prop">
                 Eliminar propiedad
               </MenuRow>

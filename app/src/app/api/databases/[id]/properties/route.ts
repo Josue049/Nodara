@@ -1,13 +1,13 @@
 import { z } from "zod";
-import { getDb } from "@/server/db";
+import { assertCollection } from "@/server/authz";
+import { addProperty } from "@/server/collections-service";
 import { api, readJson } from "@/server/http";
-import * as C from "@/server/collections-service";
-import * as V from "@/server/validation";
+import { createPropertySchema } from "@/server/validation";
 
 export const dynamic = "force-dynamic";
-const uuid = (v: string) => z.uuid().parse(v);
 
-export const POST = api(async (req, p) => {
-  const input = V.createPropertySchema.parse(await readJson(req));
-  return Response.json(await C.addProperty(await getDb(), uuid(p.id), input), { status: 201 });
+export const POST = api(async (req, p, user, db) => {
+  const id = z.uuid().parse(p.id);
+  await assertCollection(db, user, id, "edit");
+  return Response.json(await addProperty(db, id, createPropertySchema.parse(await readJson(req))), { status: 201 });
 });

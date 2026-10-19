@@ -1,18 +1,12 @@
-import { NextResponse } from "next/server";
-import { getDb } from "@/server/db";
-import { handleError } from "@/server/http";
+import { visiblePages } from "@/server/authz";
+import { api, resolveWorkspace } from "@/server/http";
 import { searchPages } from "@/server/pages-service";
 
 export const dynamic = "force-dynamic";
 
-export async function GET(req: Request) {
-  try {
-    const url = new URL(req.url);
-    const results = await searchPages(await getDb(), url.searchParams.get("q") ?? "", {
-      titlesOnly: url.searchParams.get("titlesOnly") === "1",
-    });
-    return NextResponse.json(results);
-  } catch (e) {
-    return handleError(e);
-  }
-}
+export const GET = api(async (req, _p, user, db) => {
+  const url = new URL(req.url);
+  const ws = await resolveWorkspace(db, user, req, url.searchParams.get("workspace"));
+  const allowed = new Set((await visiblePages(db, user.id, ws)).map((p) => p.id));
+  return searchPages(db, url.searchParams.get("q") ?? "", { titlesOnly: url.searchParams.get("titlesOnly") === "1", workspaceId: ws, allowed });
+});

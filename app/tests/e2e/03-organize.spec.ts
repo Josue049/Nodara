@@ -1,5 +1,5 @@
 import type { Page } from "@playwright/test";
-import { apiCreate, expect, sidebarRow, test } from "./fixtures";
+import { apiCreate, expect, gotoReady, sidebarRow, test } from "./fixtures";
 
 const rowTitles = (page: Page) => page.getByTestId("sidebar-page").locator("a, input").evaluateAll((els) =>
   els.map((e) => (e instanceof HTMLInputElement ? e.value : (e.textContent ?? "").trim())),
@@ -18,7 +18,7 @@ async function drag(page: Page, from: string, to: string, where: "before" | "ins
 
 test("menú contextual con clic derecho muestra las acciones y atajos", async ({ page, request }) => {
   await apiCreate(request, { title: "Alfa" });
-  await page.goto("/");
+  await gotoReady(page, "/");
   await sidebarRow(page, "Alfa").click({ button: "right" });
   const menu = page.getByRole("menu");
   for (const name of ["Agregar a favoritos|Añadir a favoritos", "Copiar enlace", "Duplicar", "Cambiar nombre", "^Mover a Ctrl", "Mover a la papelera"]) {
@@ -32,7 +32,7 @@ test("menú contextual con clic derecho muestra las acciones y atajos", async ({
 test("duplicar copia el subárbol y navega a la copia", async ({ page, request }) => {
   const a = await apiCreate(request, { title: "Alfa" });
   await apiCreate(request, { title: "Hija", parentId: a.id });
-  await page.goto(`/${a.id}`);
+  await gotoReady(page, `/${a.id}`);
   await sidebarRow(page, /^Alfa$/).click({ button: "right" });
   await page.getByRole("menuitem", { name: /Duplicar/ }).click();
   await expect(page).not.toHaveURL(new RegExp(a.id));
@@ -43,7 +43,7 @@ test("duplicar copia el subárbol y navega a la copia", async ({ page, request }
 
 test("Ctrl+D duplica la página abierta", async ({ page, request }) => {
   const a = await apiCreate(request, { title: "Beta" });
-  await page.goto(`/${a.id}`);
+  await gotoReady(page, `/${a.id}`);
   await expect(page.getByTestId("page-title")).toHaveValue("Beta");
   await page.keyboard.press("Control+d");
   await expect(page).not.toHaveURL(new RegExp(a.id));
@@ -52,7 +52,7 @@ test("Ctrl+D duplica la página abierta", async ({ page, request }) => {
 
 test("renombrar en la barra lateral (menú y Ctrl+⇧+R) persiste; Escape cancela", async ({ page, request }) => {
   const a = await apiCreate(request, { title: "Gamma" });
-  await page.goto(`/${a.id}`);
+  await gotoReady(page, `/${a.id}`);
   await sidebarRow(page, "Gamma").click({ button: "right" });
   await page.getByRole("menuitem", { name: /Cambiar nombre/ }).click();
   const input = page.getByRole("textbox", { name: "Cambiar nombre" });
@@ -61,6 +61,7 @@ test("renombrar en la barra lateral (menú y Ctrl+⇧+R) persiste; Escape cancel
   await input.press("Enter");
   await expect(sidebarRow(page, "Gamma 2")).toBeVisible();
   await page.reload();
+  await page.locator("html[data-nodara-ready]").waitFor({ state: "attached" });
   await expect(page.getByTestId("page-title")).toHaveValue("Gamma 2");
 
   await page.keyboard.press("Control+Shift+R");
@@ -73,7 +74,7 @@ test("renombrar en la barra lateral (menú y Ctrl+⇧+R) persiste; Escape cancel
 test("Mover a: elegir página padre y volver a la raíz", async ({ page, request }) => {
   await apiCreate(request, { title: "Destino" });
   const b = await apiCreate(request, { title: "Mover yo" });
-  await page.goto(`/${b.id}`);
+  await gotoReady(page, `/${b.id}`);
   await page.keyboard.press("Control+Shift+P");
   const dialog = page.getByTestId("move-dialog");
   await expect(dialog).toBeVisible();
@@ -91,12 +92,13 @@ test("arrastrar y soltar: reordenar y anidar con persistencia", async ({ page, r
   await apiCreate(request, { title: "Uno" });
   await apiCreate(request, { title: "Dos" });
   await apiCreate(request, { title: "Tres" });
-  await page.goto("/");
+  await gotoReady(page, "/");
   await expect(page.getByTestId("sidebar-page")).toHaveCount(3);
 
   await drag(page, "Tres", "Uno", "before");
   await expect.poll(() => rowTitles(page)).toEqual(["Tres", "Uno", "Dos"]);
   await page.reload();
+  await page.locator("html[data-nodara-ready]").waitFor({ state: "attached" });
   await expect.poll(() => rowTitles(page)).toEqual(["Tres", "Uno", "Dos"]);
 
   await drag(page, "Dos", "Tres", "inside"); // Dos pasa a ser hija de Tres
@@ -111,7 +113,7 @@ test("arrastrar y soltar: reordenar y anidar con persistencia", async ({ page, r
 test("no se puede soltar una página dentro de su propio descendiente", async ({ page, request }) => {
   const a = await apiCreate(request, { title: "Padre" });
   await apiCreate(request, { title: "Hijo", parentId: a.id });
-  await page.goto("/");
+  await gotoReady(page, "/");
   await sidebarRow(page, "Padre").getByRole("button", { name: "Expandir" }).click();
   await drag(page, "Padre", "Hijo", "inside");
   const all: { title: string; parentId: string | null }[] = await (await request.get("/api/pages")).json();
@@ -124,7 +126,7 @@ test("búsqueda Ctrl+K: título, contenido, solo títulos y navegación con tecl
   await request.patch(`/api/pages/${n.id}`, {
     data: { content: { type: "doc", content: [{ type: "paragraph", content: [{ type: "text", text: "Revisar el presupuesto anual con Ana" }] }] } },
   });
-  await page.goto("/");
+  await gotoReady(page, "/");
   await page.keyboard.press("Control+k");
   const dialog = page.getByTestId("search-dialog");
   await expect(dialog).toBeVisible();
@@ -148,7 +150,7 @@ test("búsqueda Ctrl+K: título, contenido, solo títulos y navegación con tecl
 
 test("icono de página: elegir, ver en la barra lateral, persistir y quitar", async ({ page, request }) => {
   const a = await apiCreate(request, { title: "Con icono" });
-  await page.goto(`/${a.id}`);
+  await gotoReady(page, `/${a.id}`);
   await page.getByTestId("add-icon").click({ force: true });
   const picker = page.getByTestId("emoji-picker");
   await picker.getByRole("textbox").fill("cohete");
@@ -156,6 +158,7 @@ test("icono de página: elegir, ver en la barra lateral, persistir y quitar", as
   await expect(page.getByTestId("page-icon")).toHaveText("🚀");
   await expect(sidebarRow(page, "Con icono")).toContainText("🚀");
   await page.reload();
+  await page.locator("html[data-nodara-ready]").waitFor({ state: "attached" });
   await expect(page.getByTestId("page-icon")).toHaveText("🚀");
 
   await page.getByTestId("page-icon").click();
@@ -165,13 +168,14 @@ test("icono de página: elegir, ver en la barra lateral, persistir y quitar", as
 });
 
 test("tema oscuro: alternar y recordar tras recargar", async ({ page }) => {
-  await page.goto("/");
+  await gotoReady(page, "/");
   const theme = () => page.evaluate(() => document.documentElement.dataset.theme);
   const initial = await theme();
   await page.getByTestId("theme-toggle").click();
   const flipped = initial === "dark" ? "light" : "dark";
   expect(await theme()).toBe(flipped);
   await page.reload();
+  await page.locator("html[data-nodara-ready]").waitFor({ state: "attached" });
   expect(await theme()).toBe(flipped);
   const bg = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
   expect(bg).toBe(flipped === "dark" ? "rgb(25, 25, 25)" : "rgb(255, 255, 255)");

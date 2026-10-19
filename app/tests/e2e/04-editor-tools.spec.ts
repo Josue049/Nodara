@@ -1,8 +1,8 @@
 import type { Page } from "@playwright/test";
-import { expect, test } from "./fixtures";
+import { expect, gotoReady, test } from "./fixtures";
 
 async function newPage(page: Page, title: string) {
-  await page.goto("/");
+  await gotoReady(page, "/");
   await page.getByRole("button", { name: "Nueva página" }).first().click();
   await page.getByTestId("page-title").fill(title);
   await page.getByTestId("page-title").press("Enter");
@@ -54,6 +54,7 @@ test("enlace: añadir (con https automático), persistir y quitar", async ({ pag
   await expect(link).toHaveAttribute("href", "https://example.com");
   await saved(page);
   await page.reload();
+  await page.locator("html[data-nodara-ready]").waitFor({ state: "attached" });
   await expect(page.getByTestId("editor").locator("a")).toHaveAttribute("href", "https://example.com");
 });
 
@@ -83,6 +84,7 @@ test("color de texto y de fondo se aplican y persisten", async ({ page }) => {
   await expect(page.getByTestId("editor").locator("mark")).toHaveCSS("background-color", "rgb(251, 243, 219)");
   await saved(page);
   await page.reload();
+  await page.locator("html[data-nodara-ready]").waitFor({ state: "attached" });
   await expect(page.getByTestId("editor").locator("p span").first()).toHaveCSS("color", "rgb(212, 76, 71)");
 });
 
@@ -125,6 +127,7 @@ test("tabla: insertar con /tabla, escribir y moverse con Tab", async ({ page }) 
   await expect(table.locator("th").nth(1)).toHaveText("B");
   await saved(page);
   await page.reload();
+  await page.locator("html[data-nodara-ready]").waitFor({ state: "attached" });
   await expect(page.getByTestId("editor").locator("table th").nth(1)).toHaveText("B");
 });
 
@@ -143,5 +146,6 @@ test("arrastrar un bloque con el asa lo reordena y se guarda", async ({ page }) 
   await expect.poll(() => paras.allTextContents()).toEqual(["Dos", "Tres", "Uno"]);
   await saved(page);
   await page.reload();
+  await page.locator("html[data-nodara-ready]").waitFor({ state: "attached" });
   await expect.poll(() => page.getByTestId("editor").locator("p").allTextContents()).toEqual(["Dos", "Tres", "Uno"]);
 });

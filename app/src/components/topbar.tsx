@@ -1,22 +1,51 @@
 "use client";
 
-import { Star } from "lucide-react";
+import { History, Link2, Lock, MoreHorizontal, Star, Users } from "lucide-react";
 import Link from "next/link";
+import { useRef, useState } from "react";
 import { t } from "@/lib/strings";
 import { pathTo } from "@/lib/tree";
 import { PageIcon } from "./page-icon";
+import { anchorOf, MenuRow, Popover, type Anchor } from "./database/popover";
+import { ShareDialog } from "./share-dialog";
 import { useWorkspace } from "./workspace-provider";
+import { VersionHistory } from "./version-history";
 
 export type SaveState = "idle" | "saving" | "saved" | "error";
 
-export function Topbar({ pageId, saveState, record }: { pageId: string; saveState: SaveState; record?: { id: string; title: string; icon: string | null; parentId: string | null } }) {
-  const { pages, toggleFavorite } = useWorkspace();
+type RecordInfo = { id: string; title: string; icon: string | null; parentId: string | null };
+
+export function Topbar({
+  pageId,
+  saveState,
+  record,
+  level = "full",
+  scope = "private",
+  onAccessChanged,
+}: {
+  pageId: string;
+  saveState: SaveState;
+  record?: RecordInfo;
+  level?: string;
+  scope?: string;
+  /** Se llama tras cambiar permisos o alcance desde «Compartir» (para recargar el nivel de acceso). */
+  onAccessChanged?: () => void;
+}) {
+  const { pages, toggleFavorite, refreshPages } = useWorkspace();
+  const [share, setShare] = useState<Anchor | null>(null);
+  const [more, setMore] = useState<Anchor | null>(null);
+  const [history, setHistory] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const shareBtn = useRef<HTMLButtonElement>(null);
   // Los registros de bases de datos no están en el árbol: la ruta es la de su base más el propio registro.
   const trail = record
     ? [...(record.parentId ? pathTo(pages, record.parentId) : []), { id: record.id, title: record.title, icon: record.icon, parentId: record.parentId, position: 0, isFavorite: false, kind: "page" }]
     : pathTo(pages, pageId);
   const current = record ? undefined : trail.at(-1);
   const label = { idle: "", saving: t.saving, saved: t.saved, error: t.saveError }[saveState];
+  const canEdit = level === "edit" || level === "full";
+  const ScopeIcon = scope === "workspace" ? Users : Lock;
+
   return (
     <header className="flex h-[var(--topbar-h)] shrink-0 items-center gap-2 px-3 text-[14px]">
       <nav aria-label="Ruta" className="flex min-w-0 items-center gap-1 text-ink-2">
@@ -30,10 +59,46 @@ export function Topbar({ pageId, saveState, record }: { pageId: string; saveStat
           </span>
         ))}
       </nav>
-      <div className="ml-auto flex items-center gap-2">
-        <span role="status" aria-live="polite" className="text-[12px] text-ink-3" data-testid="save-status">
+      {!record && (
+        <span className="flex shrink-0 items-center gap-1 rounded px-1.5 text-[13px] text-ink-3" data-testid="privacy-indicator" title={scope === "workspace" ? "Visible para todo el espacio de trabajo" : "Solo las personas invitadas"}>
+          <ScopeIcon size={13} />
+          {scope === "workspace" ? "Espacio de equipo" : "Privada"}
+        </span>
+      )}
+      {!canEdit && (
+        <span className="rounded bg-hover px-1.5 text-[12px] text-ink-2" data-testid="readonly-badge">
+          {level === "comment" ? "Solo comentar" : "Solo lectura"}
+        </span>
+      )}
+      <div className="ml-auto flex items-center gap-1">
+        <span role="status" aria-live="polite" className="mr-1 text-[12px] text-ink-3" data-testid="save-status">
           {label}
         </span>
+        {!record && (
+          <button
+            ref={shareBtn}
+            type="button"
+            data-testid="share-btn"
+            onClick={() => shareBtn.current && setShare(anchorOf(shareBtn.current))}
+            className="flex h-7 items-center rounded-md px-2 hover:bg-hover"
+          >
+            {t.share}
+          </button>
+        )}
+        <button
+          type="button"
+          aria-label="Copiar enlace"
+          title="Copiar enlace"
+          data-testid="topbar-copy-link"
+          onClick={async () => {
+            await navigator.clipboard?.writeText(`${window.location.origin}/${pageId}`).catch(() => {});
+            setCopied(true);
+            setTimeout(() => setCopied(false), 1500);
+          }}
+          className="flex size-7 items-center justify-center rounded hover:bg-hover"
+        >
+          <Link2 size={16} className={copied ? "text-accent" : "text-ink-2"} />
+        </button>
         {current && (
           <button
             aria-label={current.isFavorite ? t.removeFavorite : t.addFavorite}
@@ -45,7 +110,28 @@ export function Topbar({ pageId, saveState, record }: { pageId: string; saveStat
             <Star size={16} className={current.isFavorite ? "fill-[#f5c542] text-[#f5c542]" : "text-ink-2"} />
           </button>
         )}
+        <button
+          type="button"
+          aria-label={t.more}
+          data-testid="page-more"
+          onClick={(e) => setMore(anchorOf(e.currentTarget))}
+          className="flex size-7 items-center justify-center rounded hover:bg-hover"
+        >
+          <MoreHorizontal size={16} className="text-ink-2" />
+        </button>
       </div>
+      {share && <ShareDialog pageId={pageId} anchor={share} onClose={() => setShare(null)} onChanged={() => {
+          void refreshPages();
+          onAccessChanged?.();
+        }} />}
+      {more && (
+        <Popover anchor={more} onClose={() => setMore(null)} label={t.more} testId="page-more-menu" width={240} align="right">
+          <MenuRow icon={<History size={16} />} onClick={() => (setMore(null), setHistory(true))} testId="open-history">
+            {t.versionHistory}
+          </MenuRow>
+        </Popover>
+      )}
+      {history && <VersionHistory pageId={pageId} canRestore={canEdit} onClose={() => setHistory(false)} />}
     </header>
   );
 }

@@ -1,6 +1,9 @@
 import { randomUUID } from "node:crypto";
 import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { eq } from "drizzle-orm";
+import type { Db } from "./db";
+import { files as filesTable } from "./schema";
 
 export const MAX_UPLOAD_BYTES = 20 * 1024 * 1024;
 
@@ -26,12 +29,13 @@ const safeName = (name: string) =>
     .slice(0, 150) || "archivo";
 
 /** Guarda un archivo subido. El id es un UUID; el nombre original se conserva solo para mostrarlo. */
-export async function saveUpload(file: File): Promise<{ name: string; url: string }> {
+export async function saveUpload(db: Db, file: File, owner: { workspaceId: string; userId: string }): Promise<{ name: string; url: string }> {
   if (file.size > MAX_UPLOAD_BYTES) throw new RangeError("El archivo supera el límite de 20 MB");
   const id = randomUUID();
   const name = safeName(file.name);
   await mkdir(uploadDir(), { recursive: true });
   await writeFile(path.join(uploadDir(), `${id}__${name}`), Buffer.from(await file.arrayBuffer()));
+  await db.insert(filesTable).values({ id, workspaceId: owner.workspaceId, name, size: file.size, createdBy: owner.userId });
   return { name, url: `/api/files/${id}` };
 }
 
@@ -44,4 +48,11 @@ export async function readUpload(id: string): Promise<{ data: Buffer; name: stri
   const ext = path.extname(name).toLowerCase();
   const known = INLINE_TYPES[ext];
   return { data: await readFile(path.join(uploadDir(), found)), name, contentType: known ?? "application/octet-stream", inline: !!known };
+}
+
+/** Espacio de trabajo al que pertenece un archivo (para autorizar la descarga). */
+export async function fileWorkspace(db: Db, id: string): Promise<string | null> {
+  if (!/^[0-9a-f-]{36}$/.test(id)) return null;
+  const [f] = await db.select({ w: filesTable.workspaceId }).from(filesTable).where(eq(filesTable.id, id));
+  return f?.w ?? null;
 }

@@ -1,11 +1,16 @@
 import { NextResponse } from "next/server";
-import { readUpload } from "@/server/files";
+import { HttpError } from "@/server/auth";
+import { memberRole } from "@/server/authz";
+import { fileWorkspace, readUpload } from "@/server/files";
+import { api } from "@/server/http";
 
 export const dynamic = "force-dynamic";
 
-export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> }) {
-  const file = await readUpload((await ctx.params).id);
-  if (!file) return NextResponse.json({ error: "Archivo no encontrado" }, { status: 404 });
+export const GET = api(async (_req, p, user, db) => {
+  const ws = await fileWorkspace(db, p.id);
+  if (!ws || !(await memberRole(db, user.id, ws))) throw new HttpError(404, "Archivo no encontrado");
+  const file = await readUpload(p.id);
+  if (!file) throw new HttpError(404, "Archivo no encontrado");
   return new NextResponse(new Uint8Array(file.data), {
     headers: {
       "Content-Type": file.contentType,
@@ -14,4 +19,4 @@ export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> 
       "Cache-Control": "private, max-age=3600",
     },
   });
-}
+});

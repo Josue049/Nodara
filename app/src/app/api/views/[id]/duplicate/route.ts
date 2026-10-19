@@ -1,9 +1,12 @@
 import { z } from "zod";
-import { getDb } from "@/server/db";
+import { assertCollection } from "@/server/authz";
+import { collectionIdOf, duplicateView } from "@/server/collections-service";
 import { api } from "@/server/http";
-import * as C from "@/server/collections-service";
 
 export const dynamic = "force-dynamic";
-const uuid = (v: string) => z.uuid().parse(v);
 
-export const POST = api(async (_req, p) => Response.json(await C.duplicateView(await getDb(), uuid(p.id)), { status: 201 }));
+export const POST = api(async (_req, p, user, db) => {
+  const id = z.uuid().parse(p.id);
+  await assertCollection(db, user, await collectionIdOf(db, "view", id), "edit");
+  return Response.json(await duplicateView(db, id), { status: 201 });
+});

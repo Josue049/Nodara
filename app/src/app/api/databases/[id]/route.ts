@@ -1,11 +1,17 @@
 import { z } from "zod";
-import { getDb } from "@/server/db";
+import { assertCollection } from "@/server/authz";
+import { getBundle, updateCollection } from "@/server/collections-service";
 import { api, readJson } from "@/server/http";
-import * as C from "@/server/collections-service";
-import * as V from "@/server/validation";
+import { updateCollectionSchema } from "@/server/validation";
 
 export const dynamic = "force-dynamic";
-const uuid = (v: string) => z.uuid().parse(v);
 
-export const GET = api(async (_req, p) => C.getBundle(await getDb(), uuid(p.id)));
-export const PATCH = api(async (req, p) => C.updateCollection(await getDb(), uuid(p.id), V.updateCollectionSchema.parse(await readJson(req))));
+const cid = (v: string) => z.uuid().parse(v);
+export const GET = api(async (_req, p, user, db) => {
+  await assertCollection(db, user, cid(p.id), "view");
+  return getBundle(db, cid(p.id));
+});
+export const PATCH = api(async (req, p, user, db) => {
+  await assertCollection(db, user, cid(p.id), "edit");
+  return updateCollection(db, cid(p.id), updateCollectionSchema.parse(await readJson(req)));
+});

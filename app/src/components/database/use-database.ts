@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { PropertyConfig, PropertyDef, PropertyType, RecordRow, SelectOption, ViewConfig, ViewDef, ViewType } from "@/lib/collections/types";
+import { useAccess } from "../access-context";
 import { call, dbApi, type QueryResponse } from "./api";
 import type { CellCtx } from "./cells";
 
@@ -9,6 +10,9 @@ const VIEW_KEY = (cid: string) => `nodara:view:${cid}`;
 
 /** Estado y acciones de una base de datos: definición, filas de la vista activa y mutaciones. */
 export function useDatabase(collectionId: string) {
+  const { canEdit, publicToken } = useAccess();
+  // Quien no puede editar puede explorar (filtrar, ordenar, agrupar) pero esos cambios solo viven en su navegador.
+  const [localConfig, setLocalConfig] = useState<ViewConfig | null>(null);
   const [data, setData] = useState<QueryResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [viewId, setViewId] = useState<string | undefined>(() => {
@@ -25,7 +29,8 @@ export function useDatabase(collectionId: string) {
     async (opts?: { viewId?: string; search?: string }) => {
       const n = ++seq.current;
       try {
-        const res = await dbApi.query(collectionId, { viewId: opts?.viewId ?? viewId, search: (opts?.search ?? search) || undefined });
+        const q = { viewId: opts?.viewId ?? viewId, search: (opts?.search ?? search) || undefined, ...(localConfig ? { config: localConfig } : {}) };
+        const res = publicToken ? await call<QueryResponse>(`/api/public/${publicToken}/databases/${collectionId}/query`, "POST", q) : await dbApi.query(collectionId, q);
         if (n === seq.current) {
           setData(res);
           setError(null);
@@ -38,7 +43,7 @@ export function useDatabase(collectionId: string) {
         }
       }
     },
-    [collectionId, viewId, search],
+    [collectionId, viewId, search, localConfig, publicToken],
   );
 
   useEffect(() => {
@@ -66,12 +71,16 @@ export function useDatabase(collectionId: string) {
   const updateViewConfig = useCallback(
     async (patch: Partial<ViewConfig>) => {
       if (!view) return;
-      const config = { ...view.config, ...patch };
+      const config = { ...(localConfig ?? view.config), ...patch };
+      if (!canEdit) {
+        setLocalConfig(config);
+        return;
+      }
       patchBundle((b) => ({ ...b, views: b.views.map((v) => (v.id === view.id ? { ...v, config } : v)) }));
       await dbApi.updateView(view.id, { config });
       await reload();
     },
-    [view, reload],
+    [view, reload, localConfig, canEdit],
   );
   const updateView = useCallback(
     async (patch: { name?: string; type?: ViewType }) => {
@@ -222,7 +231,8 @@ export function useDatabase(collectionId: string) {
     data,
     error,
     bundle,
-    view,
+    view: view && localConfig ? { ...view, config: localConfig } : view,
+    canEdit,
     props,
     rows: data?.rows ?? [],
     groups: data?.groups,

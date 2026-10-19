@@ -20,6 +20,8 @@ import { t } from "@/lib/strings";
 import { THEME_KEY, resolveTheme, type ThemeChoice } from "@/lib/theme";
 import { childrenOf, pathTo, type TreePage } from "@/lib/tree";
 import { PageIcon } from "./page-icon";
+import { WorkspaceMenu } from "./workspace-menu";
+import { useAuth } from "./auth-provider";
 import { PopoverMenu } from "./popover-menu";
 import { usePageMenu } from "./use-page-menu";
 import { useWorkspace } from "./workspace-provider";
@@ -285,7 +287,13 @@ export function Sidebar() {
     for (const p of pathTo(pages, activeId).slice(0, -1)) toggle(p.id, true);
   }, [activeId, pages, toggle]);
 
-  const roots = childrenOf(pages, null);
+  const { user } = useAuth();
+  const ids = new Set(pages.map((p) => p.id));
+  // Una página es «raíz» de la barra lateral si su padre no existe o no es visible para este usuario.
+  const topLevel = pages.filter((p) => !p.parentId || !ids.has(p.parentId)).sort((a, b) => a.position - b.position);
+  const team = topLevel.filter((p) => p.scope === "workspace");
+  const mine = topLevel.filter((p) => p.scope !== "workspace" && (p.creatorId ?? user.id) === user.id);
+  const shared = topLevel.filter((p) => p.scope !== "workspace" && (p.creatorId ?? user.id) !== user.id);
   const favorites = pages.filter((p) => p.isFavorite);
   const newRootPage = async () => router.push(`/${await createPage(null)}`);
   const newRootDatabase = async () => router.push(`/${await createDatabase(null)}`);
@@ -339,8 +347,7 @@ export function Sidebar() {
   return (
     <aside className="relative flex h-full w-[var(--sidebar-w)] shrink-0 flex-col bg-sidebar text-ink" aria-label={t.sidebar}>
       <div className="flex h-[45px] items-center gap-2 px-3">
-        <span className="flex size-[22px] items-center justify-center rounded bg-ink text-[13px] font-semibold text-[var(--bg)]">N</span>
-        <span className="truncate text-[14px] font-medium">Nodara</span>
+        <WorkspaceMenu />
         <button
           aria-label={t.newPage}
           title={t.newPage}
@@ -362,73 +369,95 @@ export function Sidebar() {
           {t.home}
         </Link>
 
-        {favorites.length > 0 && (
-          <section className="mb-3">
-            <h2 className="px-[8px] py-1 text-[12px] font-medium text-ink-3">{t.favorites}</h2>
-            <ul>
-              {favorites.map((p) => (
-                <FavoriteRow key={p.id} page={p} active={activeId === p.id} />
-              ))}
-            </ul>
-          </section>
-        )}
+        <DndContext
+          sensors={sensors}
+          onDragStart={onDragStart}
+          onDragMove={onDragMove}
+          onDragEnd={onDragEnd}
+          onDragCancel={() => {
+            setDrop(null);
+            setDragging(null);
+          }}
+        >
+          {favorites.length > 0 && (
+            <section className="mb-3" data-testid="section-favorites">
+              <h2 className="px-[8px] py-1 text-[12px] font-medium text-ink-3">{t.favorites}</h2>
+              <ul>
+                {favorites.map((p) => (
+                  <FavoriteRow key={p.id} page={p} active={activeId === p.id} />
+                ))}
+              </ul>
+            </section>
+          )}
 
-        <section>
-          <div className="group/h flex items-center justify-between px-[8px] py-1">
-            <h2 className="text-[12px] font-medium text-ink-3">{t.pages}</h2>
-            <div className="flex items-center gap-0.5">
-            <button
-              aria-label={t.newDatabase}
-              title={t.newDatabase}
-              onClick={newRootDatabase}
-              data-testid="new-database"
-              className="flex size-5 items-center justify-center rounded opacity-0 hover:bg-active focus-visible:opacity-100 group-hover/h:opacity-100"
-            >
-              <Table2 size={14} className="text-ink-2" />
-            </button>
-            <button
-              aria-label={t.addPage}
-              title={t.addPage}
-              onClick={newRootPage}
-              className="flex size-5 items-center justify-center rounded opacity-0 hover:bg-active focus-visible:opacity-100 group-hover/h:opacity-100"
-            >
-              <Plus size={14} className="text-ink-2" />
-            </button>
-            </div>
-          </div>
-          <DndContext
-            sensors={sensors}
-            onDragStart={onDragStart}
-            onDragMove={onDragMove}
-            onDragEnd={onDragEnd}
-            onDragCancel={() => {
-              setDrop(null);
-              setDragging(null);
-            }}
-          >
-            <DropContext.Provider value={drop}>
+          <DropContext.Provider value={drop}>
+            {team.length > 0 && (
+              <section className="mb-3" data-testid="section-team">
+                <h2 className="px-[8px] py-1 text-[12px] font-medium text-ink-3">{t.teamspace}</h2>
+                <ul role="tree">
+                  {team.map((p) => (
+                    <SidebarNode key={p.id} page={p} depth={0} expanded={expanded} toggle={toggle} activeId={activeId} />
+                  ))}
+                </ul>
+              </section>
+            )}
+
+            {shared.length > 0 && (
+              <section className="mb-3" data-testid="section-shared">
+                <h2 className="px-[8px] py-1 text-[12px] font-medium text-ink-3">{t.sharedWithMe}</h2>
+                <ul role="tree">
+                  {shared.map((p) => (
+                    <SidebarNode key={p.id} page={p} depth={0} expanded={expanded} toggle={toggle} activeId={activeId} />
+                  ))}
+                </ul>
+              </section>
+            )}
+
+            <section data-testid="section-private">
+              <div className="group/h flex items-center justify-between px-[8px] py-1">
+                <h2 className="text-[12px] font-medium text-ink-3">{t.pages}</h2>
+                <div className="flex items-center gap-0.5">
+                  <button
+                    aria-label={t.newDatabase}
+                    title={t.newDatabase}
+                    onClick={newRootDatabase}
+                    data-testid="new-database"
+                    className="flex size-5 items-center justify-center rounded opacity-0 hover:bg-active focus-visible:opacity-100 group-hover/h:opacity-100"
+                  >
+                    <Table2 size={14} className="text-ink-2" />
+                  </button>
+                  <button
+                    aria-label={t.addPage}
+                    title={t.addPage}
+                    onClick={newRootPage}
+                    className="flex size-5 items-center justify-center rounded opacity-0 hover:bg-active focus-visible:opacity-100 group-hover/h:opacity-100"
+                  >
+                    <Plus size={14} className="text-ink-2" />
+                  </button>
+                </div>
+              </div>
               <ul role="tree">
-                {roots.map((p) => (
+                {mine.map((p) => (
                   <SidebarNode key={p.id} page={p} depth={0} expanded={expanded} toggle={toggle} activeId={activeId} />
                 ))}
               </ul>
-            </DropContext.Provider>
-            <DragOverlay dropAnimation={null}>
-              {dragging && (
-                <div className="flex h-[30px] w-[200px] items-center gap-1.5 rounded-[6px] bg-[var(--popover)] px-2 text-[16px] shadow-[var(--shadow-pop)]">
-                  <PageIcon icon={dragging.icon} />
-                  <span className="truncate">{dragging.title || t.untitled}</span>
-                </div>
+              {loaded && mine.length === 0 && (
+                <button onClick={newRootPage} className={`${rowBase} w-full pl-[8px] text-ink-3`}>
+                  <Plus size={14} className="mr-1.5" />
+                  {t.addPage}
+                </button>
               )}
-            </DragOverlay>
-          </DndContext>
-          {loaded && roots.length === 0 && (
-            <button onClick={newRootPage} className={`${rowBase} w-full pl-[8px] text-ink-3`}>
-              <Plus size={14} className="mr-1.5" />
-              {t.addPage}
-            </button>
-          )}
-        </section>
+            </section>
+          </DropContext.Provider>
+          <DragOverlay dropAnimation={null}>
+            {dragging && (
+              <div className="flex h-[30px] w-[200px] items-center gap-1.5 rounded-[6px] bg-[var(--popover)] px-2 text-[16px] shadow-[var(--shadow-pop)]">
+                <PageIcon icon={dragging.icon} />
+                <span className="truncate">{dragging.title || t.untitled}</span>
+              </div>
+            )}
+          </DragOverlay>
+        </DndContext>
       </nav>
 
       <div className="border-t border-line px-[8px] py-1.5">

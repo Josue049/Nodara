@@ -1,9 +1,9 @@
-import { apiCreate, expect, sidebarRow, test } from "./fixtures";
+import { apiCreate, expect, gotoReady, sidebarRow, test } from "./fixtures";
 
 test("estado vacío y creación de la primera página", async ({ page }) => {
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
-  await page.goto("/");
+  await gotoReady(page, "/");
   await expect(page.getByText("Aún no hay páginas")).toBeVisible();
   await page.getByRole("button", { name: "Nueva página" }).first().click();
   await expect(page).toHaveURL(/\/[0-9a-f-]{36}$/);
@@ -11,12 +11,13 @@ test("estado vacío y creación de la primera página", async ({ page }) => {
 });
 
 test("el título se autoguarda y persiste tras recargar", async ({ page }) => {
-  await page.goto("/");
+  await gotoReady(page, "/");
   await page.getByRole("button", { name: "Nueva página" }).first().click();
   await page.getByTestId("page-title").fill("Plan de proyecto");
   await expect(page.getByTestId("save-status")).toHaveText("Guardado");
   await expect(sidebarRow(page, "Plan de proyecto")).toBeVisible();
   await page.reload();
+  await page.locator("html[data-nodara-ready]").waitFor({ state: "attached" });
   await expect(page.getByTestId("page-title")).toHaveValue("Plan de proyecto");
   await expect(sidebarRow(page, "Plan de proyecto")).toBeVisible();
 });
@@ -24,7 +25,7 @@ test("el título se autoguarda y persiste tras recargar", async ({ page }) => {
 test("subpáginas anidadas, expandir/contraer y ruta de navegación", async ({ page, request }) => {
   await apiCreate(request, { title: "Otra página" });
   await apiCreate(request, { title: "Plan de proyecto" });
-  await page.goto("/");
+  await gotoReady(page, "/");
   const parent = sidebarRow(page, "Plan de proyecto");
   await parent.hover();
   await parent.getByRole("button", { name: "Añadir una subpágina" }).click();
@@ -44,11 +45,12 @@ test("subpáginas anidadas, expandir/contraer y ruta de navegación", async ({ p
 
 test("favoritos", async ({ page, request }) => {
   await apiCreate(request, { title: "Plan de proyecto" });
-  await page.goto("/");
+  await gotoReady(page, "/");
   await sidebarRow(page, "Plan de proyecto").click();
   await page.getByRole("button", { name: "Añadir a favoritos" }).click();
   await expect(page.getByTestId("favorite-page")).toContainText("Plan de proyecto");
   await page.reload();
+  await page.locator("html[data-nodara-ready]").waitFor({ state: "attached" });
   await expect(page.getByTestId("favorite-page")).toContainText("Plan de proyecto");
   await page.getByRole("button", { name: "Quitar de favoritos" }).click();
   await expect(page.getByTestId("favorite-page")).toHaveCount(0);
@@ -57,7 +59,7 @@ test("favoritos", async ({ page, request }) => {
 test("papelera: mover, restaurar y eliminar definitivamente", async ({ page, request }) => {
   const parent = await apiCreate(request, { title: "Plan de proyecto" });
   await apiCreate(request, { title: "Tareas", parentId: parent.id });
-  await page.goto("/");
+  await gotoReady(page, "/");
   const row = sidebarRow(page, "Plan de proyecto");
   await row.hover();
   await row.getByRole("button", { name: "Más acciones" }).click();

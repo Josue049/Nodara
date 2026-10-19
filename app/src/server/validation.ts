@@ -4,6 +4,7 @@ import { OPTION_COLORS, PROPERTY_TYPES, VIEW_TYPES } from "@/lib/collections/typ
 
 export const createPageSchema = z.object({
   parentId: z.uuid().nullable().optional(),
+  workspaceId: z.uuid().optional(),
   title: z.string().max(500).optional(),
   icon: z.string().max(16).nullable().optional(),
 });
@@ -43,6 +44,7 @@ export const propertyConfigSchema = z
   .strict();
 
 export const createDatabaseSchema = z.object({
+  workspaceId: z.uuid().optional(),
   parentId: z.uuid().nullable().optional(),
   hostPageId: z.uuid().optional(),
   title: z.string().max(500).optional(),
@@ -92,3 +94,20 @@ export const templateSchema = z.object({
   properties: recordValuesSchema.optional(),
   content: z.looseObject({ type: z.literal("doc") }).optional(),
 });
+
+// ── Usuarios, espacios y compartir ───────────────────────────────────
+const email = z.string().trim().toLowerCase().max(254).pipe(z.email());
+export const signupSchema = z.object({ email, name: z.string().trim().min(1).max(100), password: z.string().min(8, "La contraseña necesita al menos 8 caracteres").max(200) });
+export const loginSchema = z.object({ email, password: z.string().min(1).max(200) });
+export const profileSchema = z.object({ name: z.string().trim().min(1).max(100).optional() });
+export const passwordSchema = z.object({ current: z.string().min(1).max(200), next: z.string().min(8, "La contraseña necesita al menos 8 caracteres").max(200) });
+export const workspaceSchema = z.object({ name: z.string().trim().min(1).max(100) });
+export const workspacePatchSchema = z.object({ name: z.string().trim().min(1).max(100).optional(), icon: z.string().max(16).nullable().optional() });
+const role = z.enum(["owner", "admin", "member", "guest"]);
+const level = z.enum(["view", "comment", "edit", "full"]);
+export const memberRoleSchema = z.object({ role });
+export const invitationSchema = z.object({ email, role: role.default("member") });
+export const shareSchema = z.object({ email, level });
+export const permissionSchema = z.object({ level: level.nullable() });
+export const scopeSchema = z.object({ scope: z.enum(["private", "workspace"]).nullable() });
+export const publishSchema = z.object({ level: z.enum(["view", "comment", "edit"]) });

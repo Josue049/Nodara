@@ -67,7 +67,7 @@ export async function bundleForPage(db: Db, pageId: string): Promise<CollectionB
  */
 export async function createDatabase(
   db: Db,
-  input: { parentId?: string | null; title?: string; hostPageId?: string },
+  input: { parentId?: string | null; title?: string; hostPageId?: string; workspaceId?: string | null; creatorId?: string | null },
 ): Promise<CollectionBundle & { page: PageRow }> {
   return db.transaction(async (tx) => {
     let host: PageRow;
@@ -80,9 +80,23 @@ export async function createDatabase(
         .select({ last: max(pages.position) })
         .from(pages)
         .where(and(input.parentId ? eq(pages.parentId, input.parentId) : isNull(pages.parentId), isNull(pages.deletedAt), isNull(pages.collectionId)));
+      let workspaceId = input.workspaceId ?? null;
+      if (input.parentId) {
+        const [parent] = await tx.select().from(pages).where(eq(pages.id, input.parentId));
+        if (!parent || parent.deletedAt) throw new CollectionNotFound("Página padre no encontrada");
+        workspaceId = parent.workspaceId;
+      }
       [host] = await tx
         .insert(pages)
-        .values({ parentId: input.parentId ?? null, title: input.title ?? "", kind: "database", position: (last ?? 0) + 1 })
+        .values({
+          parentId: input.parentId ?? null,
+          title: input.title ?? "",
+          kind: "database",
+          position: (last ?? 0) + 1,
+          workspaceId,
+          creatorId: input.creatorId ?? null,
+          scope: input.parentId ? null : workspaceId ? "private" : null,
+        })
         .returning();
     }
     const [c] = await tx
@@ -101,13 +115,13 @@ export async function updateCollection(db: Db, id: string, patch: { title?: stri
 }
 
 /** Bases de datos existentes (para elegir destino de una relación). */
-export async function listCollections(db: Db): Promise<{ id: string; title: string; icon: string | null; isInline: boolean }[]> {
+export async function listCollections(db: Db): Promise<{ id: string; title: string; icon: string | null; isInline: boolean; workspaceId: string | null }[]> {
   const rows = await db
-    .select({ id: collections.id, title: collections.title, icon: collections.icon, isInline: collections.isInline, hostTitle: pages.title, hostIcon: pages.icon })
+    .select({ id: collections.id, title: collections.title, icon: collections.icon, isInline: collections.isInline, hostTitle: pages.title, hostIcon: pages.icon, workspaceId: pages.workspaceId })
     .from(collections)
     .innerJoin(pages, eq(pages.id, collections.hostPageId))
     .where(isNull(pages.deletedAt));
-  return rows.map((r) => ({ id: r.id, title: (r.isInline ? r.title : r.hostTitle) || "", icon: r.isInline ? r.icon : r.hostIcon, isInline: r.isInline }));
+  return rows.map((r) => ({ id: r.id, title: (r.isInline ? r.title : r.hostTitle) || "", icon: r.isInline ? r.icon : r.hostIcon, isInline: r.isInline, workspaceId: r.workspaceId }));
 }
 
 // ── Propiedades ──────────────────────────────────────────────────────
@@ -292,7 +306,7 @@ async function nextPosition(db: Db, hostPageId: string): Promise<number> {
 export async function addRecord(
   db: Db,
   collectionId: string,
-  input: { title?: string; properties?: Record<string, unknown>; templateId?: string },
+  input: { title?: string; properties?: Record<string, unknown>; templateId?: string; creatorId?: string | null },
 ): Promise<PageRow> {
   return db.transaction(async (tx) => {
     const bundle = await getBundle(tx, collectionId);
@@ -321,6 +335,8 @@ export async function addRecord(
         title,
         content: content as object,
         properties: clean,
+        workspaceId: (await tx.select({ w: pages.workspaceId }).from(pages).where(eq(pages.id, bundle.collection.hostPageId)))[0]?.w ?? null,
+        creatorId: input.creatorId ?? null,
         position: await nextPosition(tx, bundle.collection.hostPageId),
       })
       .returning();
@@ -617,3 +633,11 @@ export async function cloneCollectionsForCopy(db: Db, idMap: Map<string, string>
 }
 
 export { normalizeStored, TITLE_ID };
+
+/** Colección a la que pertenece una propiedad, vista o plantilla (para autorizar por la página anfitriona). */
+export async function collectionIdOf(db: Db, kind: "property" | "view" | "template", id: string): Promise<string> {
+  const table = kind === "property" ? collectionProperties : kind === "view" ? collectionViews : collectionTemplates;
+  const [row] = await db.select({ c: table.collectionId }).from(table).where(eq(table.id, id));
+  if (!row) throw new CollectionNotFound("Elemento no encontrado");
+  return row.c;
+}

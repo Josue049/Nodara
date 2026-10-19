@@ -10,6 +10,7 @@ import { DatabaseView } from "./database/database-view";
 import { RecordProperties } from "./database/record-properties";
 import { EmojiPicker } from "./emoji-picker";
 import { BlockEditor, type DocJson } from "./editor/block-editor";
+import { AccessContext, type AccessLevel } from "./access-context";
 import { Topbar, type SaveState } from "./topbar";
 import { useWorkspace } from "./workspace-provider";
 
@@ -22,6 +23,8 @@ type Loaded = {
   collectionId: string | null;
   deletedAt: string | null;
   content: unknown;
+  level: AccessLevel;
+  scope: string;
 };
 type Pending = { title?: string; content?: DocJson };
 
@@ -82,6 +85,15 @@ export function PageView({ pageId }: { pageId: string }) {
     };
   }, [pageId, flush]);
 
+  /** Vuelve a leer nivel de acceso y alcance (tras cambiar los permisos desde «Compartir»). */
+  const reloadAccess = useCallback(async () => {
+    const res = await fetch(`/api/pages/${pageId}`);
+    if (res.ok) {
+      const row: Loaded = await res.json();
+      setPage((p) => (p ? { ...p, level: row.level, scope: row.scope } : p));
+    }
+  }, [pageId]);
+
   // Autoajuste de altura del título.
   useLayoutEffect(() => {
     const el = area.current;
@@ -118,10 +130,11 @@ export function PageView({ pageId }: { pageId: string }) {
   const isDatabase = page.kind === "database";
   const isRecord = !!page.collectionId;
   const inTrash = !!page.deletedAt && !pages.some((p) => p.id === pageId) && !isRecord;
+  const canEdit = (page.level === "edit" || page.level === "full") && !inTrash;
 
   return (
-    <>
-      <Topbar pageId={pageId} saveState={saveState} record={isRecord ? { id: pageId, title, icon, parentId: page.parentId } : undefined} />
+    <AccessContext.Provider value={{ level: page.level }}>
+      <Topbar pageId={pageId} saveState={saveState} level={page.level} scope={page.scope} onAccessChanged={reloadAccess} record={isRecord ? { id: pageId, title, icon, parentId: page.parentId } : undefined} />
       {inTrash && (
         <div role="alert" className="flex items-center gap-3 bg-[#fdebec] px-4 py-2 text-[14px] text-[#5d1715]">
           {t.inTrashBanner}
@@ -144,13 +157,13 @@ export function PageView({ pageId }: { pageId: string }) {
               <button
                 aria-label={t.changeIcon}
                 data-testid="page-icon"
-                onClick={() => !inTrash && setPickerOpen((o) => !o)}
+                onClick={() => canEdit && setPickerOpen((o) => !o)}
                 className="mb-2 flex size-[78px] items-center justify-center rounded-md text-[72px] leading-none hover:bg-hover"
               >
                 {icon}
               </button>
             ) : (
-              !inTrash && (
+              canEdit && (
                 <button
                   onClick={() => setPickerOpen((o) => !o)}
                   data-testid="add-icon"
@@ -174,7 +187,7 @@ export function PageView({ pageId }: { pageId: string }) {
             ref={area}
             value={title}
             rows={1}
-            readOnly={inTrash}
+            readOnly={!canEdit}
             placeholder={t.titlePlaceholder}
             aria-label="Título de la página"
             data-testid="page-title"
@@ -194,7 +207,7 @@ export function PageView({ pageId }: { pageId: string }) {
               <BlockEditor
                 pageId={pageId}
                 initial={asDoc(page.content)}
-                editable={!inTrash}
+                editable={canEdit}
                 onChange={(doc) => schedule({ content: doc })}
                 onReady={(ed) => (editorRef.current = ed)}
               />
@@ -203,6 +216,6 @@ export function PageView({ pageId }: { pageId: string }) {
           )}
         </div>
       </div>
-    </>
+    </AccessContext.Provider>
   );
 }

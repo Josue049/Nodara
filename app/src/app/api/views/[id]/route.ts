@@ -1,14 +1,19 @@
 import { z } from "zod";
-import { getDb } from "@/server/db";
+import { assertCollection } from "@/server/authz";
+import { collectionIdOf, deleteView, updateView } from "@/server/collections-service";
 import { api, readJson } from "@/server/http";
-import * as C from "@/server/collections-service";
-import * as V from "@/server/validation";
+import { updateViewSchema } from "@/server/validation";
 
 export const dynamic = "force-dynamic";
-const uuid = (v: string) => z.uuid().parse(v);
 
-export const PATCH = api(async (req, p) => C.updateView(await getDb(), uuid(p.id), V.updateViewSchema.parse(await readJson(req)) as Parameters<typeof C.updateView>[2]));
-export const DELETE = api(async (_req, p) => {
-  await C.deleteView(await getDb(), uuid(p.id));
+export const PATCH = api(async (req, p, user, db) => {
+  const id = z.uuid().parse(p.id);
+  await assertCollection(db, user, await collectionIdOf(db, "view", id), "edit");
+  return updateView(db, id, updateViewSchema.parse(await readJson(req)) as Parameters<typeof updateView>[2]);
+});
+export const DELETE = api(async (_req, p, user, db) => {
+  const id = z.uuid().parse(p.id);
+  await assertCollection(db, user, await collectionIdOf(db, "view", id), "edit");
+  await deleteView(db, id);
   return null;
 });

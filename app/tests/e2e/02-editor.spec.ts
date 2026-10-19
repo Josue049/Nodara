@@ -1,8 +1,8 @@
 import type { Page } from "@playwright/test";
-import { apiCreate, expect, test } from "./fixtures";
+import { apiCreate, expect, gotoReady, test } from "./fixtures";
 
 async function newPage(page: Page, title: string) {
-  await page.goto("/");
+  await gotoReady(page, "/");
   await page.getByRole("button", { name: "Nueva página" }).first().click();
   await page.getByTestId("page-title").fill(title);
   await page.getByTestId("page-title").press("Enter"); // Enter en el título enfoca el editor
@@ -16,6 +16,7 @@ test("escribir texto y persistir tras recargar", async ({ page }) => {
   await page.keyboard.type("Hola mundo");
   await saved(page);
   await page.reload();
+  await page.locator("html[data-nodara-ready]").waitFor({ state: "attached" });
   await expect(page.getByTestId("editor")).toContainText("Hola mundo");
 });
 
@@ -34,6 +35,7 @@ test("menú / inserta encabezado, filtra y navega con teclado", async ({ page })
   await expect(page.getByTestId("editor").locator("h2")).toHaveText("Sección");
   await saved(page);
   await page.reload();
+  await page.locator("html[data-nodara-ready]").waitFor({ state: "attached" });
   await expect(page.getByTestId("editor").locator("h2")).toHaveText("Sección");
 });
 
@@ -55,6 +57,7 @@ test("lista de tareas: marcar y persistir", async ({ page }) => {
   await expect(item).toHaveAttribute("data-checked", "true");
   await saved(page);
   await page.reload();
+  await page.locator("html[data-nodara-ready]").waitFor({ state: "attached" });
   await expect(page.getByTestId("editor").locator('ul[data-type="taskList"] > li')).toHaveAttribute("data-checked", "true");
 });
 
@@ -88,6 +91,7 @@ test("bloque desplegable se inserta y se pliega", async ({ page }) => {
   await expect(page.locator(".nd-details.is-open")).toHaveCount(wasOpen ? 0 : 1);
   await saved(page);
   await page.reload();
+  await page.locator("html[data-nodara-ready]").waitFor({ state: "attached" });
   await expect(page.getByTestId("editor").locator(".nd-details")).toHaveCount(1);
 });
 

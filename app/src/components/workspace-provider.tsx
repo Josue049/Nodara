@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import type { TreePage } from "@/lib/tree";
+import type { SettingsTab } from "./settings-dialog";
 
 type Patch = Partial<Pick<TreePage, "title" | "icon" | "isFavorite" | "parentId" | "position">>;
 
@@ -31,6 +32,9 @@ type Ctx = {
   /** Página cuyo nombre se edita en la barra lateral. */
   renaming: string | null;
   setRenaming: (id: string | null) => void;
+  /** Pestaña abierta del diálogo de configuración (null = cerrado). */
+  settings: SettingsTab | null;
+  setSettings: (t: SettingsTab | null) => void;
 };
 
 const WorkspaceContext = createContext<Ctx | null>(null);
@@ -58,6 +62,7 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
   const [searchOpen, setSearchOpen] = useState(false);
   const [moveTarget, setMoveTarget] = useState<string | null>(null);
   const [renaming, setRenaming] = useState<string | null>(null);
+  const [settings, setSettings] = useState<SettingsTab | null>(null);
 
   // Marcador de «app hidratada y con datos»: lo usan las pruebas E2E para no actuar antes de tiempo.
   useEffect(() => {
@@ -179,10 +184,10 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
     () => ({
       pages, trash, loaded, createPage, createDatabase, patchLocal, updatePage, toggleFavorite, moveToTrash, restore,
       deleteForever, movePage, duplicatePage, refreshTrash, refreshPages,
-      searchOpen, setSearchOpen, moveTarget, setMoveTarget, renaming, setRenaming,
+      searchOpen, setSearchOpen, moveTarget, setMoveTarget, renaming, setRenaming, settings, setSettings,
     }),
     [pages, trash, loaded, createPage, createDatabase, patchLocal, updatePage, toggleFavorite, moveToTrash, restore,
-      deleteForever, movePage, duplicatePage, refreshTrash, refreshPages, searchOpen, moveTarget, renaming],
+      deleteForever, movePage, duplicatePage, refreshTrash, refreshPages, searchOpen, moveTarget, renaming, settings],
   );
 
   return <WorkspaceContext.Provider value={value}>{children}</WorkspaceContext.Provider>;

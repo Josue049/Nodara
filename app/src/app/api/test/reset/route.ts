@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getHandle, isDisposableTarget } from "@/server/db";
-import { pages } from "@/server/schema";
+import { pages, users, workspaces } from "@/server/schema";
 
 export const dynamic = "force-dynamic";
 
@@ -19,5 +19,7 @@ export async function POST(req: Request) {
   const { db, target } = await getHandle();
   if (!isDisposableTarget(target)) return new NextResponse(null, { status: 404 });
   await db.delete(pages);
+  await db.delete(workspaces);
+  await db.delete(users); // sesiones, miembros, permisos, favoritos e invitaciones caen en cascada
   return new NextResponse(null, { status: 204 });
 }

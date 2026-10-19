@@ -58,6 +58,7 @@ function TitleCell({ db, row, editing, setEditing, showIcon }: { db: Database; r
           type="button"
           data-testid="row-title"
           onClick={() => {
+            if (!db.canEdit) return;
             setDraft(row.title);
             setEditing(true);
           }}
@@ -153,7 +154,8 @@ export function TableView({ db }: { db: Database }) {
     </div>
   );
 
-  const addRowButton = (groupKey?: string) => (
+  const addRowButton = (groupKey?: string) =>
+    !db.canEdit ? null : (
     <button
       type="button"
       onClick={() => void newRow(groupKey)}
@@ -222,7 +224,7 @@ export function TableView({ db }: { db: Database }) {
             );
           })}
           <div className="nd-db-cell flex h-[36px] items-center justify-center" style={{ width: 40, flex: "none" }}>
-            <button
+            {db.canEdit && <button
               type="button"
               aria-label={t.addProperty}
               data-testid="add-prop"
@@ -230,7 +232,7 @@ export function TableView({ db }: { db: Database }) {
               className="flex size-7 items-center justify-center rounded text-ink-3 hover:bg-hover"
             >
               <Plus size={16} />
-            </button>
+            </button>}
           </div>
         </div>
 
@@ -269,9 +271,13 @@ export function TableView({ db }: { db: Database }) {
           onClose={() => setMenu(null)}
           items={[
             { label: t.open, icon: <ExternalLink size={16} />, onSelect: () => router.push(`/${menu.row.id}`) },
-            { label: t.duplicate, icon: <Copy size={16} />, onSelect: () => void db.duplicateRow(menu.row.id) },
-            { label: t.saveAsTemplate, icon: <BookmarkPlus size={16} />, onSelect: () => void db.saveAsTemplate(menu.row.id) },
-            { label: t.moveToTrash, icon: <Trash2 size={16} />, danger: true, onSelect: () => void db.deleteRow(menu.row.id) },
+            ...(db.canEdit
+              ? [
+                  { label: t.duplicate, icon: <Copy size={16} />, onSelect: () => void db.duplicateRow(menu.row.id) },
+                  { label: t.saveAsTemplate, icon: <BookmarkPlus size={16} />, onSelect: () => void db.saveAsTemplate(menu.row.id) },
+                  { label: t.moveToTrash, icon: <Trash2 size={16} />, danger: true, onSelect: () => void db.deleteRow(menu.row.id) },
+                ]
+              : []),
           ]}
         />
       )}

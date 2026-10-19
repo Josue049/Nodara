@@ -102,8 +102,8 @@ function SettingsPopover({ db, anchor, onClose, openFilter, openSort }: { db: Da
   return (
     <Popover anchor={anchor} onClose={onClose} label={t.viewSettings} testId="view-settings" width={340} align="right">
       <div className="flex flex-col gap-1 p-1">
-        <p className="px-2 pt-1 text-[12px] font-medium text-ink-3">{t.layout}</p>
-        <div className="grid grid-cols-3 gap-1.5 px-1 pb-1">
+        {db.canEdit && <p className="px-2 pt-1 text-[12px] font-medium text-ink-3">{t.layout}</p>}
+        {db.canEdit && <div className="grid grid-cols-3 gap-1.5 px-1 pb-1">
           {VIEW_TYPES.map((v) => (
             <button
               key={v}
@@ -117,7 +117,7 @@ function SettingsPopover({ db, anchor, onClose, openFilter, openSort }: { db: Da
               {VIEW_LABELS[v]}
             </button>
           ))}
-        </div>
+        </div>}
 
         <MenuRow icon={<Filter size={14} />} onClick={() => (onClose(), openFilter())} right={cfg.filter?.conditions.length || ""}>
           {t.filter}
@@ -282,7 +282,7 @@ export function DatabaseView({ collectionId, inline = false, header }: { collect
                   aria-selected={activeTab}
                   data-testid="view-tab"
                   data-view-id={v.id}
-                  onClick={(e) => (activeTab ? open("view", e.currentTarget) : db.selectView(v.id))}
+                  onClick={(e) => (activeTab && db.canEdit ? open("view", e.currentTarget) : db.selectView(v.id))}
                   className={`flex h-[30px] items-center gap-1.5 rounded-full px-2.5 text-[14px] ${activeTab ? "bg-active font-medium text-ink" : "text-ink-2 hover:bg-hover"}`}
                 >
                   <ViewIcon type={v.type} />
@@ -291,9 +291,9 @@ export function DatabaseView({ collectionId, inline = false, header }: { collect
               </div>
             );
           })}
-          <button type="button" aria-label={t.addView} data-testid="add-view" onClick={(e) => open("addview", e.currentTarget)} className={iconBtn}>
+          {db.canEdit && <button type="button" aria-label={t.addView} data-testid="add-view" onClick={(e) => open("addview", e.currentTarget)} className={iconBtn}>
             <Plus size={16} />
-          </button>
+          </button>}
         </div>
 
         <button ref={filterBtn} type="button" aria-label={t.filter} data-testid="filter-btn" onClick={(e) => open("filter", e.currentTarget)} className={`${iconBtn} ${filterCount ? "text-accent" : ""}`}>
@@ -327,14 +327,14 @@ export function DatabaseView({ collectionId, inline = false, header }: { collect
         <button type="button" aria-label={t.viewSettings} data-testid="settings-btn" onClick={(e) => open("settings", e.currentTarget)} className={iconBtn}>
           <SlidersHorizontal size={16} />
         </button>
-        <div className="ml-1 flex h-7 items-stretch overflow-hidden rounded-md bg-accent text-white">
+        {db.canEdit && <div className="ml-1 flex h-7 items-stretch overflow-hidden rounded-md bg-accent text-white">
           <button type="button" data-testid="new-btn" onClick={newRow} className="px-3 text-[14px] font-medium hover:brightness-95">
             {t.new}
           </button>
           <button type="button" aria-label={t.moreOptions} data-testid="templates-btn" onClick={(e) => open("templates", e.currentTarget)} className="border-l border-white/30 px-1.5 hover:brightness-95">
             <ChevronDown size={14} />
           </button>
-        </div>
+        </div>}
       </div>
 
       <div className="pt-1" data-testid="db-body">
