@@ -5,6 +5,7 @@ export type TreePage = {
   icon: string | null;
   position: number;
   isFavorite: boolean;
+  kind: string;
 };
 
 export function childrenOf(pages: TreePage[], parentId: string | null): TreePage[] {

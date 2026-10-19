@@ -9,6 +9,7 @@ import { openDb } from "@/server/db";
 import * as schema from "@/server/schema";
 import { getTableName, is } from "drizzle-orm";
 import { PgTable } from "drizzle-orm/pg-core";
+import { addProperty, addRecord, createDatabase, queryCollection } from "@/server/collections-service";
 import { createPage, listPages, updatePage } from "@/server/pages-service";
 
 const tmp = mkdtempSync(path.join(os.tmpdir(), "nodara-mig-"));
@@ -39,6 +40,9 @@ describe("migración PGlite → PostgreSQL", () => {
     const a = await createPage(h.db, { title: "Raíz", icon: "📘" });
     const b = await createPage(h.db, { title: "Hija", parentId: a.id });
     await updatePage(h.db, b.id, { content: { type: "doc", content: [{ type: "paragraph", content: [{ type: "text", text: "hola ñandú" }] }] } });
+    const database = await createDatabase(h.db, { title: "Tareas" });
+    const hours = await addProperty(h.db, database.collection.id, { name: "Horas", type: "number" });
+    const rec = await addRecord(h.db, database.collection.id, { title: "Fila", properties: { [hours.id]: 7 } });
     await h.close();
 
     await migratePgliteToPostgres({ sourceDir: src, targetUrl: url, backupRoot: path.join(tmp, "bk"), log: () => {} });
@@ -46,7 +50,10 @@ describe("migración PGlite → PostgreSQL", () => {
 
     const dst = await openDb(url);
     const rows = await listPages(dst.db);
-    expect(rows.map((r) => r.title).sort()).toEqual(["Hija", "Raíz"]);
+    expect(rows.map((r) => r.title).sort()).toEqual(["Hija", "Raíz", "Tareas"]);
+    const q = await queryCollection(dst.db, database.collection.id); // la base de datos y sus registros sobreviven
+    expect(q.rows.map((r) => [r.id, r.title, r.values[hours.id]])).toEqual([[rec.id, "Fila", 7]]);
+    expect(q.bundle.views).toHaveLength(1);
     expect(rows.find((r) => r.title === "Hija")!.parentId).toBe(a.id);
     const [full] = (await dst.db.select().from(schema.pages)).filter((p) => p.title === "Hija");
     expect(full.contentText).toBe("hola ñandú");

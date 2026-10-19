@@ -1,4 +1,6 @@
 import type { Editor, Range } from "@tiptap/core";
+import { dbApi } from "../database/api";
+import { getPageId } from "./database-node";
 
 export type SlashItem = {
   id: string;
@@ -29,6 +31,13 @@ export const slashItems: SlashItem[] = [
     run: (e, r) => base(e, r).setDetails().run() },
   { id: "table", title: "Tabla", hint: "Tabla simple de 3×3", keywords: ["table", "tabla", "grid"],
     run: (e, r) => base(e, r).insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run() },
+  { id: "database", title: "Base de datos integrada", hint: "Inserta una tabla con vistas en esta página", keywords: ["database", "base", "datos", "tabla", "inline"],
+    run: (e, r) => {
+      const pageId = getPageId(e);
+      if (!pageId) return;
+      base(e, r).run();
+      void dbApi.create({ hostPageId: pageId }).then((res) => e.chain().focus().insertContent({ type: "databaseBlock", attrs: { collectionId: res.collection.id } }).run());
+    } },
   { id: "quote", title: "Cita", hint: "Captura una cita", keywords: ["quote", "cita", "blockquote"],
     run: (e, r) => base(e, r).toggleBlockquote().run() },
   { id: "code", title: "Código", hint: "Bloque de código", keywords: ["code", "codigo", "pre"],

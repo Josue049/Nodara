@@ -17,6 +17,7 @@
   --code-text: #cf5148;
   --pre-bg: #f7f6f3;
   --shadow-pop: rgba(15, 15, 15, 0.05) 0 0 0 1px, rgba(15, 15, 15, 0.1) 0 3px 6px, rgba(15, 15, 15, 0.2) 0 9px 24px;
+  --db-header: #7d7a75; /* medido: encabezado de tabla */
   --sidebar-w: 270px;
   --topbar-h: 44px;
   color-scheme: light;
@@ -36,6 +37,7 @@
   --code-bg: rgba(255, 255, 255, 0.08);
   --code-text: #cf5148; /* medido: igual que en light */
   --pre-bg: #252525;
+  --db-header: #ada9a3; /* medido */
   --shadow-pop: rgba(0, 0, 0, 0.2) 0 0 0 1px, rgba(0, 0, 0, 0.3) 0 3px 6px, rgba(0, 0, 0, 0.4) 0 9px 24px;
   color-scheme: dark;
 }
@@ -189,3 +191,56 @@ body {
 .tableWrapper { overflow-x: auto; }
 .resize-cursor { cursor: col-resize; }
 .ProseMirror-selectednode { outline: 2px solid rgba(35, 131, 226, 0.4); }
+
+/* Colores de etiquetas de opciones (tonos propios, sin medir en Notion) */
+:root {
+  --opt-default-bg: #e3e2e0;
+  --opt-default-fg: #32302c;
+  --opt-gray-bg: #e3e2e0;
+  --opt-gray-fg: #32302c;
+  --opt-brown-bg: #eee0da;
+  --opt-brown-fg: #442a1e;
+  --opt-orange-bg: #fadec9;
+  --opt-orange-fg: #5c3b23;
+  --opt-yellow-bg: #fdecc8;
+  --opt-yellow-fg: #402c1b;
+  --opt-green-bg: #dbeddb;
+  --opt-green-fg: #1c3829;
+  --opt-blue-bg: #d3e5ef;
+  --opt-blue-fg: #183347;
+  --opt-purple-bg: #e8deee;
+  --opt-purple-fg: #412454;
+  --opt-pink-bg: #f5e0e9;
+  --opt-pink-fg: #4c2337;
+  --opt-red-bg: #ffe2dd;
+  --opt-red-fg: #5d1715;
+}
+:root[data-theme="dark"] {
+  --opt-default-bg: #373737;
+  --opt-default-fg: #e6e5e3;
+  --opt-gray-bg: #454b4e;
+  --opt-gray-fg: #e6e5e3;
+  --opt-brown-bg: #434040;
+  --opt-brown-fg: #e6e5e3;
+  --opt-orange-bg: #594a3a;
+  --opt-orange-fg: #e6e5e3;
+  --opt-yellow-bg: #59563b;
+  --opt-yellow-fg: #e6e5e3;
+  --opt-green-bg: #354c4b;
+  --opt-green-fg: #e6e5e3;
+  --opt-blue-bg: #364954;
+  --opt-blue-fg: #e6e5e3;
+  --opt-purple-bg: #443f57;
+  --opt-purple-fg: #e6e5e3;
+  --opt-pink-bg: #533b4c;
+  --opt-pink-fg: #e6e5e3;
+  --opt-red-bg: #594141;
+  --opt-red-fg: #e6e5e3;
+}
+
+/* Bases de datos */
+.nd-db-cell { border-bottom: 0.8px solid rgba(42, 28, 0, 0.07); }
+:root[data-theme="dark"] .nd-db-cell { border-bottom-color: rgba(255, 255, 243, 0.082); } /* medido */
+.nd-db-vline { border-right: 0.8px solid rgba(42, 28, 0, 0.07); }
+:root[data-theme="dark"] .nd-db-vline { border-right-color: rgba(255, 255, 243, 0.082); }
+.nd-tag { display: inline-flex; align-items: center; max-width: 100%; padding: 0 6px; border-radius: 3px; font-size: 14px; line-height: 20px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

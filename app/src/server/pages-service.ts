@@ -1,10 +1,11 @@
 import { and, asc, desc, eq, inArray, isNotNull, isNull, max, sql } from "drizzle-orm";
+import { cloneCollectionsForCopy } from "./collections-service";
 import type { Db } from "./db";
 import { pages, type PageRow } from "./schema";
 
 export type PageSummary = Pick<
   PageRow,
-  "id" | "parentId" | "title" | "icon" | "position" | "isFavorite"
+  "id" | "parentId" | "title" | "icon" | "position" | "isFavorite" | "kind"
 >;
 
 const summaryCols = {
@@ -14,6 +15,7 @@ const summaryCols = {
   icon: pages.icon,
   position: pages.position,
   isFavorite: pages.isFavorite,
+  kind: pages.kind,
 };
 
 /** Texto plano de un documento TipTap/ProseMirror (bloques separados por espacio). */
@@ -50,7 +52,7 @@ export async function listPages(db: Db): Promise<PageSummary[]> {
   return db
     .select(summaryCols)
     .from(pages)
-    .where(isNull(pages.deletedAt))
+    .where(and(isNull(pages.deletedAt), isNull(pages.collectionId))) // los registros de bases de datos no aparecen en el árbol
     .orderBy(asc(pages.position), asc(pages.createdAt));
 }
 
@@ -162,6 +164,7 @@ export async function listTrash(db: Db): Promise<PageSummary[]> {
       icon: r.icon,
       position: r.position,
       isFavorite: r.isFavorite,
+      kind: r.kind,
     }));
 }
 
@@ -196,11 +199,23 @@ async function duplicatePageTx(db: Db, id: string): Promise<PageRow> {
   const byParent = new Map<string | null, PageRow[]>();
   for (const r of rows) byParent.set(r.parentId, [...(byParent.get(r.parentId) ?? []), r]);
 
+  const idMap = new Map<string, string>();
   const copy = async (src: PageRow, parentId: string | null, position: number): Promise<PageRow> => {
     const [row] = await db
       .insert(pages)
-      .values({ parentId, title: src.title, icon: src.icon, content: src.content, contentText: src.contentText, position })
+      .values({
+        parentId,
+        title: src.title,
+        icon: src.icon,
+        content: src.content,
+        contentText: src.contentText,
+        kind: src.kind,
+        collectionId: src.collectionId,
+        properties: src.properties,
+        position,
+      })
       .returning();
+    idMap.set(src.id, row.id);
     for (const child of (byParent.get(src.id) ?? []).sort((a, b) => a.position - b.position)) {
       await copy(child, row.id, child.position);
     }
@@ -216,7 +231,9 @@ async function duplicatePageTx(db: Db, id: string): Promise<PageRow> {
     .map((p) => p.position)
     .filter((p) => p > root.position)
     .sort((a, b) => a - b)[0];
-  return copy(root, root.parentId, next === undefined ? root.position + 1 : (root.position + next) / 2);
+  const created = await copy(root, root.parentId, next === undefined ? root.position + 1 : (root.position + next) / 2);
+  await cloneCollectionsForCopy(db, idMap);
+  return created;
 }
 
 export type SearchResult = PageSummary & { snippet: string; path: string[] };
@@ -257,11 +274,11 @@ export async function searchPages(
       snippet = (start > 0 ? "…" : "") + r.contentText.slice(start, at + q.length + 60);
     }
     results.push({
-      id: r.id, parentId: r.parentId, title: r.title, icon: r.icon, position: r.position, isFavorite: r.isFavorite,
+      id: r.id, parentId: r.parentId, title: r.title, icon: r.icon, position: r.position, isFavorite: r.isFavorite, kind: r.kind,
       snippet, path: pathOf(r), rank: inTitle ? 0 : 1,
     });
   }
-  return results.sort((a, b) => a.rank - b.rank).slice(0, opts.limit ?? 20).map((x) => ({ id: x.id, parentId: x.parentId, title: x.title, icon: x.icon, position: x.position, isFavorite: x.isFavorite, snippet: x.snippet, path: x.path }));
+  return results.sort((a, b) => a.rank - b.rank).slice(0, opts.limit ?? 20).map((x) => ({ id: x.id, parentId: x.parentId, title: x.title, icon: x.icon, position: x.position, isFavorite: x.isFavorite, kind: x.kind, snippet: x.snippet, path: x.path }));
 }
 
 // Operaciones de varios pasos: se ejecutan en una transacción para no dejar árboles a medias.

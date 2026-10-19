@@ -9,10 +9,13 @@ import { useWorkspace } from "./workspace-provider";
 
 export type SaveState = "idle" | "saving" | "saved" | "error";
 
-export function Topbar({ pageId, saveState }: { pageId: string; saveState: SaveState }) {
+export function Topbar({ pageId, saveState, record }: { pageId: string; saveState: SaveState; record?: { id: string; title: string; icon: string | null; parentId: string | null } }) {
   const { pages, toggleFavorite } = useWorkspace();
-  const trail = pathTo(pages, pageId);
-  const current = trail.at(-1);
+  // Los registros de bases de datos no están en el árbol: la ruta es la de su base más el propio registro.
+  const trail = record
+    ? [...(record.parentId ? pathTo(pages, record.parentId) : []), { id: record.id, title: record.title, icon: record.icon, parentId: record.parentId, position: 0, isFavorite: false, kind: "page" }]
+    : pathTo(pages, pageId);
+  const current = record ? undefined : trail.at(-1);
   const label = { idle: "", saving: t.saving, saved: t.saved, error: t.saveError }[saveState];
   return (
     <header className="flex h-[var(--topbar-h)] shrink-0 items-center gap-2 px-3 text-[14px]">
@@ -21,7 +24,7 @@ export function Topbar({ pageId, saveState }: { pageId: string; saveState: SaveS
           <span key={p.id} className="flex min-w-0 items-center gap-1">
             {i > 0 && <span className="text-ink-3">/</span>}
             <Link href={`/${p.id}`} className="flex min-w-0 items-center gap-1 rounded px-1.5 py-0.5 hover:bg-hover">
-              <PageIcon icon={p.icon} size={16} />
+              <PageIcon icon={p.icon} size={16} kind={p.kind} />
               <span className="truncate">{p.title || t.untitled}</span>
             </Link>
           </span>

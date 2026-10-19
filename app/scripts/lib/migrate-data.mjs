@@ -33,6 +33,7 @@ export async function migratePgliteToPostgres({ sourceDir, targetUrl, backupRoot
     await pool.query("begin");
     try {
       if (force) await pool.query(`truncate ${[...TABLE_ORDER].reverse().map(q).join(", ")} cascade`);
+      const pendingCollectionRefs = []; // pages.collection_id se completa al final (referencia circular con collections)
       for (const t of TABLE_ORDER) {
         let rows = (await srcRun(`select * from ${q(t)}`)).rows;
         if (t === "pages") {
@@ -44,6 +45,10 @@ export async function migratePgliteToPostgres({ sourceDir, targetUrl, backupRoot
           rows = rows.sort((a, b) => d(a) - d(b));
         }
         for (const row of rows) {
+          if (t === "pages" && row.collection_id) {
+            pendingCollectionRefs.push([row.id, row.collection_id]);
+            row.collection_id = null;
+          }
           const cols = Object.keys(row);
           const vals = cols.map((c) => (row[c] !== null && typeof row[c] === "object" && !(row[c] instanceof Date) ? JSON.stringify(row[c]) : row[c]));
           await pool.query(`insert into ${q(t)} (${cols.map(q).join(", ")}) values (${cols.map((_, i) => `$${i + 1}`).join(", ")})`, vals);
@@ -52,6 +57,9 @@ export async function migratePgliteToPostgres({ sourceDir, targetUrl, backupRoot
         if (a !== b) throw new Error(`Conteo distinto en '${t}': origen ${a}, destino ${b}`);
         log(`  ${t}: ${b} filas copiadas y verificadas`);
       }
+      for (const [pageId, collectionId] of pendingCollectionRefs) await pool.query("update pages set collection_id = $1 where id = $2", [collectionId, pageId]);
+      const [a, b] = [await count(srcRun, "pages"), await count(dstRun, "pages")];
+      if (a !== b) throw new Error(`Conteo de pages distinto tras reasignar colecciones: ${a} vs ${b}`);
       await pool.query("commit");
     } catch (e) {
       await pool.query("rollback");

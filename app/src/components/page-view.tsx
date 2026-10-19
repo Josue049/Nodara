@@ -5,12 +5,24 @@ import Link from "next/link";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { t } from "@/lib/strings";
 import { SmilePlus } from "lucide-react";
+import { dbApi } from "./database/api";
+import { DatabaseView } from "./database/database-view";
+import { RecordProperties } from "./database/record-properties";
 import { EmojiPicker } from "./emoji-picker";
 import { BlockEditor, type DocJson } from "./editor/block-editor";
 import { Topbar, type SaveState } from "./topbar";
 import { useWorkspace } from "./workspace-provider";
 
-type Loaded = { id: string; title: string; deletedAt: string | null; content: unknown };
+type Loaded = {
+  id: string;
+  title: string;
+  icon: string | null;
+  parentId: string | null;
+  kind: string;
+  collectionId: string | null;
+  deletedAt: string | null;
+  content: unknown;
+};
 type Pending = { title?: string; content?: DocJson };
 
 const asDoc = (v: unknown): DocJson | null =>
@@ -21,7 +33,8 @@ const SAVE_DELAY_MS = 500;
 export function PageView({ pageId }: { pageId: string }) {
   const { patchLocal, restore, refreshPages, pages, updatePage } = useWorkspace();
   const [pickerOpen, setPickerOpen] = useState(false);
-  const icon = pages.find((p) => p.id === pageId)?.icon ?? null;
+  const [iconOverride, setIconOverride] = useState<string | null | undefined>(undefined);
+  const [dbId, setDbId] = useState<string | null>(null);
   const [page, setPage] = useState<Loaded | null>(null);
   const [missing, setMissing] = useState(false);
   const [title, setTitle] = useState("");
@@ -60,6 +73,7 @@ export function PageView({ pageId }: { pageId: string }) {
         const row: Loaded = await res.json();
         setPage(row);
         setTitle(row.title);
+        if (row.kind === "database") dbApi.bundleForPage(pageId).then((b) => !cancelled && setDbId(b.collection.id)).catch(() => {});
       })
       .catch(() => !cancelled && setMissing(true));
     return () => {
@@ -100,11 +114,14 @@ export function PageView({ pageId }: { pageId: string }) {
   }
   if (!page) return <div className="flex-1" aria-busy />;
 
-  const inTrash = !!page.deletedAt && !pages.some((p) => p.id === pageId);
+  const icon = iconOverride !== undefined ? iconOverride : (pages.find((p) => p.id === pageId)?.icon ?? page.icon);
+  const isDatabase = page.kind === "database";
+  const isRecord = !!page.collectionId;
+  const inTrash = !!page.deletedAt && !pages.some((p) => p.id === pageId) && !isRecord;
 
   return (
     <>
-      <Topbar pageId={pageId} saveState={saveState} />
+      <Topbar pageId={pageId} saveState={saveState} record={isRecord ? { id: pageId, title, icon, parentId: page.parentId } : undefined} />
       {inTrash && (
         <div role="alert" className="flex items-center gap-3 bg-[#fdebec] px-4 py-2 text-[14px] text-[#5d1715]">
           {t.inTrashBanner}
@@ -121,7 +138,7 @@ export function PageView({ pageId }: { pageId: string }) {
         </div>
       )}
       <div className="nd-scroll flex-1 overflow-y-auto">
-        <div className="mx-auto w-full max-w-[816px] px-12 pt-[84px] max-[900px]:px-6">
+        <div className={`mx-auto w-full px-12 pt-[84px] max-[900px]:px-6 ${isDatabase ? "max-w-[1100px]" : "max-w-[816px]"}`}>
           <div className="group/icon relative">
             {icon ? (
               <button
@@ -148,6 +165,7 @@ export function PageView({ pageId }: { pageId: string }) {
                 onClose={() => setPickerOpen(false)}
                 onPick={(e) => {
                   setPickerOpen(false);
+                  setIconOverride(e);
                   void updatePage(pageId, { icon: e });
                 }}
               />
@@ -169,17 +187,20 @@ export function PageView({ pageId }: { pageId: string }) {
             className="w-full resize-none overflow-hidden bg-transparent text-[40px] font-bold leading-[1.2] tracking-[-0.01em] outline-none placeholder:text-ink-3"
           />
           </div>
-          <BlockEditor
-            initial={asDoc(page.content)}
-            editable={!inTrash}
-            onChange={(doc) => schedule({ content: doc })}
-            onReady={(ed) => (editorRef.current = ed)}
-          />
-          <div
-            aria-hidden
-            className="min-h-[30vh] cursor-text"
-            onClick={() => editorRef.current?.commands.focus("end")}
-          />
+          {isDatabase && dbId && <DatabaseView key={dbId} collectionId={dbId} />}
+          {isRecord && <RecordProperties pageId={pageId} />}
+          {!isDatabase && (
+            <>
+              <BlockEditor
+                pageId={pageId}
+                initial={asDoc(page.content)}
+                editable={!inTrash}
+                onChange={(doc) => schedule({ content: doc })}
+                onReady={(ed) => (editorRef.current = ed)}
+              />
+              <div aria-hidden className="min-h-[30vh] cursor-text" onClick={() => editorRef.current?.commands.focus("end")} />
+            </>
+          )}
         </div>
       </div>
     </>

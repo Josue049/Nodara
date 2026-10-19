@@ -11,6 +11,7 @@ type Ctx = {
   trash: TreePage[];
   loaded: boolean;
   createPage: (parentId?: string | null) => Promise<string>;
+  createDatabase: (parentId?: string | null) => Promise<string>;
   patchLocal: (id: string, patch: Patch) => void;
   /** Cambia título/icono en memoria y en el servidor. */
   updatePage: (id: string, patch: Pick<Patch, "title" | "icon">) => Promise<void>;
@@ -58,6 +59,11 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
   const [moveTarget, setMoveTarget] = useState<string | null>(null);
   const [renaming, setRenaming] = useState<string | null>(null);
 
+  // Marcador de «app hidratada y con datos»: lo usan las pruebas E2E para no actuar antes de tiempo.
+  useEffect(() => {
+    if (loaded) document.documentElement.dataset.nodaraReady = "1";
+  }, [loaded]);
+
   const refreshPages = useCallback(async () => {
     setPages(await api<TreePage[]>("/api/pages"));
     setLoaded(true);
@@ -82,6 +88,15 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
     setPages((p) => [...p, row]);
     return row.id;
   }, []);
+
+  const createDatabase = useCallback(
+    async (parentId: string | null = null) => {
+      const res = await api<{ page: TreePage }>("/api/databases", { method: "POST", body: JSON.stringify({ parentId }) });
+      setPages((p) => [...p, res.page]);
+      return res.page.id;
+    },
+    [],
+  );
 
   const patchLocal = useCallback((id: string, patch: Patch) => {
     setPages((p) => p.map((x) => (x.id === id ? { ...x, ...patch } : x)));
@@ -162,11 +177,11 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
 
   const value = useMemo(
     () => ({
-      pages, trash, loaded, createPage, patchLocal, updatePage, toggleFavorite, moveToTrash, restore,
+      pages, trash, loaded, createPage, createDatabase, patchLocal, updatePage, toggleFavorite, moveToTrash, restore,
       deleteForever, movePage, duplicatePage, refreshTrash, refreshPages,
       searchOpen, setSearchOpen, moveTarget, setMoveTarget, renaming, setRenaming,
     }),
-    [pages, trash, loaded, createPage, patchLocal, updatePage, toggleFavorite, moveToTrash, restore,
+    [pages, trash, loaded, createPage, createDatabase, patchLocal, updatePage, toggleFavorite, moveToTrash, restore,
       deleteForever, movePage, duplicatePage, refreshTrash, refreshPages, searchOpen, moveTarget, renaming],
   );
 

@@ -12,7 +12,7 @@ import {
   type DragMoveEvent,
   type DragStartEvent,
 } from "@dnd-kit/core";
-import { ChevronRight, Home, MoreHorizontal, Moon, Plus, Search, SquarePen, Trash2, Undo2, X } from "lucide-react";
+import { ChevronRight, Home, Table2, MoreHorizontal, Moon, Plus, Search, SquarePen, Trash2, Undo2, X } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
@@ -141,14 +141,14 @@ function SidebarNode({
         {renaming === page.id ? (
           <>
             <span className="flex size-5 shrink-0 items-center justify-center">
-              <PageIcon icon={page.icon} />
+              <PageIcon icon={page.icon} kind={page.kind} />
             </span>
             <RenameInput page={page} onDone={() => setRenaming(null)} />
           </>
         ) : (
           <Link href={`/${page.id}`} draggable={false} className="flex min-w-0 flex-1 items-center gap-1.5 self-stretch">
             <span className="flex size-5 shrink-0 items-center justify-center">
-              <PageIcon icon={page.icon} />
+              <PageIcon icon={page.icon} kind={page.kind} />
             </span>
             <span className="truncate">{page.title || t.untitled}</span>
           </Link>
@@ -203,7 +203,7 @@ function FavoriteRow({ page, active }: { page: TreePage; active: boolean }) {
         data-testid="favorite-page"
       >
         <span className="flex size-5 shrink-0 items-center justify-center">
-          <PageIcon icon={page.icon} />
+          <PageIcon icon={page.icon} kind={page.kind} />
         </span>
         <span className="truncate">{page.title || t.untitled}</span>
       </Link>
@@ -269,7 +269,7 @@ function ThemeToggle() {
 }
 
 export function Sidebar() {
-  const { pages, loaded, createPage, movePage, setSearchOpen } = useWorkspace();
+  const { pages, loaded, createPage, createDatabase, movePage, setSearchOpen } = useWorkspace();
   const params = useParams<{ pageId?: string }>();
   const router = useRouter();
   const activeId = params.pageId ?? null;
@@ -288,6 +288,7 @@ export function Sidebar() {
   const roots = childrenOf(pages, null);
   const favorites = pages.filter((p) => p.isFavorite);
   const newRootPage = async () => router.push(`/${await createPage(null)}`);
+  const newRootDatabase = async () => router.push(`/${await createDatabase(null)}`);
 
   // Descendientes de la página arrastrada: no son destinos válidos.
   const blocked = useMemo(() => {
@@ -375,6 +376,16 @@ export function Sidebar() {
         <section>
           <div className="group/h flex items-center justify-between px-[8px] py-1">
             <h2 className="text-[12px] font-medium text-ink-3">{t.pages}</h2>
+            <div className="flex items-center gap-0.5">
+            <button
+              aria-label={t.newDatabase}
+              title={t.newDatabase}
+              onClick={newRootDatabase}
+              data-testid="new-database"
+              className="flex size-5 items-center justify-center rounded opacity-0 hover:bg-active focus-visible:opacity-100 group-hover/h:opacity-100"
+            >
+              <Table2 size={14} className="text-ink-2" />
+            </button>
             <button
               aria-label={t.addPage}
               title={t.addPage}
@@ -383,6 +394,7 @@ export function Sidebar() {
             >
               <Plus size={14} className="text-ink-2" />
             </button>
+            </div>
           </div>
           <DndContext
             sensors={sensors}

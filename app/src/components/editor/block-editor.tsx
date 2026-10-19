@@ -13,6 +13,7 @@ import StarterKit from "@tiptap/starter-kit";
 import { useEffect } from "react";
 import { t } from "@/lib/strings";
 import { BlockHandle } from "./block-handle";
+import { DatabaseBlock, NodaraContext } from "./database-node";
 import { FormatMenu } from "./format-menu";
 import { SlashCommand } from "./slash-extension";
 import { SlashMenu, useSlashBridge } from "./slash-menu";
@@ -20,11 +21,14 @@ import { SlashMenu, useSlashBridge } from "./slash-menu";
 export type DocJson = JSONContent & { type: "doc" };
 
 export function BlockEditor({
+  pageId,
   initial,
   editable,
   onChange,
   onReady,
 }: {
+  /** Página que contiene el editor (para crear bases de datos integradas). */
+  pageId?: string;
   initial: DocJson | null;
   editable: boolean;
   onChange: (doc: DocJson) => void;
@@ -52,6 +56,8 @@ export function BlockEditor({
       Placeholder.configure({
         placeholder: ({ node }) => (node.type.name === "detailsSummary" ? t.toggleSummary : t.editorPlaceholder),
       }),
+      NodaraContext.configure({ pageId: pageId ?? null }),
+      DatabaseBlock,
       SlashCommand.configure({ bridge }),
     ],
     editorProps: { attributes: { class: "nd-editor", "aria-label": t.pageContent, "data-testid": "editor" } },
