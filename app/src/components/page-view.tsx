@@ -15,6 +15,8 @@ import { AccessContext, type AccessLevel } from "./access-context";
 import { hardNavigate, useAuth } from "./auth-provider";
 import type { MentionMember } from "./editor/mention-menu";
 import { CommentsPanel } from "./comments-panel";
+import { AddCoverButton, PageCover } from "./page-cover";
+import type { PageSettings } from "./page-menu";
 import { Topbar, type SaveState } from "./topbar";
 import { useWorkspace } from "./workspace-provider";
 
@@ -29,6 +31,12 @@ type Loaded = {
   content: unknown;
   level: AccessLevel;
   scope: string;
+  cover: string | null;
+  fontStyle: PageSettings["fontStyle"];
+  smallText: boolean;
+  fullWidth: boolean;
+  locked: boolean;
+  canUnlock: boolean;
 };
 type Pending = { title?: string; content?: DocJson };
 
@@ -156,9 +164,25 @@ export function PageView({ pageId }: { pageId: string }) {
     const res = await fetch(`/api/pages/${pageId}`);
     if (res.ok) {
       const row: Loaded = await res.json();
-      setPage((p) => (p ? { ...p, level: row.level, scope: row.scope } : p));
+      setPage((p) => (p ? { ...p, level: row.level, scope: row.scope, locked: row.locked, canUnlock: row.canUnlock } : p));
     }
   }, [pageId]);
+
+  // Cuenta una visita (analíticas de página) al abrirla.
+  useEffect(() => {
+    void fetch(`/api/pages/${pageId}/analytics`, { method: "POST", keepalive: true }).catch(() => {});
+  }, [pageId]);
+
+  /** Cambia un ajuste de página (tipografía, ancho, bloqueo, portada): se ve al instante y se guarda en el servidor. */
+  const patchSettings = async (patch: Partial<PageSettings> & { cover?: string | null }) => {
+    setPage((p) => (p ? { ...p, ...patch } : p));
+    const res = await fetch(`/api/pages/${pageId}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(patch) });
+    if (res.ok) {
+      const row: Loaded = await res.json();
+      setPage((p) => (p ? { ...p, level: row.level, canUnlock: row.canUnlock, locked: row.locked, cover: row.cover, fontStyle: row.fontStyle, smallText: row.smallText, fullWidth: row.fullWidth } : p));
+    } else await reloadAccess();
+  };
+
 
   // Autoajuste de altura del título.
   useLayoutEffect(() => {
@@ -205,7 +229,7 @@ export function PageView({ pageId }: { pageId: string }) {
 
   return (
     <AccessContext.Provider value={{ level: page.level }}>
-      <Topbar onToggleComments={() => setCommentsOpen((o) => !o)} commentsOpen={commentsOpen} pageId={pageId} saveState={effectiveSave} presence={presence.map((p) => p.user)} offline={offline} level={page.level} scope={page.scope} onAccessChanged={reloadAccess} record={isRecord ? { id: pageId, title, icon, parentId: page.parentId } : undefined} />
+      <Topbar onToggleComments={() => setCommentsOpen((o) => !o)} commentsOpen={commentsOpen} settings={{ fontStyle: page.fontStyle, smallText: page.smallText, fullWidth: page.fullWidth, locked: page.locked }} onSettings={patchSettings} canUnlock={page.canUnlock} isDatabase={isDatabase} collectionId={dbId} title={title} pageId={pageId} saveState={effectiveSave} presence={presence.map((p) => p.user)} offline={offline} level={page.level} scope={page.scope} onAccessChanged={reloadAccess} record={isRecord ? { id: pageId, title, icon, parentId: page.parentId } : undefined} />
       {inTrash && (
         <div role="alert" className="flex items-center gap-3 bg-[#fdebec] px-4 py-2 text-[14px] text-[#5d1715]">
           {t.inTrashBanner}
@@ -248,6 +272,7 @@ export function PageView({ pageId }: { pageId: string }) {
       )}
       <div
         className="nd-scroll flex-1 overflow-y-auto"
+        data-testid="page-scroll"
         onClick={(e) => {
           const el = (e.target as HTMLElement).closest<HTMLElement>("[data-thread-id]");
           if (el) {
@@ -256,7 +281,14 @@ export function PageView({ pageId }: { pageId: string }) {
           }
         }}
       >
-        <div className={`mx-auto w-full px-12 pt-[84px] max-[900px]:px-6 ${isDatabase ? "max-w-[1100px]" : "max-w-[816px]"}`}>
+        <PageCover cover={page.cover} canEdit={canEdit} onChange={(cover) => void patchSettings({ cover })} />
+        <div
+          data-testid="page-body"
+          data-font={page.fontStyle}
+          data-small={page.smallText}
+          data-wide={page.fullWidth}
+          className={`nd-page mx-auto w-full px-12 max-[900px]:px-6 ${page.cover ? "pt-8" : "pt-[84px]"} ${page.fullWidth ? "max-w-none px-24 max-[900px]:px-6" : isDatabase ? "max-w-[1100px]" : "max-w-[816px]"}`}
+        >
           <div className="group/icon relative">
             {icon ? (
               <button
@@ -278,6 +310,7 @@ export function PageView({ pageId }: { pageId: string }) {
                 </button>
               )
             )}
+            {!page.cover && canEdit && <AddCoverButton onChange={(cover) => void patchSettings({ cover })} />}
             {pickerOpen && (
               <EmojiPicker
                 onClose={() => setPickerOpen(false)}

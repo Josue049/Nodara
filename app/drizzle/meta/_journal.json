@@ -36,6 +36,13 @@
       "when": 1792374486935,
       "tag": "0004_collaboration",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1792380461289,
+      "tag": "0005_page_settings_templates_audit",
+      "breakpoints": true
     }
   ]
 }

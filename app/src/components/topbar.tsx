@@ -5,8 +5,11 @@ import Link from "next/link";
 import { useRef, useState } from "react";
 import { t } from "@/lib/strings";
 import { pathTo } from "@/lib/tree";
+import { SidebarToggle } from "./app-shell";
 import { PageIcon } from "./page-icon";
 import { anchorOf, MenuRow, Popover, type Anchor } from "./database/popover";
+import { AnalyticsPanel } from "./analytics-panel";
+import { PageMenu, type PageSettings } from "./page-menu";
 import { ShareDialog } from "./share-dialog";
 import { useWorkspace } from "./workspace-provider";
 import { VersionHistory } from "./version-history";
@@ -26,7 +29,19 @@ export function Topbar({
   offline = false,
   onToggleComments,
   commentsOpen = false,
+  settings,
+  onSettings,
+  canUnlock = false,
+  isDatabase = false,
+  collectionId = null,
+  title = "",
 }: {
+  settings?: PageSettings;
+  onSettings?: (patch: Partial<PageSettings>) => void;
+  canUnlock?: boolean;
+  isDatabase?: boolean;
+  collectionId?: string | null;
+  title?: string;
   onToggleComments?: () => void;
   commentsOpen?: boolean;
   pageId: string;
@@ -45,6 +60,7 @@ export function Topbar({
   const [share, setShare] = useState<Anchor | null>(null);
   const [more, setMore] = useState<Anchor | null>(null);
   const [history, setHistory] = useState(false);
+  const [analytics, setAnalytics] = useState(false);
   const [copied, setCopied] = useState(false);
   const shareBtn = useRef<HTMLButtonElement>(null);
   // Los registros de bases de datos no están en el árbol: la ruta es la de su base más el propio registro.
@@ -58,6 +74,7 @@ export function Topbar({
 
   return (
     <header className="flex h-[var(--topbar-h)] shrink-0 items-center gap-2 px-3 text-[14px]">
+      <SidebarToggle />
       <nav aria-label="Ruta" className="flex min-w-0 items-center gap-1 text-ink-2">
         {trail.map((p, i) => (
           <span key={p.id} className="flex min-w-0 items-center gap-1">
@@ -75,10 +92,16 @@ export function Topbar({
           {scope === "workspace" ? "Espacio de equipo" : "Privada"}
         </span>
       )}
-      {!canEdit && (
-        <span className="rounded bg-hover px-1.5 text-[12px] text-ink-2" data-testid="readonly-badge">
-          {level === "comment" ? "Solo comentar" : "Solo lectura"}
+      {settings?.locked ? (
+        <span className="flex items-center gap-1 rounded bg-hover px-1.5 text-[12px] text-ink-2" data-testid="locked-badge">
+          <Lock size={12} /> Bloqueada
         </span>
+      ) : (
+        !canEdit && (
+          <span className="rounded bg-hover px-1.5 text-[12px] text-ink-2" data-testid="readonly-badge">
+            {level === "comment" ? "Solo comentar" : "Solo lectura"}
+          </span>
+        )
       )}
       <div className="ml-auto flex items-center gap-1">
         {offline && (
@@ -162,12 +185,29 @@ export function Topbar({
           onAccessChanged?.();
         }} />}
       {more && (
-        <Popover anchor={more} onClose={() => setMore(null)} label={t.more} testId="page-more-menu" width={240} align="right">
-          <MenuRow icon={<History size={16} />} onClick={() => (setMore(null), setHistory(true))} testId="open-history">
-            {t.versionHistory}
-          </MenuRow>
+        <Popover anchor={more} onClose={() => setMore(null)} label={t.more} testId="page-more-menu" width={264} align="right">
+          {settings && onSettings ? (
+            <PageMenu
+              pageId={pageId}
+              title={title}
+              settings={settings}
+              canEdit={canEdit}
+              canUnlock={canUnlock}
+              isDatabase={isDatabase}
+              collectionId={collectionId}
+              onSettings={onSettings}
+              onHistory={() => (setMore(null), setHistory(true))}
+              onAnalytics={() => (setMore(null), setAnalytics(true))}
+              onClose={() => setMore(null)}
+            />
+          ) : (
+            <MenuRow icon={<History size={16} />} onClick={() => (setMore(null), setHistory(true))} testId="open-history">
+              {t.versionHistory}
+            </MenuRow>
+          )}
         </Popover>
       )}
+      {analytics && <AnalyticsPanel pageId={pageId} onClose={() => setAnalytics(false)} />}
       {history && <VersionHistory pageId={pageId} canRestore={canEdit} onClose={() => setHistory(false)} />}
     </header>
   );

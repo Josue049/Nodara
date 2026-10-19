@@ -19,4 +19,7 @@ export const TABLE_ORDER = [
   "page_ydocs",
   "comments",
   "notifications",
+  "page_templates",
+  "audit_log",
+  "page_views",
 ];

@@ -16,6 +16,11 @@ export const updatePageSchema = z.object({
   parentId: z.uuid().nullable().optional(),
   position: z.number().finite().optional(),
   content: z.looseObject({ type: z.literal("doc") }).optional(),
+  cover: z.string().max(500).nullable().optional(),
+  fontStyle: z.enum(["sans", "serif", "mono"]).optional(),
+  smallText: z.boolean().optional(),
+  fullWidth: z.boolean().optional(),
+  locked: z.boolean().optional(),
 });
 
 // ── Bases de datos ───────────────────────────────────────────────────

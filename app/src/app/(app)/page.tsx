@@ -3,6 +3,7 @@
 import { Plus } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { SidebarToggle } from "@/components/app-shell";
 import { PageIcon } from "@/components/page-icon";
 import { useWorkspace } from "@/components/workspace-provider";
 import { t } from "@/lib/strings";
@@ -13,8 +14,12 @@ export default function HomePage() {
   const empty = loaded && pages.length === 0;
 
   return (
+    <>
+    <div className="flex h-[var(--topbar-h)] shrink-0 items-center px-3">
+      <SidebarToggle />
+    </div>
     <div className="nd-scroll flex-1 overflow-y-auto">
-      <div className="mx-auto w-full max-w-[708px] px-6 pt-24">
+      <div className="mx-auto w-full max-w-[708px] px-6 pt-12">
         <h1 className="text-[32px] font-bold leading-tight">{t.welcome}</h1>
         {empty ? (
           <div className="mt-10 text-ink-2">
@@ -44,5 +49,6 @@ export default function HomePage() {
         )}
       </div>
     </div>
+    </>
   );
 }

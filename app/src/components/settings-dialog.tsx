@@ -9,7 +9,7 @@ type Role = WorkspaceInfo["role"];
 type Member = { userId: string; name: string; email: string; avatarColor: string; role: Role };
 type Pending = { id: string; email: string; role: Role; expiresAt: string };
 
-export type SettingsTab = "account" | "workspace" | "members";
+export type SettingsTab = "account" | "workspace" | "members" | "audit";
 
 const ROLE_LABELS: Record<Role, string> = { owner: "Propietario", admin: "Administrador", member: "Miembro", guest: "Invitado" };
 const field = "h-9 rounded-md border border-line bg-transparent px-2.5 outline-none focus:border-accent";
@@ -88,6 +88,82 @@ function AccountTab() {
   );
 }
 
+
+type AuditRow = { id: string; action: string; targetId: string | null; detail: string; createdAt: string; actorName: string | null; actorEmail: string | null };
+const AUDIT_LABELS: Record<string, string> = {
+  "page.trash": "Página enviada a la papelera",
+  "page.delete": "Página eliminada definitivamente",
+  "page.share": "Página compartida con una persona",
+  "page.permission": "Permiso de página cambiado",
+  "page.scope": "Acceso general de página cambiado",
+  "page.publish": "Página publicada en la web",
+  "page.unpublish": "Publicación web retirada",
+  "page.export": "Página exportada",
+  "page.lock": "Página bloqueada o desbloqueada",
+  "page.restore_version": "Versión restaurada",
+  "member.invite": "Invitación creada",
+  "member.role": "Rol de miembro cambiado",
+  "member.remove": "Miembro eliminado",
+  "workspace.export": "Copia de seguridad exportada",
+  import: "Contenido importado",
+};
+const auditDate = new Intl.DateTimeFormat("es-ES", { dateStyle: "medium", timeStyle: "short" });
+
+/** Registro de auditoría del espacio de trabajo (propietarios y administradores). */
+function AuditTab() {
+  const { workspace } = useAuth();
+  const [rows, setRows] = useState<AuditRow[] | null>(null);
+  const [action, setAction] = useState("");
+  const [error, setError] = useState("");
+  useEffect(() => {
+    let alive = true;
+    call<AuditRow[]>(`/api/workspaces/${workspace.id}/audit?limit=200${action ? `&action=${encodeURIComponent(action)}` : ""}`)
+      .then((r) => alive && setRows(r))
+      .catch((e) => alive && setError(e.message));
+    return () => {
+      alive = false;
+    };
+  }, [workspace.id, action]);
+  return (
+    <div data-testid="settings-audit">
+      <h2 className="mb-1 text-[18px] font-semibold">Registro de auditoría</h2>
+      <p className="mb-3 text-ink-2">Cambios de seguridad y administración: quién compartió, publicó, exportó o eliminó contenido, y cambios de miembros.</p>
+      <div className="mb-3 flex flex-wrap items-center gap-2">
+        <select value={action} onChange={(e) => setAction(e.target.value)} aria-label="Filtrar por acción" className={field}>
+          <option value="">Todas las acciones</option>
+          {Object.entries(AUDIT_LABELS).map(([k, v]) => (
+            <option key={k} value={k}>
+              {v}
+            </option>
+          ))}
+        </select>
+        <a href={`/api/workspaces/${workspace.id}/audit?format=csv&limit=1000`} download data-testid="audit-csv" className="flex h-9 items-center rounded-md border border-line px-3 hover:bg-hover">
+          Descargar CSV
+        </a>
+      </div>
+      {error && (
+        <p role="alert" className="text-danger">
+          {error}
+        </p>
+      )}
+      {rows && rows.length === 0 && <p className="text-ink-3">Todavía no hay eventos.</p>}
+      <ul className="flex flex-col" data-testid="audit-list">
+        {(rows ?? []).map((r) => (
+          <li key={r.id} data-testid="audit-row" className="border-b border-line py-2 last:border-0">
+            <p>
+              <span className="font-medium">{r.actorName ?? "Alguien"}</span> · {AUDIT_LABELS[r.action] ?? r.action}
+            </p>
+            <p className="text-[13px] text-ink-3">
+              {auditDate.format(new Date(r.createdAt))}
+              {r.detail ? ` · ${r.detail}` : ""}
+            </p>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 function WorkspaceTab() {
   const { workspace, refresh } = useAuth();
   const [name, setName] = useState(workspace.name);
@@ -111,6 +187,15 @@ function WorkspaceTab() {
             Guardar
           </button>
         </div>
+      )}
+      {admin && (
+        <section className="border-t border-line pt-4">
+          <h3 className="mb-1 font-semibold">Copia de seguridad</h3>
+          <p className="mb-2 text-[14px] text-ink-2">Descarga todas las páginas y bases de datos del espacio (sin la papelera) en un archivo JSON.</p>
+          <a href={`/api/workspaces/${workspace.id}/export`} download data-testid="export-workspace" className="inline-flex h-8 items-center rounded-md border border-line px-3 hover:bg-hover">
+            Exportar el espacio de trabajo
+          </a>
+        </section>
       )}
       {workspace.role === "owner" && (
         <section className="border-t border-line pt-4">
@@ -286,6 +371,7 @@ function MembersTab() {
 }
 
 export function SettingsDialog({ tab, onTab, onClose }: { tab: SettingsTab; onTab: (t: SettingsTab) => void; onClose: () => void }) {
+  const { workspace } = useAuth();
   useEffect(() => {
     const key = (e: KeyboardEvent) => e.key === "Escape" && onClose();
     document.addEventListener("keydown", key);
@@ -295,6 +381,7 @@ export function SettingsDialog({ tab, onTab, onClose }: { tab: SettingsTab; onTa
     ["account", "Mi cuenta"],
     ["workspace", "Espacio de trabajo"],
     ["members", "Miembros"],
+    ...((workspace.role === "owner" || workspace.role === "admin" ? [["audit", "Auditoría"]] : []) as [SettingsTab, string][]),
   ];
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/30" onMouseDown={onClose}>
@@ -320,6 +407,7 @@ export function SettingsDialog({ tab, onTab, onClose }: { tab: SettingsTab; onTa
           {tab === "account" && <AccountTab />}
           {tab === "workspace" && <WorkspaceTab />}
           {tab === "members" && <MembersTab />}
+          {tab === "audit" && <AuditTab />}
         </div>
       </div>
     </div>

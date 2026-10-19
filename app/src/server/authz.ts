@@ -32,15 +32,16 @@ export type ChainPage = {
   scope: Scope | null;
   collectionId: string | null;
   deletedAt: Date | null;
+  locked: boolean;
 };
 
 /** La página y sus ancestros, de la propia página hacia la raíz. */
 export async function pageChain(db: Db, pageId: string): Promise<ChainPage[]> {
   const res = (await db.execute(sql`
     WITH RECURSIVE chain AS (
-      SELECT id, parent_id, workspace_id, creator_id, scope, collection_id, deleted_at, 0 AS depth FROM pages WHERE id = ${pageId}
+      SELECT id, parent_id, workspace_id, creator_id, scope, collection_id, deleted_at, locked, 0 AS depth FROM pages WHERE id = ${pageId}
       UNION ALL
-      SELECT p.id, p.parent_id, p.workspace_id, p.creator_id, p.scope, p.collection_id, p.deleted_at, c.depth + 1
+      SELECT p.id, p.parent_id, p.workspace_id, p.creator_id, p.scope, p.collection_id, p.deleted_at, p.locked, c.depth + 1
       FROM pages p JOIN chain c ON p.id = c.parent_id
     )
     SELECT * FROM chain ORDER BY depth
@@ -53,10 +54,12 @@ export async function pageChain(db: Db, pageId: string): Promise<ChainPage[]> {
     scope: ((r.scope as string | null) ?? null) as Scope | null,
     collectionId: (r.collection_id as string | null) ?? null,
     deletedAt: r.deleted_at ? new Date(r.deleted_at as string) : null,
+    locked: r.locked === true,
   }));
 }
 
-export type PageAccess = { level: Level; role: Role | null; workspaceId: string; page: ChainPage; scope: Scope };
+/** `level` ya descuenta el bloqueo de la página; `canUnlock` indica si la persona podría editarla sin él. */
+export type PageAccess = { level: Level; role: Role | null; workspaceId: string; page: ChainPage; scope: Scope; locked: boolean; canUnlock: boolean };
 
 /** Nivel efectivo de un usuario sobre una página. `null` si la página no existe. */
 export async function pageAccess(db: Db, userId: string, pageId: string): Promise<PageAccess | null> {
@@ -77,7 +80,9 @@ export async function pageAccess(db: Db, userId: string, pageId: string): Promis
   );
   // Sin pertenecer al espacio (ni como invitado) no hay acceso por alcance; los permisos explícitos solo valen a miembros/invitados.
   const level = role ? maxLevel(explicit, effScope === "workspace" ? scopeLevel(role) : "none") : "none";
-  return { level, role, workspaceId, page, scope: effScope };
+  // Una página bloqueada se comporta como de solo comentarios para todos hasta que alguien con permiso de edición la desbloquea.
+  const locked = page.locked && atLeast(level, "edit");
+  return { level: locked ? "comment" : level, role, workspaceId, page, scope: effScope, locked: page.locked, canUnlock: atLeast(level, "edit") };
 }
 
 /** Exige un nivel mínimo. 404 si no hay ningún acceso (no revela la existencia), 403 si el nivel es insuficiente. */

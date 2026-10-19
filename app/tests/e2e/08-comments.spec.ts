@@ -45,7 +45,7 @@ test.describe("comentarios y notificaciones", () => {
     await expect(page.getByTestId("thread")).toHaveCount(1);
   });
 
-  test("una mención llega a la bandeja de la otra persona y se marca como leída", async ({ page, browser, request }) => {
+  test("una mención llega a la bandeja de la otra persona y se marca como leída", async ({ browser, request }) => {
     const ana = await newUser(browser, "ana@nodara.test", "Ana");
     const doc = await sharedPage(request, "ana@nodara.test", "comment");
     await gotoReady(ana.page, "/");

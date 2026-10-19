@@ -296,3 +296,33 @@ body {
 .nd-editor .nd-column { flex: 1 1 0; min-width: 0; }
 @media (max-width: 700px) { .nd-editor .nd-columns { flex-direction: column; gap: 8px; } }
 .nd-editor .ProseMirror-selectednode > .nd-image-view, .nd-editor .ProseMirror-selectednode.nd-file-view { outline: 2px solid var(--accent); }
+
+/* Animaciones sutiles (se desactivan con «reducir movimiento») */
+@keyframes nd-fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes nd-pop-in { from { opacity: 0; transform: translateY(6px) scale(0.98); } to { opacity: 1; transform: none; } }
+.nd-fade { animation: nd-fade-in 0.15s ease-out; }
+.nd-pop { animation: nd-pop-in 0.18s ease-out; }
+.nd-sidebar-wrap { transition: transform 0.2s ease; }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; scroll-behavior: auto !important; }
+}
+
+/* Foco visible para quien navega con teclado */
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.nd-editor :focus-visible, textarea:focus-visible, input:focus-visible { outline: none; }
+
+/* Estilo de página: tipografía y tamaño de texto */
+.nd-page[data-font="serif"] { font-family: ui-serif, Georgia, "Times New Roman", serif; }
+.nd-page[data-font="mono"] { font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace; }
+.nd-page[data-small="true"] .nd-editor { font-size: 14px; }
+.nd-page[data-small="true"] .nd-editor h1 { font-size: 1.7em; }
+
+/* Impresión / PDF: solo el contenido de la página */
+@media print {
+  html, body { height: auto !important; overflow: visible !important; background: #fff !important; }
+  [data-sidebar], [data-sidebar] > *, main { overflow: visible !important; height: auto !important; }
+  .nd-sidebar-wrap, header, [data-testid="comments-panel"], [data-testid="inbox-btn"], .nd-no-print, [data-testid="format-menu"] { display: none !important; }
+  .nd-scroll { overflow: visible !important; }
+  [data-testid="page-body"] { max-width: none !important; padding: 0 !important; }
+  .nd-editor a { text-decoration: underline; }
+}

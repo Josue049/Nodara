@@ -96,7 +96,7 @@ export async function createPage(
 export async function updatePage(
   db: Db,
   id: string,
-  patch: Partial<Pick<PageRow, "title" | "icon" | "isFavorite" | "parentId" | "position" | "content">>,
+  patch: Partial<Pick<PageRow, "title" | "icon" | "isFavorite" | "parentId" | "position" | "content" | "cover" | "fontStyle" | "smallText" | "fullWidth" | "locked">>,
 ): Promise<PageRow> {
   if (patch.parentId !== undefined && patch.parentId !== null) {
     if (patch.parentId === id || (await subtreeIds(db, id)).includes(patch.parentId)) {

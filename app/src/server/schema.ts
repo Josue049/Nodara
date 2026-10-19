@@ -36,6 +36,14 @@ export const pages = pgTable(
     creatorId: uuid("creator_id").references((): AnyPgColumn => users.id, { onDelete: "set null" }),
     /** «private» | «workspace»; nulo = hereda del padre (la raíz sin valor se trata como privada). */
     scope: text("scope"),
+    /** Portada: color/degradado predefinido («color:azul»), imagen subida («/api/files/…») o URL. Nulo = sin portada. */
+    cover: text("cover"),
+    /** Tipografía de la página: «sans» | «serif» | «mono». */
+    fontStyle: text("font_style").notNull().default("sans"),
+    smallText: boolean("small_text").notNull().default(false),
+    fullWidth: boolean("full_width").notNull().default(false),
+    /** Página bloqueada: nadie la edita hasta desbloquearla. */
+    locked: boolean("locked").notNull().default(false),
     position: doublePrecision("position").notNull().default(0),
     isFavorite: boolean("is_favorite").notNull().default(false),
     deletedAt: timestamp("deleted_at", { withTimezone: true }),
@@ -273,4 +281,48 @@ export const notifications = pgTable(
     readAt: timestamp("read_at", { withTimezone: true }),
   },
   (t) => [index("notifications_user_idx").on(t.userId, t.createdAt)],
+);
+
+/** Plantillas de página del espacio de trabajo (las integradas viven en el código). */
+export const pageTemplates = pgTable(
+  "page_templates",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    workspaceId: uuid("workspace_id").notNull().references((): AnyPgColumn => workspaces.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    icon: text("icon"),
+    content: jsonb("content").notNull().default({ type: "doc", content: [] }),
+    createdBy: uuid("created_by").references(() => users.id, { onDelete: "set null" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("page_templates_ws_idx").on(t.workspaceId)],
+);
+
+/** Registro de auditoría de seguridad y administración del espacio de trabajo. */
+export const auditLog = pgTable(
+  "audit_log",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    workspaceId: uuid("workspace_id").notNull().references((): AnyPgColumn => workspaces.id, { onDelete: "cascade" }),
+    actorId: uuid("actor_id").references(() => users.id, { onDelete: "set null" }),
+    /** p. ej. page.delete, page.share, member.role, workspace.export */
+    action: text("action").notNull(),
+    targetId: text("target_id"),
+    detail: text("detail").notNull().default(""),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("audit_log_ws_idx").on(t.workspaceId, t.createdAt)],
+);
+
+/** Visitas a páginas (un registro por persona y día) para las analíticas de página. */
+export const pageViews = pgTable(
+  "page_views",
+  {
+    pageId: uuid("page_id").notNull().references((): AnyPgColumn => pages.id, { onDelete: "cascade" }),
+    userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    day: text("day").notNull(),
+    count: integer("count").notNull().default(1),
+    lastViewedAt: timestamp("last_viewed_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.pageId, t.userId, t.day] })],
 );

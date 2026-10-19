@@ -1,6 +1,8 @@
 "use client";
 
+import { ImportDialog } from "./import-dialog";
 import { Inbox } from "./inbox";
+import { TemplatesDialog } from "./templates-dialog";
 import {
   DndContext,
   DragOverlay,
@@ -13,7 +15,7 @@ import {
   type DragMoveEvent,
   type DragStartEvent,
 } from "@dnd-kit/core";
-import { ChevronRight, Home, Table2, MoreHorizontal, Moon, Plus, Search, SquarePen, Trash2, Undo2, X } from "lucide-react";
+import { ChevronRight, Home, LayoutTemplate, Moon, MoreHorizontal, Plus, Search, SquarePen, Table2, Trash2, Undo2, Upload, X } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
@@ -278,6 +280,8 @@ export function Sidebar() {
   const activeId = params.pageId ?? null;
   const { expanded, toggle } = useExpanded();
   const [trashOpen, setTrashOpen] = useState(false);
+  const [templatesOpen, setTemplatesOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
   const [drop, setDrop] = useState<Drop>(null);
   const [dragging, setDragging] = useState<TreePage | null>(null);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
@@ -346,7 +350,7 @@ export function Sidebar() {
   };
 
   return (
-    <aside className="relative flex h-full w-[var(--sidebar-w)] shrink-0 flex-col bg-sidebar text-ink" aria-label={t.sidebar}>
+    <aside className="relative flex h-full w-[var(--sidebar-w)] max-w-[85vw] shrink-0 flex-col bg-sidebar text-ink" aria-label={t.sidebar}>
       <div className="flex h-[45px] items-center gap-2 px-3">
         <WorkspaceMenu />
         <button
@@ -463,6 +467,14 @@ export function Sidebar() {
       </nav>
 
       <div className="border-t border-line px-[8px] py-1.5">
+        <button onClick={() => setTemplatesOpen(true)} className={`${rowBase} w-full pl-[8px] font-normal`} data-testid="open-templates">
+          <LayoutTemplate size={16} className="mr-1.5" />
+          Plantillas
+        </button>
+        <button onClick={() => setImportOpen(true)} className={`${rowBase} w-full pl-[8px] font-normal`} data-testid="open-import">
+          <Upload size={16} className="mr-1.5" />
+          Importar
+        </button>
         <ThemeToggle />
         <button
           onClick={() => setTrashOpen((o) => !o)}
@@ -475,6 +487,8 @@ export function Sidebar() {
         </button>
       </div>
       {trashOpen && <TrashPanel onClose={() => setTrashOpen(false)} />}
+      {templatesOpen && <TemplatesDialog onClose={() => setTemplatesOpen(false)} />}
+      {importOpen && <ImportDialog onClose={() => setImportOpen(false)} />}
     </aside>
   );
 }
