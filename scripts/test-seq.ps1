@@ -7,6 +7,8 @@ $node = "$global:Root\tools\node\node.exe"
 $log = "$global:Root\.data\test-seq.log"
 New-Item -ItemType Directory -Force (Split-Path $log) | Out-Null
 "== $(Get-Date -Format s) ==" | Set-Content $log
+$Only = @($Only | ForEach-Object { $_ -split "," } | Where-Object { $_ })   # con -File, «09,02» llega como una sola cadena
+$ran = 0
 $results = [ordered]@{}
 
 function Step($name, [scriptblock]$run) {
@@ -42,9 +44,11 @@ if ($All) {
   Cleanup-Children
 } else { foreach ($f in Get-ChildItem tests\e2e\*.spec.ts) {
   if ($Only.Count -gt 0 -and -not ($Only | Where-Object { $f.Name -like "$_*" })) { continue }
+  $ran++
   if (-not (Step "e2e $($f.Name)" { & $node node_modules\@playwright\test\cli.js test "tests/e2e/$($f.Name)" --workers=1 --reporter=line })) { $failed = $true }
   Cleanup-Children
 } }
+if (-not $All -and $ran -eq 0) { Write-Host "ERROR: el filtro -Only no coincide con ningún archivo E2E"; "[e2e] NINGUNO EJECUTADO" | Add-Content $log; exit 1 }
 $results.GetEnumerator() | ForEach-Object { "{0,-34} {1}" -f $_.Key, $_.Value } | Tee-Object -FilePath $log -Append | Out-Host
 if ($failed) { exit 1 }
 

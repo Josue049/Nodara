@@ -2,7 +2,7 @@
  * Definición del esquema del editor, sin dependencias de React ni del DOM: la usan el cliente (TipTap) y el servidor
  * (conversión entre JSON de ProseMirror y documentos Yjs para la edición colaborativa).
  */
-import { mergeAttributes, Mark, Node, type Extensions } from "@tiptap/core";
+import { mergeAttributes, Mark, Node, type AnyExtension, type Extensions } from "@tiptap/core";
 import { Details, DetailsContent, DetailsSummary } from "@tiptap/extension-details";
 import { Highlight } from "@tiptap/extension-highlight";
 import Mention from "@tiptap/extension-mention";
@@ -223,13 +223,15 @@ export const PersonMention = Mention.extend({
  * Extensiones que definen el esquema. `collaborative: true` desactiva el historial propio de ProseMirror
  * (la colaboración usa el historial de Yjs).
  */
-export function schemaExtensions(opts: { collaborative?: boolean } = {}): Extensions {
+export function schemaExtensions(opts: { collaborative?: boolean; /** Sustituye al bloque de código de StarterKit (mismo nombre y atributos) por una versión con resaltado. */ codeBlock?: AnyExtension } = {}): Extensions {
   return [
     StarterKit.configure({
       heading: { levels: [1, 2, 3] },
       link: { openOnClick: false, autolink: true, HTMLAttributes: { rel: "noopener noreferrer nofollow", target: "_blank" } },
       ...(opts.collaborative ? { undoRedo: false } : {}),
+      ...(opts.codeBlock ? { codeBlock: false as const } : {}),
     }),
+    ...(opts.codeBlock ? [opts.codeBlock] : []),
     TextStyle,
     Color,
     Highlight.configure({ multicolor: true }),

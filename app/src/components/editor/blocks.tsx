@@ -3,9 +3,11 @@
 import { Extension, InputRule } from "@tiptap/core";
 import { Plugin } from "@tiptap/pm/state";
 import { NodeViewContent, NodeViewWrapper, ReactNodeViewRenderer, type NodeViewProps } from "@tiptap/react";
+import { CodeBlockLowlight } from "@tiptap/extension-code-block-lowlight";
 import katex from "katex";
 import "katex/dist/katex.min.css";
-import { AlignCenter, AlignLeft, AlignRight, Download, ExternalLink, FileText, Trash2 } from "lucide-react";
+import { common, createLowlight } from "lowlight";
+import { AlignCenter, AlignLeft, AlignRight, Check, Copy, Download, ExternalLink, FileText, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   BookmarkBase,
@@ -472,3 +474,66 @@ export const MediaDrop = Extension.create({
     ];
   },
 });
+
+// ── Bloque de código con resaltado de sintaxis ──
+const lowlight = createLowlight(common);
+export const CODE_LANGUAGES: [string, string][] = [
+  ["", "Automático"],
+  ["plaintext", "Texto sin formato"],
+  ["javascript", "JavaScript"],
+  ["typescript", "TypeScript"],
+  ["python", "Python"],
+  ["java", "Java"],
+  ["csharp", "C#"],
+  ["cpp", "C++"],
+  ["c", "C"],
+  ["go", "Go"],
+  ["rust", "Rust"],
+  ["php", "PHP"],
+  ["ruby", "Ruby"],
+  ["swift", "Swift"],
+  ["kotlin", "Kotlin"],
+  ["sql", "SQL"],
+  ["bash", "Bash"],
+  ["json", "JSON"],
+  ["yaml", "YAML"],
+  ["xml", "HTML / XML"],
+  ["css", "CSS"],
+  ["markdown", "Markdown"],
+];
+
+function CodeView({ node, updateAttributes, editor }: NodeViewProps) {
+  const [copied, setCopied] = useState(false);
+  const language = (node.attrs.language as string | null) ?? "";
+  return (
+    <NodeViewWrapper className="nd-code-block group/code" data-testid="code-block">
+      <div className="nd-code-bar" contentEditable={false}>
+        <select value={language} disabled={!editor.isEditable} aria-label="Lenguaje del código" data-testid="code-language" onChange={(e) => updateAttributes({ language: e.target.value || null })}>
+          {CODE_LANGUAGES.map(([v, label]) => (
+            <option key={v} value={v}>
+              {label}
+            </option>
+          ))}
+          {language && !CODE_LANGUAGES.some(([v]) => v === language) && <option value={language}>{language}</option>}
+        </select>
+        <button
+          type="button"
+          aria-label="Copiar código"
+          data-testid="code-copy"
+          onClick={async () => {
+            await navigator.clipboard?.writeText(node.textContent).catch(() => {});
+            setCopied(true);
+            setTimeout(() => setCopied(false), 1500);
+          }}
+        >
+          {copied ? <Check size={14} /> : <Copy size={14} />}
+          <span>{copied ? "Copiado" : "Copiar"}</span>
+        </button>
+      </div>
+      <pre>
+        <NodeViewContent as={"code" as "div"} className={language ? `language-${language}` : undefined} />
+      </pre>
+    </NodeViewWrapper>
+  );
+}
+export const RichCodeBlock = CodeBlockLowlight.extend({ addNodeView: () => ReactNodeViewRenderer(CodeView) }).configure({ lowlight, defaultLanguage: null });

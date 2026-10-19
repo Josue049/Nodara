@@ -10,7 +10,7 @@ import { schemaExtensions, PersonMention } from "@/lib/editor/schema";
 import type { NodaraProvider } from "@/lib/collab/provider";
 import { t } from "@/lib/strings";
 import { BlockHandle } from "./block-handle";
-import { MediaDrop, nodeViewExtensions } from "./blocks";
+import { MediaDrop, nodeViewExtensions, RichCodeBlock } from "./blocks";
 import { DatabaseBlock, NodaraContext } from "./database-node";
 import { FormatMenu } from "./format-menu";
 import { MentionMenu, mentionSuggestion, useMentionBridge, type MentionMember } from "./mention-menu";
@@ -49,7 +49,7 @@ export function BlockEditor({
     editable,
     content: collab ? undefined : (initial ?? undefined),
     extensions: [
-      ...schemaExtensions({ collaborative: !!collab }).map((e) => {
+      ...schemaExtensions({ collaborative: !!collab, codeBlock: RichCodeBlock }).map((e) => {
         if (e.name === "databaseBlock") return DatabaseBlock;
         if (e.name in nodeViewExtensions) return nodeViewExtensions[e.name as keyof typeof nodeViewExtensions];
         if (e.name === "mention") return PersonMention.configure({ suggestion: mentionSuggestion(members, mention.bridge) });

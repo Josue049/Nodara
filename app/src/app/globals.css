@@ -329,3 +329,24 @@ body {
   [data-testid="page-body"] { max-width: none !important; padding: 0 !important; }
   .nd-editor a { text-decoration: underline; }
 }
+
+/* Bloque de código: barra de lenguaje y resaltado de sintaxis (colores propios de Nodara) */
+.nd-editor .nd-code-block { position: relative; margin: 4px 0; border-radius: 6px; background: var(--pre-bg); }
+.nd-editor .nd-code-block pre { margin: 0; background: none; padding: 32px 16px 16px; }
+.nd-editor .nd-code-bar { position: absolute; top: 4px; left: 8px; right: 8px; display: flex; justify-content: space-between; align-items: center; opacity: 0; transition: opacity 0.15s; }
+.nd-editor .nd-code-block:hover .nd-code-bar, .nd-editor .nd-code-block:focus-within .nd-code-bar { opacity: 1; }
+.nd-editor .nd-code-bar select, .nd-editor .nd-code-bar button { background: none; border: none; border-radius: 4px; font: inherit; font-size: 12px; color: var(--text-secondary); padding: 2px 6px; display: flex; align-items: center; gap: 4px; }
+.nd-editor .nd-code-bar select:hover, .nd-editor .nd-code-bar button:hover { background: var(--bg-hover); }
+.hljs-comment, .hljs-quote { color: #8a8a85; font-style: italic; }
+.hljs-keyword, .hljs-selector-tag, .hljs-literal, .hljs-doctag { color: #a626a4; }
+.hljs-string, .hljs-regexp, .hljs-addition, .hljs-attribute, .hljs-meta .hljs-string { color: #3a7d44; }
+.hljs-number, .hljs-symbol, .hljs-bullet, .hljs-variable, .hljs-template-variable { color: #b35c00; }
+.hljs-title, .hljs-section, .hljs-title.function_, .hljs-built_in, .hljs-type { color: #1a6fbf; }
+.hljs-name, .hljs-tag, .hljs-selector-id, .hljs-selector-class, .hljs-deletion { color: #c4331f; }
+.hljs-emphasis { font-style: italic; } .hljs-strong { font-weight: 700; }
+:root[data-theme="dark"] .hljs-comment, :root[data-theme="dark"] .hljs-quote { color: #8f8f89; }
+:root[data-theme="dark"] .hljs-keyword, :root[data-theme="dark"] .hljs-selector-tag, :root[data-theme="dark"] .hljs-literal, :root[data-theme="dark"] .hljs-doctag { color: #d19ae0; }
+:root[data-theme="dark"] .hljs-string, :root[data-theme="dark"] .hljs-regexp, :root[data-theme="dark"] .hljs-addition, :root[data-theme="dark"] .hljs-attribute { color: #8fcf8f; }
+:root[data-theme="dark"] .hljs-number, :root[data-theme="dark"] .hljs-symbol, :root[data-theme="dark"] .hljs-bullet, :root[data-theme="dark"] .hljs-variable { color: #e5a35a; }
+:root[data-theme="dark"] .hljs-title, :root[data-theme="dark"] .hljs-section, :root[data-theme="dark"] .hljs-built_in, :root[data-theme="dark"] .hljs-type { color: #79b8f2; }
+:root[data-theme="dark"] .hljs-name, :root[data-theme="dark"] .hljs-tag, :root[data-theme="dark"] .hljs-selector-id, :root[data-theme="dark"] .hljs-selector-class { color: #f08a7e; }

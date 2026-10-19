@@ -159,6 +159,25 @@ test.describe("bloques avanzados del editor", () => {
     await expect(page.getByTestId("editor").locator(".nd-column").nth(1)).toContainText("Derecha");
   });
 
+  test("código: elegir lenguaje resalta la sintaxis, se copia y persiste", async ({ page, context }) => {
+    await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+    await openPage(page, "Código");
+    await slash(page, "codigo");
+    await page.keyboard.type("const total = 42; // suma");
+    await page.getByTestId("code-block").hover();
+    await page.getByTestId("code-language").selectOption("javascript");
+    await expect(page.getByTestId("code-block").locator(".hljs-keyword")).toHaveText("const");
+    await expect(page.getByTestId("code-block").locator(".hljs-number")).toHaveText("42");
+    await expect(page.getByTestId("code-block").locator(".hljs-comment")).toContainText("suma");
+    await page.getByTestId("code-copy").click();
+    await expect(page.getByTestId("code-copy")).toContainText("Copiado");
+    expect(await page.evaluate(() => navigator.clipboard.readText())).toBe("const total = 42; // suma");
+    await saved(page);
+    await reload(page);
+    await expect(page.getByTestId("code-language")).toHaveValue("javascript");
+    await expect(page.getByTestId("code-block").locator(".hljs-keyword")).toHaveText("const");
+  });
+
   test("los bloques nuevos se sincronizan entre dos personas", async ({ page, browser, request }) => {
     const ana = await newUser(browser, "ana@nodara.test", "Ana");
     const doc = await apiCreate(request, { title: "Compartida con bloques" });
