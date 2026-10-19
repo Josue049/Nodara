@@ -1,0 +1,21 @@
+# /etc/systemd/system/nodara.service — ejecución sin Docker (Node 22+ y PostgreSQL ya instalados)
+[Unit]
+Description=Nodara
+After=network.target postgresql.service
+
+[Service]
+Type=simple
+User=nodara
+WorkingDirectory=/opt/nodara/app
+EnvironmentFile=/etc/nodara.env
+ExecStart=/usr/bin/node node_modules/next/dist/bin/next start -H 127.0.0.1 -p 3000
+Restart=on-failure
+RestartSec=3
+# Endurecimiento básico
+NoNewPrivileges=true
+ProtectSystem=strict
+ReadWritePaths=/var/lib/nodara
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,31 @@
+# Proxy inverso para Nodara. La edición colaborativa usa Server-Sent Events (SSE): desactiva el buffering.
+server {
+    listen 443 ssl http2;
+    server_name notas.ejemplo.com;
+    ssl_certificate     /etc/letsencrypt/live/notas.ejemplo.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/notas.ejemplo.com/privkey.pem;
+    client_max_body_size 25m;                 # subidas de hasta 20 MB
+
+    location / {
+        proxy_pass http://127.0.0.1:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-Host $host;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-For $remote_addr;
+    }
+
+    # Canal en tiempo real de la edición colaborativa
+    location ~ ^/api/collab/[^/]+/stream$ {
+        proxy_pass http://127.0.0.1:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-Host $host;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header Connection "";
+        proxy_buffering off;
+        proxy_cache off;
+        proxy_read_timeout 1h;
+    }
+}
+server { listen 80; server_name notas.ejemplo.com; return 301 https://$host$request_uri; }

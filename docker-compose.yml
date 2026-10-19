@@ -1,0 +1,36 @@
+# Nodara con PostgreSQL. Copia deploy/.env.example a .env y cambia las contraseñas antes de arrancar.
+services:
+  db:
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: nodara
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?define POSTGRES_PASSWORD en .env}
+      POSTGRES_DB: nodara
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nodara -d nodara"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://nodara:${POSTGRES_PASSWORD}@db:5432/nodara
+      NODARA_UPLOAD_DIR: /data/uploads
+      # Detrás de HTTPS (proxy inverso) marca las cookies como seguras:
+      NODARA_COOKIE_SECURE: ${NODARA_COOKIE_SECURE:-0}
+    ports:
+      - "${NODARA_PORT:-3000}:3000"
+    volumes:
+      - uploads:/data/uploads
+
+volumes:
+  pgdata:
+  uploads:

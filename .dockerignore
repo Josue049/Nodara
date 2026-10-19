@@ -1,0 +1,13 @@
+.git
+.data
+backups
+research
+tools
+docs
+scripts
+app/node_modules
+app/.next
+app/.next-e2e
+app/tests
+app/.env
+**/*.log
