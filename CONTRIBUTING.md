@@ -1,6 +1,6 @@
 # Contribuir a Nodara
 
-¡Gracias por querer ayudar! Nodara es una alternativa open source a Notion hecha desde cero: **no se acepta código, textos ni activos copiados de Notion**. El comportamiento se documenta por observación (ver `research/`), separando *hechos observados* de *hipótesis*.
+¡Gracias por querer ayudar! Nodara está escrito desde cero: **no se acepta código, textos ni activos copiados de otros productos**.
 
 ## Entorno
 - Windows: `.\scripts\setup.ps1` instala un Node portable verificado en `tools/node` y las dependencias. En otros sistemas basta con Node 22.19+ y `cd app && npm ci`.
@@ -14,7 +14,7 @@
 ```
 - Los E2E compilan un build de producción en `app/.next-e2e` con una base desechable y reinician el estado en cada prueba. `/api/test/reset` solo existe con `NODARA_E2E=1` y un token aleatorio.
 - Una ejecución interrumpida **no** es una ejecución aprobada: el script termina con error si algún paso falla o si el filtro no selecciona ninguna prueba.
-- Toda funcionalidad nueva incluye: implementación completa (UI + API + persistencia), pruebas unitarias o E2E, y actualización de `docs/FEATURE_MATRIX.md`.
+- Toda funcionalidad nueva incluye: implementación completa (UI + API + persistencia), pruebas unitarias o E2E, y actualización de la documentación (`README.md`, `docs/`).
 
 ## Estilo
 - Interfaz y mensajes en **español**; los textos compartidos en `app/src/lib/strings.ts`.

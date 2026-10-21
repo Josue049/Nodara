@@ -10,8 +10,6 @@
 
 - [x] **Inicio rediseñado** (2026-10-20) — panel con panorámica, contadores, recientes por visitas reales y cuadrícula de espacios; barra lateral oscura, logo e Inter.
 
-> El plan priorizado tras la auditoría frente a Notion está en [`../ROADMAP.md`](../ROADMAP.md) (con [`../AUDIT_NOTION.md`](../AUDIT_NOTION.md)). La lista siguiente se conserva como histórico.
-
 ## Siguientes pasos (no iniciados)
 - **Escalado horizontal**: bus compartido (Redis o `LISTEN/NOTIFY`) para las salas colaborativas y los límites de intentos.
 - **Correo saliente**: SMTP para verificación de correo, restablecimiento autoservicio y notificaciones por email.
@@ -19,4 +17,4 @@
 - **Bases de datos**: vistas vinculadas, «última edición por», color condicional, gráficos, fórmulas con más funciones, barras de cronograma arrastrables.
 - **Editor**: bloques sincronizados, botones, comentarios en bloques sin selección de texto, importación de Notion (.zip).
 - **Cuentas**: 2FA, SSO (OIDC/SAML), SCIM.
-- **Regresión visual automatizada** contra capturas de referencia de Notion (hoy la comparación es medida por scripts, no por diferencia de píxeles).
+- **Regresión visual automatizada** con capturas de referencia por diferencia de píxeles.

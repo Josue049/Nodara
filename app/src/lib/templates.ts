@@ -1,4 +1,4 @@
-/** Plantillas de página integradas (contenido propio de Nodara; no copiadas de Notion). */
+/** Plantillas de página integradas. */
 import type { DocNode } from "./export/markdown";
 
 const t = (text: string): DocNode => ({ type: "text", text });

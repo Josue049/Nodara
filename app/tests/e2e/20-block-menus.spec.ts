@@ -1,7 +1,7 @@
 import type { Page } from "@playwright/test";
 import { apiCreate, expect, gotoReady, test } from "./fixtures";
 
-// Menú «/» y menú del asa de bloque, comparados con Notion (research/features/006-notion-menus.md).
+// Menú «/» y menú del asa de bloque.
 const SHOTS = "../.data/menu-shots";
 
 async function openPage(page: Page, title: string) {
@@ -21,7 +21,7 @@ const selected = (page: Page) => menu(page).locator('[role="option"][aria-select
 
 test.describe("menú «/»", () => {
   for (const theme of ["light", "dark"] as const) {
-    test(`estructura y aspecto como Notion — tema ${theme}`, async ({ page }) => {
+    test(`estructura y aspecto — tema ${theme}`, async ({ page }) => {
       await page.emulateMedia({ colorScheme: theme, reducedMotion: "reduce" });
       await page.addInitScript((t) => localStorage.setItem("nodara:theme", t), theme);
       await openPage(page, `Menú ${theme}`);
@@ -29,7 +29,7 @@ test.describe("menú «/»", () => {
       await expect(menu(page)).toBeVisible();
       // Píldora «/Escribe para buscar» en el bloque
       await expect(page.getByTestId("editor").locator(".nd-slash-query.is-empty")).toHaveText("/");
-      // Secciones en el orden de Notion
+      // Secciones en orden
       await expect(menu(page).getByTestId("slash-section")).toHaveText(["Sugeridos", "Bloques básicos", "Multimedia", "Base de datos", "Bloques avanzados", "En línea", "Convertir en", "Acciones", "Color del texto", "Color de fondo"]);
       await expect(selected(page)).toHaveCount(1);
       await expect(menu(page).getByRole("option", { name: "Encabezado 1" }).first()).toContainText("#");
@@ -100,7 +100,7 @@ test.describe("menú «/»", () => {
     await expect(ed.locator("p").first()).toHaveText("Hola");
     await expect(ed.locator("h2")).toHaveText("Debajo");
     // «Convertir en» conserva el texto del bloque
-    // Un espacio cierra la búsqueda (como en Notion): «/h4» y bajar a la variante «Convertir en»
+    // Un espacio cierra la búsqueda: «/h4» y bajar a la variante «Convertir en»
     await page.keyboard.type(" /h4");
     await page.keyboard.press("ArrowDown");
     await expect(selected(page)).toHaveAttribute("data-slash-id", "turn-h4");

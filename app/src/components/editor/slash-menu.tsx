@@ -46,7 +46,7 @@ export function useSlashBridge() {
   return { bridge, state, index };
 }
 
-// Medidas observadas en Notion (2026-10-20, research/features/006-notion-menus.md): ancho 324, lista 273 + pie 42.
+// Medidas del menú: ancho 324, lista 273 + pie 42.
 const WIDTH = 324;
 const HEIGHT = 315;
 const GAP = 12;
@@ -71,7 +71,7 @@ export function SlashMenu({ state, index, onHover }: { state: SlashState; index:
     list.current?.querySelector("[data-slash-active=true]")?.scrollIntoView({ block: "nearest" });
   }, [index]);
 
-  // Sin coincidencias, el menú se cierra (observado en Notion); el texto escrito se queda.
+  // Sin coincidencias, el menú se cierra; el texto escrito se queda.
   if (!state || !state.rect || state.entries.length === 0) return null;
   const r = state.rect;
   const below = r.bottom + GAP + HEIGHT <= window.innerHeight || r.top - GAP - HEIGHT < 0;

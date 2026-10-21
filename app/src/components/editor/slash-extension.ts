@@ -38,7 +38,7 @@ export const SlashCommand = Extension.create<{ bridge: SlashBridge | null }>({
         char: "/",
         allowSpaces: false,
         startOfLine: false,
-        // Texto «/consulta» con la píldora y el marcador «Escribe para buscar» de Notion.
+        // Texto «/consulta» con la píldora y el marcador «Escribe para buscar».
         decorationClass: "nd-slash-query",
         decorationEmptyClass: "is-empty",
         items: ({ query }) => filterSlashItems(query, readRecent()),

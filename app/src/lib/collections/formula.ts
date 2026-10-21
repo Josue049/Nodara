@@ -1,6 +1,6 @@
 /**
  * Motor de fórmulas de Nodara: analizador recursivo descendente + evaluador.
- * Sintaxis inspirada en las fórmulas de Notion: prop("Nombre"), if(c, a, b), operadores aritméticos,
+ * Sintaxis de fórmulas: prop("Nombre"), if(c, a, b), operadores aritméticos,
  * de comparación y lógicos (and/or/not, &&, ||, !), cadenas "…", números, true/false.
  * Las fechas se manejan como `Date`; las listas como arrays.
  */

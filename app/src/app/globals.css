@@ -1,14 +1,14 @@
 @import "tailwindcss";
 
 :root {
-  /* Medido en Notion (light): fondo #FFF, sidebar rgb(249,248,247), texto rgb(44,44,43), secundario rgb(95,94,89), hover rgba(33,27,23,.05) */
+  /* Tema claro: fondo #FFF, sidebar rgb(249,248,247), texto rgb(44,44,43), secundario rgb(95,94,89), hover rgba(33,27,23,.05) */
   --bg: #ffffff;
   --bg-sidebar: #f9f8f7;
   --bg-hover: rgba(33, 27, 23, 0.05);
   --bg-active: rgba(33, 27, 23, 0.08); /* hipótesis: no medido */
   --text: #2c2c2b;
   --text-secondary: #5f5e59;
-  --text-tertiary: rgba(44, 44, 43, 0.72); /* accesibilidad: ≥ 4,5:1 sobre #fff, #f9f8f7 y #f1f0ee (Notion usa un gris más tenue, no medido) */
+  --text-tertiary: rgba(44, 44, 43, 0.72); /* accesibilidad: ≥ 4,5:1 sobre #fff, #f9f8f7 y #f1f0ee */
   --border: rgba(33, 27, 23, 0.09); /* hipótesis */
   --accent: #1a6fc4; /* accesibilidad: texto blanco sobre el acento = 5,1:1 (#2383e2 daba 3,9:1) */
   --danger: #c9302c; /* accesibilidad: texto de error ≥ 4,5:1 sobre blanco y #f9f8f7 */
@@ -17,9 +17,9 @@
   --code-text: #cf5148;
   --pre-bg: #f7f6f3;
   --shadow-pop: rgba(15, 15, 15, 0.05) 0 0 0 1px, rgba(15, 15, 15, 0.1) 0 3px 6px, rgba(15, 15, 15, 0.2) 0 9px 24px;
-  --db-header: #726f6a; /* encabezado de tabla: Notion usa #7d7a75 (4,3:1); se oscurece lo justo para llegar a 4,5:1 */
+  --db-header: #726f6a; /* encabezado de tabla: oscurecido lo justo para llegar a 4,5:1 */
   --callout-gray: #f9f8f7; /* medido: caja de «callout» */
-  /* Menús de bloque («/» y asa): medido en Notion 2026-10-20 */
+  /* Menús de bloque («/» y asa) */
   --shadow-menu: rgba(25, 25, 25, 0.05) 0 20px 24px 0, rgba(25, 25, 25, 0.027) 0 5px 8px 0, rgba(42, 28, 0, 0.07) 0 0 0 1px;
   --menu-sep: rgba(42, 28, 0, 0.07);
   --slash-chip: rgba(33, 27, 23, 0.05);
@@ -28,7 +28,7 @@
   color-scheme: light;
 }
 
-/* Medido en Notion (dark): fondo rgb(25,25,25), sidebar rgb(32,32,32), texto rgb(240,239,237) */
+/* Tema oscuro: fondo rgb(25,25,25), sidebar rgb(32,32,32), texto rgb(240,239,237) */
 :root[data-theme="dark"] {
   --bg: #191919;
   --bg-sidebar: #202020;
@@ -319,7 +319,7 @@ body {
 .resize-cursor { cursor: col-resize; }
 .ProseMirror-selectednode { outline: 2px solid rgba(35, 131, 226, 0.4); }
 
-/* Colores de etiquetas de opciones (tonos propios, sin medir en Notion) */
+/* Colores de etiquetas de opciones */
 :root {
   --opt-default-bg: #e3e2e0;
   --opt-default-fg: #32302c;
@@ -380,7 +380,7 @@ body {
 .nd-editor .nd-comment.nd-comment-active { background: rgba(255, 212, 0, 0.5); }
 
 /* Bloques avanzados: llamada, imagen, archivo, marcador, ecuaciones, índice y columnas */
-/* Medido en Notion (research/features/notion-blocks-*.json): caja gris #f9f8f7 / #383836, radio 10 px, relleno 12 px, icono 24 px, separación 8 px. */
+/* Llamada: caja gris #f9f8f7 / #383836, radio 10 px, relleno 12 px, icono 24 px, separación 8 px. */
 .nd-editor .nd-callout { display: flex; gap: 8px; padding: 12px; margin: 4px 0; border-radius: 10px; background: var(--callout-gray); color: var(--text); position: relative; }
 .nd-editor .nd-callout[data-color="gray"] { background: var(--callout-gray); }
 .nd-editor .nd-callout[data-color="brown"] { background: var(--opt-brown-bg); }
@@ -483,7 +483,7 @@ body {
 :root[data-theme="dark"] .bg-accent.text-white { color: #0f1419; }
 :root[data-theme="dark"] .bg-accent\/70, :root[data-theme="dark"] .bg-accent\/80 { color: #0f1419; }
 
-/* ── Menús de bloque: «/» y asa (medidas observadas en Notion; colores por tokens del tema) ── */
+/* ── Menús de bloque: «/» y asa (colores por tokens del tema) ── */
 .nd-menu { background: var(--popover); color: var(--text); border-radius: 10px; box-shadow: var(--shadow-menu); font-size: 14px; line-height: 16.8px; }
 .nd-menu-header { padding: 10px 12px 9px; font-size: 12px; line-height: 14.4px; font-weight: 500; color: var(--text-tertiary); user-select: none; }
 .nd-menu-sep { height: 1px; margin: 6px 12px 0; background: var(--menu-sep); }
@@ -501,10 +501,10 @@ body {
 .nd-menu-empty { padding: 8px 12px; color: var(--text-tertiary); }
 .nd-menu-swatch { display: inline-flex; width: 20px; height: 20px; align-items: center; justify-content: center; border-radius: 4px; border: 1px solid var(--border); font-size: 14px; font-weight: 500; color: var(--text); }
 .nd-menu-foot { padding: 6px 12px 8px; border-top: 1px solid var(--menu-sep); font-size: 12px; color: var(--text-tertiary); }
-/* Texto «/consulta» mientras el menú está abierto, con el marcador de Notion («/Type to search») */
+/* Texto «/consulta» mientras el menú está abierto, con el marcador «Escribe para buscar» */
 .nd-editor .nd-slash-query { background: var(--slash-chip); border-radius: 4px; padding: 2px 0 2px 2px; }
 .nd-editor .nd-slash-query.is-empty::after { content: "Escribe para buscar"; color: var(--text-tertiary); padding-right: 4px; pointer-events: none; }
-/* El editor no muestra recuadro de foco (Notion tampoco); el cursor ya indica el foco */
+/* El editor no muestra recuadro de foco; el cursor ya indica el foco */
 .nd-editor:focus-visible { outline: none; }
 /* Bloques nuevos: página enlazada, ruta de navegación, vídeo y audio */
 .nd-editor .nd-page-link { margin: 1px 0; }

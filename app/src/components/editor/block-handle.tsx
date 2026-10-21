@@ -13,7 +13,7 @@ type Hovered = { pos: number; size: number } | null;
 const POSITION_CONFIG = { placement: "left-start" } as const;
 
 /**
- * Asa de bloque (observada en Notion): «+» inserta debajo y abre el menú /; «⠿» arrastra y, con clic o clic derecho,
+ * Asa de bloque: «+» inserta debajo y abre el menú /; «⠿» arrastra y, con clic o clic derecho,
  * abre el menú de acciones del bloque.
  */
 export function BlockHandle({ editor, onComment }: { editor: Editor; onComment?: (range: { from: number; to: number; text: string }) => void }) {

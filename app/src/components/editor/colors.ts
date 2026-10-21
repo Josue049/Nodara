@@ -1,4 +1,4 @@
-// Paleta de bloques de Notion (valores de uso público); el tema oscuro reutiliza los mismos tonos de texto. Sin medir en la app: ver docs/STATUS.md.
+// Paleta de colores de bloque; el tema oscuro reutiliza los mismos tonos de texto.
 export type Swatch = { name: string; text: string | null; bg: string | null };
 
 export const SWATCHES: Swatch[] = [

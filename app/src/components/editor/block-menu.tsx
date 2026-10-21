@@ -14,7 +14,7 @@ const norm = (s: string) => s.normalize("NFD").replace(/\p{Diacritic}/gu, "").to
 const WIDTH = 265;
 
 /**
- * Menú de acciones del bloque (asa «⋮⋮»: clic o clic derecho), observado en Notion 2026-10-20: buscador, tipo de bloque,
+ * Menú de acciones del bloque (asa «⋮⋮»: clic o clic derecho): buscador, tipo de bloque,
  * Convertir en ›, Color ›, Duplicar, Eliminar, Comentar y recuento de palabras al pie.
  */
 export function BlockMenu({
@@ -121,7 +121,7 @@ export function BlockMenu({
     // El menú se queda con sus teclas: Ctrl+D no debe llegar al atajo global que duplica la página.
     if (["Escape", "Enter", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Delete"].includes(k) || e.ctrlKey || e.metaKey) e.stopPropagation();
     const mod = e.ctrlKey || e.metaKey;
-    // Atajos de Notion con el menú abierto: actúan sobre el bloque.
+    // Atajos con el menú abierto: actúan sobre el bloque.
     if (mod && !e.shiftKey && k.toLowerCase() === "d") return e.preventDefault(), done(() => duplicateBlock(editor, pos))();
     if (mod && e.shiftKey && k.toLowerCase() === "m") return e.preventDefault(), actions.find((a) => a.id === "comment") && done(actions.find((a) => a.id === "comment")!.run!)();
     if (k === "Delete" && !q) return e.preventDefault(), done(() => deleteBlock(editor, pos))();

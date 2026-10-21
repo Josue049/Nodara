@@ -57,7 +57,7 @@ export type SlashContext = {
 
 export type SectionId = "suggested" | "basic" | "media" | "database" | "advanced" | "inline" | "turn" | "actions" | "textColor" | "bgColor";
 
-/** Secciones en el orden observado en Notion (2026-10-20). */
+/** Secciones del menú, en orden. */
 export const SECTIONS: Record<SectionId, string> = {
   suggested: "Sugeridos",
   basic: "Bloques básicos",
@@ -80,7 +80,7 @@ export type SlashItem = {
   title: string;
   section: Exclude<SectionId, "suggested">;
   icon: SlashIcon;
-  /** Atajo Markdown que también crea el bloque en Nodara (columna derecha, como en Notion). */
+  /** Atajo Markdown que también crea el bloque en Nodara (columna derecha). */
   hint?: string;
   keywords: string[];
   run: (editor: Editor, range: Range, ctx: SlashContext | null) => void;
@@ -89,7 +89,7 @@ export type SlashItem = {
 /** Entrada del menú: un elemento dentro de una sección (un mismo elemento puede aparecer en «Sugeridos» y en su sección). */
 export type SlashEntry = { key: string; section: SectionId; item: SlashItem };
 
-// ── Inserción con la semántica de Notion: en un bloque vacío lo convierte; si tiene texto, crea el bloque debajo ──
+// ── Inserción: en un bloque vacío lo convierte; si tiene texto, crea el bloque debajo ──
 function place(e: Editor, r: Range, apply: (c: ChainedCommands) => ChainedCommands) {
   e.chain().focus().deleteRange(r).run();
   const { $from } = e.state.selection;
@@ -222,7 +222,7 @@ export const slashItems: SlashItem[] = [
 const DEFAULT_SUGGESTED = ["todo", "h1", "page"];
 const RECENT_KEY = "nodara:slash-recent";
 
-/** Bloques usados recientemente (preferencia local del navegador, como «Sugeridos» en Notion). */
+/** Bloques usados recientemente (preferencia local del navegador, sección «Sugeridos»). */
 export function readRecent(): string[] {
   try {
     const v = JSON.parse(localStorage.getItem(RECENT_KEY) ?? "[]");
@@ -252,7 +252,7 @@ function score(item: SlashItem, q: string): number | null {
 
 /**
  * Sin texto: todas las secciones en orden, con «Sugeridos» (recientes o, si no hay, unos por defecto) al principio.
- * Con texto: una sola sección de resultados ordenada por relevancia (como «Filtered results» en Notion).
+ * Con texto: una sola sección de resultados ordenada por relevancia.
  */
 export function filterSlashItems(query: string, recent: string[] = []): SlashEntry[] {
   const q = norm(query.trim());
@@ -271,5 +271,5 @@ export function filterSlashItems(query: string, recent: string[] = []): SlashEnt
     .map(({ item }) => ({ key: item.id, section: item.section, item }));
 }
 
-/** Rótulo secundario en los resultados filtrados (Notion: «Heading 2 · Turn into»). */
+/** Rótulo secundario en los resultados filtrados (p. ej. «Encabezado 2 · Convertir en»). */
 export const filteredSub = (item: SlashItem): string | null => (["turn", "actions", "textColor", "bgColor"].includes(item.section) ? SECTIONS[item.section] : null);

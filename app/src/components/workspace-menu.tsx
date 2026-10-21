@@ -10,7 +10,7 @@ import { useWorkspace } from "./workspace-provider";
 
 const ROLE_LABELS = { owner: "Propietario", admin: "Administrador", member: "Miembro", guest: "Invitado" } as const;
 
-/** Selector de espacio de trabajo (observado en Notion: tarjeta del espacio, Configuración, Invitar, lista de espacios, Nuevo espacio, Cerrar sesión). */
+/** Selector de espacio de trabajo (tarjeta del espacio, Configuración, Invitar, lista de espacios, Nuevo espacio, Cerrar sesión). */
 export function WorkspaceMenu() {
   const { user, workspace, workspaces, switchWorkspace, createWorkspace, logout } = useAuth();
   const { setSettings } = useWorkspace();

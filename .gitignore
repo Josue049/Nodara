@@ -1,13 +1,6 @@
-# Herramientas locales (no versionadas: Node portable y clon independiente de REA)
-tools/node/
-tools/rea/
+# Herramientas locales (no versionadas: Node portable)
+tools/
 # Datos locales
 .data/
-research/.browser-profile/
-research/captures/*.json
-!research/captures/.gitkeep
-research/screenshots/rea-*.json
 node_modules/
-research/screenshots/notion-app-*.png
-research/captures/*.json
 backups/

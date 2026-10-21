@@ -1,5 +1,5 @@
 // Operaciones sobre un bloque (convertir, color, duplicar, eliminar, contar), compartidas por el menú «/»,
-// el menú del asa de bloque y el menú de formato. Observado en Notion (2026-10-20): ver research/features/006-notion-menus.md.
+// el menú del asa de bloque y el menú de formato.
 import type { Editor } from "@tiptap/core";
 import type { Node as PMNode } from "@tiptap/pm/model";
 import { TextSelection } from "@tiptap/pm/state";
@@ -24,10 +24,10 @@ export const TURN_INTO: TurnInto[] = [
   { id: "callout", label: "Llamada", run: (e) => turnIntoCallout(e) },
 ];
 
-/** Icono de cada tipo de «Convertir en» (como en Notion). */
+/** Icono de cada tipo de «Convertir en». */
 export const TURN_ICONS: Record<string, LucideIcon> = { text: Type, h1: Heading1, h2: Heading2, h3: Heading3, h4: Heading4, bullet: List, number: ListOrdered, todo: ListTodo, toggle: ChevronRight, code: Code, quote: Quote, callout: Lightbulb };
 
-/** Envuelve el texto del bloque actual en una llamada (Notion: «Turn into › Callout»). */
+/** Envuelve el texto del bloque actual en una llamada («Convertir en › Llamada»). */
 function turnIntoCallout(e: Editor) {
   e.chain().focus().clearNodes().run();
   const { $from } = e.state.selection;
@@ -115,7 +115,7 @@ export function deleteBlock(e: Editor, pos: number) {
   if (node) e.chain().focus().deleteRange({ from: pos, to: pos + node.nodeSize }).run();
 }
 
-/** Aplica color de texto o de fondo a todo el texto del bloque (Notion: «Color» del bloque). `null` = predeterminado. */
+/** Aplica color de texto o de fondo a todo el texto del bloque («Color» del bloque). `null` = predeterminado. */
 export function colorBlock(e: Editor, pos: number, kind: "text" | "bg", swatch: (typeof SWATCHES)[number]) {
   const node = e.state.doc.nodeAt(pos);
   if (!node) return;

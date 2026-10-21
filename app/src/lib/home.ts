@@ -31,7 +31,7 @@ export type RecentPage = TreePage & { activity: "viewed" | "edited"; at: string;
 
 /**
  * Páginas ordenadas por actividad del usuario: su última visita o, si es posterior o no existe, la última edición
- * (como «Visitado recientemente» en Notion, que también cuenta las páginas recién creadas).
+ * (también cuenta las páginas recién creadas).
  */
 export function recentPages(pages: TreePage[], limit: number): RecentPage[] {
   return pages

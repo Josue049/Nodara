@@ -35,4 +35,4 @@ TipTap + Yjs  ◄──SSE stream──  api/collab/[id]/stream  (salas en memor
 | Orquestación | `scripts/test-seq.ps1` | lint → tipos → Vitest → build → E2E de forma secuencial (poca memoria); falla si algún paso falla o no se ejecuta ninguna prueba |
 
 ## Límites conocidos
-Una instancia de aplicación; sin envío de correo; archivos en disco local; sin regresión visual por píxeles frente a Notion (comparaciones medidas por script en `research/comparisons`).
+Una instancia de aplicación; sin envío de correo; archivos en disco local; sin regresión visual por píxeles.

@@ -102,7 +102,7 @@ export const VideoBlockBase = mediaNode("videoBlock", "video");
 export const AudioBlockBase = mediaNode("audioBlock", "audio");
 
 /**
- * Enlace a una página del espacio como bloque (Notion: «Page» crea una subpágina y la enlaza; «Link to page» enlaza una existente).
+ * Enlace a una página del espacio como bloque («Página» crea una subpágina y la enlaza; «Enlace a página» enlaza una existente).
  * `title` e `icon` son una copia para exportar y para vistas sin acceso al árbol; la vista muestra los datos vivos.
  */
 export const PageLinkBase = Node.create({
@@ -122,7 +122,7 @@ export const PageLinkBase = Node.create({
   renderText: ({ node }) => String(node.attrs.title || "Sin título"),
 });
 
-/** Ruta de navegación (Notion: «Breadcrumb»): muestra los ancestros de la página que la contiene. */
+/** Ruta de navegación: muestra los ancestros de la página que la contiene. */
 export const BreadcrumbBase = Node.create({
   name: "breadcrumb",
   group: "block",

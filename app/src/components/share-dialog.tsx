@@ -13,7 +13,7 @@ type Info = { scope: "private" | "workspace"; scopeIsOwn: boolean; yourLevel: st
 export const LEVEL_LABELS: Record<Level, string> = { full: "Acceso completo", edit: "Puede editar", comment: "Puede comentar", view: "Puede ver" };
 const field = "h-8 rounded-md border border-line bg-transparent px-2 outline-none focus:border-accent";
 
-/** Diálogo «Compartir» (estructura observada en Notion: pestañas Compartir/Publicar, invitar por correo, lista de personas, acceso general, copiar enlace). */
+/** Diálogo «Compartir» (pestañas Compartir/Publicar, invitar por correo, lista de personas, acceso general, copiar enlace). */
 export function ShareDialog({ pageId, anchor, onClose, onChanged }: { pageId: string; anchor: Anchor; onClose: () => void; onChanged?: () => void }) {
   const [tab, setTab] = useState<"share" | "publish">("share");
   const [info, setInfo] = useState<Info | null>(null);

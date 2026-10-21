@@ -10,7 +10,7 @@ const inter = Inter({ subsets: ["latin", "latin-ext"], variable: "--font-inter",
 
 export const metadata: Metadata = {
   title: "Nodara",
-  description: "Alternativa open source a Notion: páginas, bloques y bases de datos.",
+  description: "Espacio de trabajo todo en uno: páginas, bloques y bases de datos.",
   // Antes de hidratar se elige por la preferencia del sistema; después ThemeSync sigue al tema elegido en Nodara.
   icons: {
     icon: [

@@ -4,7 +4,7 @@ import { useParams } from "next/navigation";
 import { useEffect } from "react";
 import { useWorkspace } from "./workspace-provider";
 
-/** Atajos globales observados en el menú de Notion: Ctrl+K, Ctrl+D, Ctrl+⇧+R, Ctrl+⇧+P. */
+/** Atajos globales: Ctrl+K, Ctrl+D, Ctrl+⇧+R, Ctrl+⇧+P. */
 export function GlobalShortcuts() {
   const { setSearchOpen, duplicatePage, setRenaming, setMoveTarget } = useWorkspace();
   const params = useParams<{ pageId?: string }>();

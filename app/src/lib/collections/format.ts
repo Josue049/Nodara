@@ -114,5 +114,5 @@ export function formatCalc(fn: CalcFn, v: number | string | null, p: PropertyDef
 
 export const optionById = (p: PropertyDef, id: unknown): SelectOption | undefined => (p.config.options ?? []).find((o) => o.id === id);
 
-/** Colores de etiqueta (tonos propios, no medidos en Notion). El tema oscuro se resuelve con variables CSS. */
+/** Colores de etiqueta. El tema oscuro se resuelve con variables CSS. */
 export const tagVar = (c: OptionColor) => ({ background: `var(--opt-${c}-bg)`, color: `var(--opt-${c}-fg)` });

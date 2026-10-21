@@ -398,7 +398,7 @@ test("duplicar la página que aloja una base copia sus datos sin compartirlos", 
   expect((await apiQuery(request, db.cid)).rows.map((r) => r.title).sort()).toEqual(["Alfa", "Beta", "Gamma"]); // el original intacto
 });
 
-test("tema oscuro: la tabla usa los colores medidos en Notion", async ({ page, request }) => {
+test("tema oscuro: la tabla usa los colores del tema", async ({ page, request }) => {
   const db = await seedTasks(request);
   await gotoReady(page, `/${db.pageId}`);
   const header = page.getByTestId("col-header").first();

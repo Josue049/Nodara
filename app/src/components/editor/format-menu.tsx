@@ -13,7 +13,7 @@ const normalizeHref = (v: string) => (/^[a-z][a-z0-9+.-]*:/i.test(v) ? v : `http
 
 type Panel = null | "turn" | "color" | "link";
 
-/** Menú flotante de formato al seleccionar texto (equivalente observado en Notion: convertir en, B/I/U, enlace, tachado, código, color). */
+/** Menú flotante de formato al seleccionar texto (convertir en, B/I/U, enlace, tachado, código, color). */
 export function FormatMenu({ editor, onComment }: { editor: Editor; onComment?: (range: { from: number; to: number; text: string }) => void }) {
   const [panel, setPanel] = useState<Panel>(null);
   const [href, setHref] = useState("");

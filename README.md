@@ -1,10 +1,9 @@
 # Nodara
 
-**Alternativa open source a Notion**: páginas anidadas, editor de bloques, bases de datos con seis vistas, colaboración en tiempo real, comentarios, permisos y publicación. Autoalojable (Docker o Node + PostgreSQL), en español.
+**El espacio de trabajo todo en uno, autoalojable y en español**: páginas anidadas, editor de bloques, bases de datos con seis vistas, colaboración en tiempo real, comentarios, permisos y publicación. Se instala con Docker o con Node + PostgreSQL.
 
-Implementación independiente —sin código, logotipos ni activos de Notion— guiada por la observación del comportamiento público de Notion Web (`research/`, con hechos observados separados de hipótesis).
-
-> Estado detallado, límites y matriz de funcionalidades: [`docs/STATUS.md`](docs/STATUS.md) · [`docs/FEATURE_MATRIX.md`](docs/FEATURE_MATRIX.md)
+## Inspiración
+Nodara nace de la admiración por herramientas como Notion y su idea de que documentos, wikis y bases de datos convivan en un mismo lugar. Es un producto independiente, escrito desde cero: no contiene código, textos, logotipos ni activos de terceros.
 
 <p align="center">
   <img src="docs/images/pagina-clara.png" alt="Página con portada, llamada, columnas, ecuación y código (tema claro)" width="49%">
@@ -54,13 +53,12 @@ La primera cuenta creada adopta el espacio de trabajo y es propietaria. Guía co
 - **API**: 90 operaciones documentadas en [`docs/API.md`](docs/API.md) (`GET /api/health` para monitores).
 
 ## Calidad
-La suite completa se ejecuta con `scripts/test-seq.ps1 -All`: ESLint, TypeScript, pruebas unitarias/integración (Vitest, incluyendo el driver `pg` y la migración desde PGlite) y pruebas E2E (Playwright sobre un **build de producción** con base desechable, una prueba = un estado limpio). Los números vigentes están en [`docs/STATUS.md`](docs/STATUS.md). Las comparaciones con Notion (estilos medidos con Playwright/CDP) están en [`research/comparisons/`](research/comparisons/) y [`research/features/`](research/features/).
-
+La suite completa se ejecuta con `scripts/test-seq.ps1 -All`: ESLint, TypeScript, pruebas unitarias/integración (Vitest, incluyendo el driver `pg` y la migración desde PGlite) y pruebas E2E (Playwright sobre un **build de producción** con base desechable, una prueba = un estado limpio).
 ## Documentación
-[`STATUS`](docs/STATUS.md) · [`ROADMAP`](docs/ROADMAP.md) · [`FEATURE_MATRIX`](docs/FEATURE_MATRIX.md) · [`ARCHITECTURE`](docs/ARCHITECTURE.md) · [`DATABASE`](docs/DATABASE.md) · [`SECURITY`](docs/SECURITY.md) · [`LIMITATIONS`](docs/LIMITATIONS.md) · [`DEPLOYMENT`](docs/DEPLOYMENT.md) · [`API`](docs/API.md) · [`CONTRIBUTING`](CONTRIBUTING.md)
+[`ROADMAP`](docs/ROADMAP.md) · [`ARCHITECTURE`](docs/ARCHITECTURE.md) · [`DATABASE`](docs/DATABASE.md) · [`SECURITY`](docs/SECURITY.md) · [`LIMITATIONS`](docs/LIMITATIONS.md) · [`DEPLOYMENT`](docs/DEPLOYMENT.md) · [`API`](docs/API.md) · [`CONTRIBUTING`](CONTRIBUTING.md)
 
 ## Límites conocidos
 Una sola instancia de aplicación (salas colaborativas en memoria), sin envío de correo (enlaces de un solo uso), archivos en disco local, sin vistas vinculadas entre bases ni «última edición por» en propiedades. Lista completa y honesta en [`docs/LIMITATIONS.md`](docs/LIMITATIONS.md).
 
 ## Licencia
-MIT. Notion es una marca de sus propietarios; este proyecto no está afiliado a Notion Labs.
+MIT. Notion es una marca registrada de Notion Labs, Inc.; Nodara no está afiliado, patrocinado ni respaldado por Notion Labs.
