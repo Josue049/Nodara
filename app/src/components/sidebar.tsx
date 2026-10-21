@@ -15,18 +15,20 @@ import {
   type DragMoveEvent,
   type DragStartEvent,
 } from "@dnd-kit/core";
-import { ChevronRight, Home, LayoutTemplate, Moon, MoreHorizontal, Plus, Search, SquarePen, Table2, Trash2, Undo2, Upload, X } from "lucide-react";
+import { ChevronRight, CloudUpload, Home, LayoutTemplate, Moon, MoreHorizontal, Plus, Search, SquarePen, Table2, Trash2, Undo2, Upload, X } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { t } from "@/lib/strings";
-import { THEME_KEY, resolveTheme, type ThemeChoice } from "@/lib/theme";
+import { applyTheme } from "@/lib/theme";
 import { childrenOf, pathTo, type TreePage } from "@/lib/tree";
+import { BrandLogo } from "./brand-logo";
 import { PageIcon } from "./page-icon";
 import { WorkspaceMenu } from "./workspace-menu";
 import { useAuth } from "./auth-provider";
 import { PopoverMenu } from "./popover-menu";
 import { usePageMenu } from "./use-page-menu";
+import { openAccountDialog } from "./guest";
 import { useWorkspace } from "./workspace-provider";
 
 const EXPANDED_KEY = "nodara:expanded";
@@ -258,13 +260,7 @@ function TrashPanel({ onClose }: { onClose: () => void }) {
 }
 
 function ThemeToggle() {
-  const toggle = () => {
-    const next: ThemeChoice = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
-    try {
-      localStorage.setItem(THEME_KEY, next);
-    } catch {}
-    document.documentElement.dataset.theme = resolveTheme(next);
-  };
+  const toggle = () => applyTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark");
   return (
     <button onClick={toggle} className={`${rowBase} w-full pl-[8px] font-normal`} data-testid="theme-toggle">
       <Moon size={16} className="mr-1.5" />
@@ -350,7 +346,13 @@ export function Sidebar() {
   };
 
   return (
-    <aside className="relative flex h-full w-[var(--sidebar-w)] max-w-[85vw] shrink-0 flex-col bg-sidebar text-ink" aria-label={t.sidebar}>
+    <aside className="nd-sidebar relative flex h-full w-[var(--sidebar-w)] max-w-[85vw] shrink-0 flex-col bg-sidebar text-ink" aria-label={t.sidebar}>
+      <div className="flex h-[48px] items-center px-2 pt-1">
+        <Link href="/" aria-label={t.brandHome} title={t.home} className="flex h-9 items-center gap-2 rounded-md px-2 transition-colors hover:bg-hover" data-testid="sidebar-brand">
+          <BrandLogo size={26} />
+          <span className="text-[17px] font-bold tracking-[-0.02em] text-ink">Nodara</span>
+        </Link>
+      </div>
       <div className="flex h-[45px] items-center gap-2 px-3">
         <WorkspaceMenu />
         <button
@@ -466,6 +468,15 @@ export function Sidebar() {
         </DndContext>
       </nav>
 
+      {user.isGuest && (
+        <div className="mx-[8px] mb-1.5 rounded-lg border border-[var(--home-border)] bg-[var(--home-chip)] p-2.5 text-[13px]" data-testid="guest-sidebar-note">
+          <p className="mb-2 text-ink-2">{t.guestSidebarNote}</p>
+          <button type="button" onClick={() => openAccountDialog("signup")} className="flex h-8 w-full items-center justify-center gap-1.5 rounded-md bg-accent font-medium text-white hover:brightness-95" data-testid="guest-save">
+            <CloudUpload size={15} />
+            {t.guestSave}
+          </button>
+        </div>
+      )}
       <div className="border-t border-line px-[8px] py-1.5">
         <button onClick={() => setTemplatesOpen(true)} className={`${rowBase} w-full pl-[8px] font-normal`} data-testid="open-templates">
           <LayoutTemplate size={16} className="mr-1.5" />

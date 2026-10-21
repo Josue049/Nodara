@@ -194,5 +194,5 @@ export async function revokeInvitation(db: Db, user: SessionUser, workspaceId: s
 export async function updateProfile(db: Db, user: SessionUser, patch: { name?: string }): Promise<SessionUser> {
   if (patch.name !== undefined) await db.update(users).set({ name: patch.name.trim() }).where(eq(users.id, user.id));
   const [u] = await db.select().from(users).where(eq(users.id, user.id));
-  return { id: u.id, email: u.email, name: u.name, avatarColor: u.avatarColor };
+  return { id: u.id, email: u.email, name: u.name, avatarColor: u.avatarColor, isGuest: u.isGuest };
 }

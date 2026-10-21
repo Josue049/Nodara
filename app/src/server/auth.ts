@@ -19,7 +19,7 @@ export class HttpError extends Error {
   }
 }
 
-export type SessionUser = { id: string; email: string; name: string; avatarColor: string };
+export type SessionUser = { id: string; email: string; name: string; avatarColor: string; isGuest?: boolean };
 
 // ── Contraseñas ──────────────────────────────────────────────────────
 
@@ -64,7 +64,7 @@ export async function destroySession(db: Db, token: string): Promise<void> {
 
 export async function userForToken(db: Db, token: string): Promise<SessionUser | null> {
   const [row] = await db
-    .select({ id: users.id, email: users.email, name: users.name, avatarColor: users.avatarColor, sessionId: sessions.id, expiresAt: sessions.expiresAt })
+    .select({ id: users.id, email: users.email, name: users.name, avatarColor: users.avatarColor, isGuest: users.isGuest, sessionId: sessions.id, expiresAt: sessions.expiresAt })
     .from(sessions)
     .innerJoin(users, eq(users.id, sessions.userId))
     .where(and(eq(sessions.tokenHash, sha256(token)), gt(sessions.expiresAt, new Date())));
@@ -73,7 +73,7 @@ export async function userForToken(db: Db, token: string): Promise<SessionUser |
   if (row.expiresAt.getTime() - Date.now() < SESSION_TTL_MS / 2) {
     await db.update(sessions).set({ expiresAt: new Date(Date.now() + SESSION_TTL_MS) }).where(eq(sessions.id, row.sessionId));
   }
-  return { id: row.id, email: row.email, name: row.name, avatarColor: row.avatarColor };
+  return { id: row.id, email: row.email, name: row.name, avatarColor: row.avatarColor, isGuest: row.isGuest };
 }
 
 export function readCookie(req: Request, name: string): string | null {

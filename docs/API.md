@@ -1,6 +1,6 @@
 # API HTTP de Nodara
 
-Generada con `scripts/gen-api-docs.mjs` (90 operaciones). Todas las rutas devuelven JSON salvo las descargas (exportaciones, archivos) y el canal SSE de colaboración.
+Generada con `scripts/gen-api-docs.mjs` (91 operaciones). Todas las rutas devuelven JSON salvo las descargas (exportaciones, archivos) y el canal SSE de colaboración.
 
 - **Autenticación**: cookie `nodara_session` (HttpOnly, SameSite=Lax). Las operaciones «sesión» devuelven 401 sin ella.
 - **CSRF**: las operaciones que modifican datos rechazan un `Origin` distinto del host (403).
@@ -9,6 +9,7 @@ Generada con `scripts/gen-api-docs.mjs` (90 operaciones). Todas las rutas devuel
 
 | Ruta | Método | Acceso | Descripción |
 |---|---|---|---|
+| `/api/auth/guest` | POST | pública / opcional | Entrar sin cuenta: crea una cuenta temporal con su espacio. Con sesión ya abierta no hace nada. |
 | `/api/auth/login` | POST | pública / opcional |  |
 | `/api/auth/logout` | POST | pública / opcional |  |
 | `/api/auth/reset/:token` | GET | pública / opcional |  |

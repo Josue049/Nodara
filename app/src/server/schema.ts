@@ -123,6 +123,8 @@ export const users = pgTable("users", {
   name: text("name").notNull().default(""),
   passwordHash: text("password_hash").notNull(),
   avatarColor: text("avatar_color").notNull().default("gray"),
+  /** Cuenta temporal de quien prueba Nodara sin registrarse: se convierte en cuenta real al registrarse. */
+  isGuest: boolean("is_guest").notNull().default(false),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

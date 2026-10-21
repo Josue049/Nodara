@@ -50,6 +50,13 @@
       "when": 1792382093710,
       "tag": "0006_password_resets",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1792540801686,
+      "tag": "0007_guest_users",
+      "breakpoints": true
     }
   ]
 }

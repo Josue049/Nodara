@@ -6,31 +6,8 @@ import { BubbleMenu } from "@tiptap/react/menus";
 import { Bold, ChevronDown, Code, Italic, Link2, MessageSquarePlus, RemoveFormatting, Strikethrough, Underline } from "lucide-react";
 import { useState } from "react";
 import { t } from "@/lib/strings";
+import { currentBlockLabel, TURN_INTO } from "./block-actions";
 import { SWATCHES } from "./colors";
-
-const TURN_INTO: { id: string; label: string; run: (e: Editor) => void }[] = [
-  { id: "text", label: "Texto", run: (e) => e.chain().focus().clearNodes().run() },
-  { id: "h1", label: "Encabezado 1", run: (e) => e.chain().focus().clearNodes().setHeading({ level: 1 }).run() },
-  { id: "h2", label: "Encabezado 2", run: (e) => e.chain().focus().clearNodes().setHeading({ level: 2 }).run() },
-  { id: "h3", label: "Encabezado 3", run: (e) => e.chain().focus().clearNodes().setHeading({ level: 3 }).run() },
-  { id: "bullet", label: "Lista con viñetas", run: (e) => e.chain().focus().clearNodes().toggleBulletList().run() },
-  { id: "number", label: "Lista numerada", run: (e) => e.chain().focus().clearNodes().toggleOrderedList().run() },
-  { id: "todo", label: "Lista de tareas", run: (e) => e.chain().focus().clearNodes().toggleTaskList().run() },
-  { id: "quote", label: "Cita", run: (e) => e.chain().focus().clearNodes().toggleBlockquote().run() },
-  { id: "code", label: "Código", run: (e) => e.chain().focus().clearNodes().toggleCodeBlock().run() },
-];
-
-function currentBlockLabel(e: Editor): string {
-  if (e.isActive("heading", { level: 1 })) return "Encabezado 1";
-  if (e.isActive("heading", { level: 2 })) return "Encabezado 2";
-  if (e.isActive("heading", { level: 3 })) return "Encabezado 3";
-  if (e.isActive("taskList")) return "Lista de tareas";
-  if (e.isActive("bulletList")) return "Lista con viñetas";
-  if (e.isActive("orderedList")) return "Lista numerada";
-  if (e.isActive("blockquote")) return "Cita";
-  if (e.isActive("codeBlock")) return "Código";
-  return "Texto";
-}
 
 const normalizeHref = (v: string) => (/^[a-z][a-z0-9+.-]*:/i.test(v) ? v : `https://${v}`);
 

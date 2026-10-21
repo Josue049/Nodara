@@ -54,6 +54,11 @@ async function api<T>(url: string, init?: RequestInit): Promise<T> {
   return res.status === 204 ? (undefined as T) : res.json();
 }
 
+/** Igual que useWorkspace, pero devuelve null fuera del proveedor (p. ej. en páginas públicas). */
+export function useOptionalWorkspace(): Ctx | null {
+  return useContext(WorkspaceContext);
+}
+
 export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const [pages, setPages] = useState<TreePage[]>([]);

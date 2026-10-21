@@ -80,6 +80,62 @@ export const ImageBlockBase = Node.create({
   },
 });
 
+/** Vídeo y audio (subidos al servidor o por URL) con reproductor nativo y pie opcional. */
+function mediaNode(name: "videoBlock" | "audioBlock", tag: "video" | "audio") {
+  return Node.create({
+    name,
+    group: "block",
+    atom: true,
+    draggable: true,
+    addAttributes() {
+      return { src: { default: "" }, caption: { default: "" } };
+    },
+    parseHTML() {
+      return [{ tag: `figure[data-type="${name}"]`, getAttrs: (el) => ({ src: (el as HTMLElement).querySelector(tag)?.getAttribute("src") ?? "", caption: (el as HTMLElement).querySelector("figcaption")?.textContent ?? "" }) }];
+    },
+    renderHTML({ node }) {
+      return ["figure", { "data-type": name }, [tag, { src: node.attrs.src, controls: "true" }], ...(node.attrs.caption ? [["figcaption", {}, node.attrs.caption]] : [])] as never;
+    },
+  });
+}
+export const VideoBlockBase = mediaNode("videoBlock", "video");
+export const AudioBlockBase = mediaNode("audioBlock", "audio");
+
+/**
+ * Enlace a una página del espacio como bloque (Notion: «Page» crea una subpágina y la enlaza; «Link to page» enlaza una existente).
+ * `title` e `icon` son una copia para exportar y para vistas sin acceso al árbol; la vista muestra los datos vivos.
+ */
+export const PageLinkBase = Node.create({
+  name: "pageLink",
+  group: "block",
+  atom: true,
+  draggable: true,
+  addAttributes() {
+    return { pageId: { default: "" }, title: { default: "" }, icon: { default: null } };
+  },
+  parseHTML() {
+    return [{ tag: 'a[data-type="page-link"]', getAttrs: (el) => ({ pageId: (el as HTMLElement).getAttribute("data-page-id") ?? "", title: (el as HTMLElement).textContent ?? "" }) }];
+  },
+  renderHTML({ node }) {
+    return ["a", { "data-type": "page-link", "data-page-id": node.attrs.pageId, href: node.attrs.pageId ? `/${node.attrs.pageId}` : null }, String(node.attrs.title || "Sin título")];
+  },
+  renderText: ({ node }) => String(node.attrs.title || "Sin título"),
+});
+
+/** Ruta de navegación (Notion: «Breadcrumb»): muestra los ancestros de la página que la contiene. */
+export const BreadcrumbBase = Node.create({
+  name: "breadcrumb",
+  group: "block",
+  atom: true,
+  draggable: true,
+  parseHTML() {
+    return [{ tag: 'nav[data-type="breadcrumb"]' }];
+  },
+  renderHTML() {
+    return ["nav", { "data-type": "breadcrumb" }];
+  },
+});
+
 /** Archivo adjunto: enlace de descarga con nombre y tamaño. */
 export const FileBlockBase = Node.create({
   name: "fileBlock",
@@ -226,7 +282,7 @@ export const PersonMention = Mention.extend({
 export function schemaExtensions(opts: { collaborative?: boolean; /** Sustituye al bloque de código de StarterKit (mismo nombre y atributos) por una versión con resaltado. */ codeBlock?: AnyExtension } = {}): Extensions {
   return [
     StarterKit.configure({
-      heading: { levels: [1, 2, 3] },
+      heading: { levels: [1, 2, 3, 4] },
       link: { openOnClick: false, autolink: true, HTMLAttributes: { rel: "noopener noreferrer nofollow", target: "_blank" } },
       ...(opts.collaborative ? { undoRedo: false } : {}),
       ...(opts.codeBlock ? { codeBlock: false as const } : {}),
@@ -245,6 +301,10 @@ export function schemaExtensions(opts: { collaborative?: boolean; /** Sustituye 
     CalloutBase,
     ImageBlockBase,
     FileBlockBase,
+    VideoBlockBase,
+    AudioBlockBase,
+    PageLinkBase,
+    BreadcrumbBase,
     BookmarkBase,
     MathBlockBase,
     MathInlineBase,

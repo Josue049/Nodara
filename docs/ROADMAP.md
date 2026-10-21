@@ -8,6 +8,10 @@
 - [x] **Hito 6** — Colaboración en tiempo real (Yjs sobre SSE), presencia y cursores, modo sin conexión, comentarios anclados, menciones, bandeja de entrada.
 - [x] **Hito 7** — Editor completo (llamadas, columnas, imágenes, archivos, marcadores, ecuaciones, índice, código con resaltado), búsqueda avanzada, importación/exportación, plantillas de página, portada y estilos de página, bloqueo, auditoría, analíticas, restablecimiento de contraseña, ventana lateral, personas, responsive, accesibilidad (axe, WCAG AA), rendimiento, despliegue (Docker, nginx, systemd) y documentación pública.
 
+- [x] **Inicio rediseñado** (2026-10-20) — panel con panorámica, contadores, recientes por visitas reales y cuadrícula de espacios; barra lateral oscura, logo e Inter.
+
+> El plan priorizado tras la auditoría frente a Notion está en [`../ROADMAP.md`](../ROADMAP.md) (con [`../AUDIT_NOTION.md`](../AUDIT_NOTION.md)). La lista siguiente se conserva como histórico.
+
 ## Siguientes pasos (no iniciados)
 - **Escalado horizontal**: bus compartido (Redis o `LISTEN/NOTIFY`) para las salas colaborativas y los límites de intentos.
 - **Correo saliente**: SMTP para verificación de correo, restablecimiento autoservicio y notificaciones por email.

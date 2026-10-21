@@ -9,3 +9,5 @@ export async function uploadFile(file: File): Promise<{ name: string; url: strin
 }
 
 export const IMAGE_TYPES = ["image/png", "image/jpeg", "image/gif", "image/webp"];
+export const VIDEO_TYPES = ["video/mp4", "video/webm", "video/quicktime"];
+export const AUDIO_TYPES = ["audio/mpeg", "audio/mp4", "audio/wav", "audio/ogg"];

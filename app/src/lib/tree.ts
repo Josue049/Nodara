@@ -11,6 +11,11 @@ export type TreePage = {
   /** Alcance efectivo: private | workspace. */
   scope?: string;
   creatorId?: string | null;
+  cover?: string | null;
+  /** ISO: última edición. */
+  updatedAt?: string;
+  /** ISO: última visita del usuario actual. */
+  viewedAt?: string | null;
 };
 
 export function childrenOf(pages: TreePage[], parentId: string | null): TreePage[] {

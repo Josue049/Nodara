@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import { BrandLogo } from "@/components/brand-logo";
 
 export default function ResetPasswordPage() {
   const { token } = useParams<{ token: string }>();
@@ -42,7 +43,9 @@ export default function ResetPasswordPage() {
   return (
     <main className="flex min-h-screen items-center justify-center bg-bg px-4">
       <div className="flex w-full max-w-[400px] flex-col gap-4" data-testid="reset-page">
-        <span className="flex size-12 items-center justify-center self-center rounded-lg bg-ink text-[24px] font-semibold text-[var(--bg)]">N</span>
+        <span className="flex size-12 items-center justify-center self-center" data-testid="auth-logo">
+          <BrandLogo size={48} />
+        </span>
         {invalid && (
           <>
             <h1 className="text-center text-[22px] font-bold">Enlace no válido o caducado</h1>

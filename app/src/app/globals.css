@@ -19,6 +19,10 @@
   --shadow-pop: rgba(15, 15, 15, 0.05) 0 0 0 1px, rgba(15, 15, 15, 0.1) 0 3px 6px, rgba(15, 15, 15, 0.2) 0 9px 24px;
   --db-header: #726f6a; /* encabezado de tabla: Notion usa #7d7a75 (4,3:1); se oscurece lo justo para llegar a 4,5:1 */
   --callout-gray: #f9f8f7; /* medido: caja de «callout» */
+  /* Menús de bloque («/» y asa): medido en Notion 2026-10-20 */
+  --shadow-menu: rgba(25, 25, 25, 0.05) 0 20px 24px 0, rgba(25, 25, 25, 0.027) 0 5px 8px 0, rgba(42, 28, 0, 0.07) 0 0 0 1px;
+  --menu-sep: rgba(42, 28, 0, 0.07);
+  --slash-chip: rgba(33, 27, 23, 0.05);
   --sidebar-w: 270px;
   --topbar-h: 44px;
   color-scheme: light;
@@ -41,10 +45,127 @@
   --pre-bg: #252525;
   --db-header: #ada9a3; /* medido */
   --callout-gray: #383836; /* medido: caja de «callout» */
+  --shadow-menu: rgb(56, 56, 54) 0 0 0 1px, rgba(25, 25, 25, 0.2) 0 14px 28px -6px, rgba(25, 25, 25, 0.118) 0 2px 4px -1px;
+  --menu-sep: rgba(255, 255, 255, 0.094);
+  --slash-chip: rgba(255, 255, 255, 0.055);
   --danger: #f07070; /* accesibilidad sobre #191919–#252525 */
   --shadow-pop: rgba(0, 0, 0, 0.2) 0 0 0 1px, rgba(0, 0, 0, 0.3) 0 3px 6px, rgba(0, 0, 0, 0.4) 0 9px 24px;
   color-scheme: dark;
 }
+
+/* ── Identidad de Nodara: azul-negro con acentos lavanda y violeta (panel de inicio y barra lateral) ── */
+:root {
+  --brand-violet: #6a48e0; /* texto blanco encima = 5,6:1 */
+  --brand-violet-strong: #5338c8;
+  --brand-lavender: #c4b5fd;
+  --brand-link: #5b3fd0; /* texto de acento sobre fondos claros ≥ 7:1 */
+  --home-bg: #f6f5fb;
+  --home-card: #ffffff;
+  --home-chip: rgba(106, 72, 224, 0.08);
+  --home-border: rgba(80, 64, 170, 0.13);
+  --home-border-strong: rgba(106, 72, 224, 0.45);
+  --home-shadow-sm: 0 1px 2px rgba(20, 16, 60, 0.06);
+  --home-shadow: 0 1px 2px rgba(20, 16, 60, 0.06), 0 10px 28px rgba(40, 30, 110, 0.1);
+}
+:root[data-theme="dark"] {
+  --brand-link: #b9a8ff;
+  --home-bg: #0b0e1a;
+  --home-card: #12162a;
+  --home-chip: rgba(180, 165, 255, 0.12);
+  --home-border: rgba(196, 181, 253, 0.12);
+  --home-border-strong: rgba(180, 165, 255, 0.5);
+  --home-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --home-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 12px 32px rgba(0, 0, 0, 0.38);
+}
+
+/* Barra lateral: superficies del tema activo; el violeta de Nodara solo como acento (selección, foco, indicadores). */
+.nd-sidebar {
+  --accent: var(--brand-violet);
+  --bg-active: rgba(106, 72, 224, 0.09);
+}
+:root[data-theme="dark"] .nd-sidebar {
+  --accent: #b4a5ff;
+  --bg-active: rgba(180, 165, 255, 0.14);
+}
+
+/* Variantes del logotipo según el tema activo */
+.nd-only-dark { display: none; }
+:root[data-theme="dark"] .nd-only-dark { display: block; }
+:root[data-theme="dark"] .nd-only-light { display: none; }
+
+/* Banner del inicio: paisaje diurno (claro) y nocturno (oscuro) con la misma composición */
+:root {
+  --banner-sky-1: #7fb6f2;
+  --banner-sky-2: #b9d6fb;
+  --banner-sky-3: #f3e6fb;
+  --banner-glow: #fff1c7;
+  --banner-glow-opacity: 0.75;
+  --banner-star: #ffffff;
+  --banner-star-opacity: 0;
+  --banner-orb-halo: #ffe9a8;
+  --banner-orb: #fff8e1;
+  --banner-far-1: #c9c3f2;
+  --banner-far-2: #a9a2e3;
+  --banner-mist: #ffffff;
+  --banner-mist-opacity: 0.45;
+  --banner-mid-1: #9c95dd;
+  --banner-mid-2: #8079c9;
+  --banner-near: #6d68b8;
+  --banner-front: #5a56a6;
+  --banner-scrim: linear-gradient(to top, rgba(255, 255, 255, 0.86), rgba(255, 255, 255, 0.45) 55%, rgba(255, 255, 255, 0));
+  --banner-ink: #14152e; /* sobre el velo blanco ≥ 12:1 */
+  --banner-ink-2: #2e2f52;
+  --banner-eyebrow: #4a35b8;
+  --glass-bg: rgba(255, 255, 255, 0.72);
+  --glass-bg-hover: rgba(255, 255, 255, 0.92);
+  --glass-fg: #1d1b3a;
+  --glass-border: rgba(80, 64, 170, 0.22);
+}
+:root[data-theme="dark"] {
+  --banner-sky-1: #090d22;
+  --banner-sky-2: #1d1a4a;
+  --banner-sky-3: #4a3a8c;
+  --banner-glow: #c4b5fd;
+  --banner-glow-opacity: 0.55;
+  --banner-star: #efeaff;
+  --banner-star-opacity: 1;
+  --banner-orb-halo: #c4b5fd;
+  --banner-orb: #f1edff;
+  --banner-far-1: #5a4fa3;
+  --banner-far-2: #2e2a66;
+  --banner-mist: #d9d0ff;
+  --banner-mist-opacity: 0.18;
+  --banner-mid-1: #2f2b6b;
+  --banner-mid-2: #1a1940;
+  --banner-near: #12132e;
+  --banner-front: #0a0b1f;
+  --banner-scrim: linear-gradient(to top, rgba(6, 8, 20, 0.82), rgba(6, 8, 20, 0.25) 55%, rgba(6, 8, 20, 0));
+  --banner-ink: #ffffff;
+  --banner-ink-2: #e6e2f7;
+  --banner-eyebrow: #ddd5ff;
+  --glass-bg: rgba(13, 16, 36, 0.55);
+  --glass-bg-hover: rgba(13, 16, 36, 0.72);
+  --glass-fg: #ffffff;
+  --glass-border: rgba(220, 212, 255, 0.28);
+}
+
+/* Botones de marca */
+.nd-btn-brand, .nd-btn-glass {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  height: 38px; padding: 0 14px; border-radius: 10px; font-size: 14px; font-weight: 600; white-space: nowrap;
+  transition: transform 0.15s ease, box-shadow 0.2s ease, background-color 0.2s ease, filter 0.2s ease;
+}
+.nd-btn-brand {
+  color: #fff;
+  background: linear-gradient(135deg, var(--brand-violet), var(--brand-violet-strong));
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.18) inset, 0 6px 18px rgba(83, 56, 200, 0.35);
+}
+.nd-btn-brand:hover:not(:disabled) { transform: translateY(-1px); filter: brightness(1.08); box-shadow: 0 1px 0 rgba(255, 255, 255, 0.2) inset, 0 10px 24px rgba(83, 56, 200, 0.45); }
+.nd-btn-glass { color: var(--glass-fg); background: var(--glass-bg); border: 1px solid var(--glass-border); backdrop-filter: blur(8px); }
+.nd-btn-glass:hover:not(:disabled) { background: var(--glass-bg-hover); transform: translateY(-1px); }
+.nd-btn-brand:active:not(:disabled), .nd-btn-glass:active:not(:disabled) { transform: translateY(0); }
+.nd-btn-brand:disabled, .nd-btn-glass:disabled { opacity: 0.6; cursor: progress; }
+.nd-btn-brand:focus-visible, .nd-btn-glass:focus-visible { outline: 2px solid var(--brand-link); outline-offset: 2px; }
 
 @theme inline {
   --color-bg: var(--bg);
@@ -57,7 +178,7 @@
   --color-line: var(--border);
   --color-accent: var(--accent);
   --color-danger: var(--danger);
-  --font-sans: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica,
+  --font-sans: var(--font-inter), ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica,
     "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol";
 }
 
@@ -114,6 +235,7 @@ body {
 .nd-editor h1 { font-size: 1.875em; font-weight: 700; line-height: 1.2; margin-top: 2em; padding: 3px 2px; }
 .nd-editor h2 { font-size: 1.5em; font-weight: 600; line-height: 1.3; margin-top: 1.4em; padding: 3px 2px; }
 .nd-editor h3 { font-size: 1.25em; font-weight: 600; line-height: 1.3; margin-top: 1em; padding: 3px 2px; }
+.nd-editor h4 { font-size: 1.125em; font-weight: 600; line-height: 1.3; margin-top: 0.8em; padding: 3px 2px; }
 .nd-editor ul, .nd-editor ol { padding-left: 1.6em; }
 .nd-editor ul { list-style: disc; }
 .nd-editor ol { list-style: decimal; }
@@ -141,7 +263,8 @@ body {
 .nd-editor p.is-empty::before,
 .nd-editor h1.is-empty::before,
 .nd-editor h2.is-empty::before,
-.nd-editor h3.is-empty::before {
+.nd-editor h3.is-empty::before,
+.nd-editor h4.is-empty::before {
   content: attr(data-placeholder);
   color: var(--text-tertiary);
   float: left;
@@ -359,3 +482,78 @@ body {
 /* Botones de acento en tema oscuro: texto oscuro para mantener contraste AA (el acento claro no admite texto blanco). */
 :root[data-theme="dark"] .bg-accent.text-white { color: #0f1419; }
 :root[data-theme="dark"] .bg-accent\/70, :root[data-theme="dark"] .bg-accent\/80 { color: #0f1419; }
+
+/* ── Menús de bloque: «/» y asa (medidas observadas en Notion; colores por tokens del tema) ── */
+.nd-menu { background: var(--popover); color: var(--text); border-radius: 10px; box-shadow: var(--shadow-menu); font-size: 14px; line-height: 16.8px; }
+.nd-menu-header { padding: 10px 12px 9px; font-size: 12px; line-height: 14.4px; font-weight: 500; color: var(--text-tertiary); user-select: none; }
+.nd-menu-sep { height: 1px; margin: 6px 12px 0; background: var(--menu-sep); }
+.nd-menu-item { display: flex; align-items: center; gap: 8px; width: calc(100% - 8px); height: 32px; margin: 0 4px 1px; padding: 0 8px; border-radius: 6px; text-align: left; color: var(--text); background: none; border: 0; font: inherit; }
+.nd-menu-item[aria-selected="true"], .nd-menu-item[data-active="true"] { background: var(--bg-hover); }
+.nd-menu-item.nd-menu-compact { height: 28px; }
+.nd-menu-icon { display: flex; width: 20px; height: 20px; flex: none; align-items: center; justify-content: center; color: var(--text); }
+.nd-menu-sub { color: var(--text-tertiary); flex: none; }
+.nd-menu-hint { margin-left: auto; padding-left: 8px; flex: none; font-size: 12px; color: var(--text-tertiary); }
+.nd-menu-footer { display: flex; align-items: center; height: 42px; flex: none; padding: 0 12px; border-top: 1px solid var(--menu-sep); color: var(--text); background: none; text-align: left; border-radius: 0 0 10px 10px; }
+.nd-menu-footer:hover { background: var(--bg-hover); }
+.nd-menu-search { width: 100%; height: 28px; padding: 0 8px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-hover); color: var(--text); font-size: 14px; outline: none; }
+.nd-menu-search:focus { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.nd-menu-search::placeholder { color: var(--text-tertiary); }
+.nd-menu-empty { padding: 8px 12px; color: var(--text-tertiary); }
+.nd-menu-swatch { display: inline-flex; width: 20px; height: 20px; align-items: center; justify-content: center; border-radius: 4px; border: 1px solid var(--border); font-size: 14px; font-weight: 500; color: var(--text); }
+.nd-menu-foot { padding: 6px 12px 8px; border-top: 1px solid var(--menu-sep); font-size: 12px; color: var(--text-tertiary); }
+/* Texto «/consulta» mientras el menú está abierto, con el marcador de Notion («/Type to search») */
+.nd-editor .nd-slash-query { background: var(--slash-chip); border-radius: 4px; padding: 2px 0 2px 2px; }
+.nd-editor .nd-slash-query.is-empty::after { content: "Escribe para buscar"; color: var(--text-tertiary); padding-right: 4px; pointer-events: none; }
+/* El editor no muestra recuadro de foco (Notion tampoco); el cursor ya indica el foco */
+.nd-editor:focus-visible { outline: none; }
+/* Bloques nuevos: página enlazada, ruta de navegación, vídeo y audio */
+.nd-editor .nd-page-link { margin: 1px 0; }
+.nd-editor .nd-page-link-title { text-decoration: underline; text-decoration-color: var(--border); text-underline-offset: 3px; font-weight: 500; }
+.nd-editor .nd-media-view { margin: 6px 0; }
+
+/* ── Portada comercial (/bienvenida) ── */
+:root {
+  --landing-border: rgba(33, 27, 23, 0.1);
+  --landing-header: rgba(255, 255, 255, 0.86);
+  --landing-band: #f7f6f3;
+  --landing-line: rgba(33, 27, 23, 0.09);
+  --landing-line-strong: rgba(33, 27, 23, 0.2);
+  --landing-track: rgba(33, 27, 23, 0.05);
+  --landing-shadow: 0 1px 2px rgba(15, 15, 15, 0.04), 0 24px 60px -12px rgba(40, 30, 110, 0.22);
+  --landing-glow: radial-gradient(60% 60% at 50% 40%, rgba(106, 72, 224, 0.16), transparent 70%);
+}
+:root[data-theme="dark"] {
+  --landing-border: rgba(255, 255, 255, 0.1);
+  --landing-header: rgba(25, 25, 25, 0.82);
+  --landing-band: #202020;
+  --landing-line: rgba(255, 255, 255, 0.1);
+  --landing-line-strong: rgba(255, 255, 255, 0.24);
+  --landing-track: rgba(255, 255, 255, 0.06);
+  --landing-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 24px 60px -12px rgba(0, 0, 0, 0.6);
+  --landing-glow: radial-gradient(60% 60% at 50% 40%, rgba(180, 165, 255, 0.16), transparent 70%);
+}
+.nd-landing-glow {
+  background: var(--landing-glow);
+}
+/* Botón principal: tinta sobre fondo, como el resto de llamadas a la acción de la portada (contraste ≥ 15:1 en ambos temas). */
+.nd-landing-primary {
+  background: var(--text);
+  color: var(--bg);
+}
+.nd-landing-primary:hover {
+  background: var(--brand-violet-strong);
+  color: #fff;
+}
+.nd-landing-tag {
+  background: var(--tag-light);
+  color: #32302c;
+}
+:root[data-theme="dark"] .nd-landing-tag {
+  background: var(--tag-dark);
+  color: #f0efed;
+}
+@media (prefers-reduced-motion: no-preference) {
+  html:has(.nd-landing) {
+    scroll-behavior: smooth;
+  }
+}

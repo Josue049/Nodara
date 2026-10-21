@@ -19,6 +19,14 @@ const INLINE_TYPES: Record<string, string> = {
   ".webp": "image/webp",
   ".pdf": "application/pdf",
   ".txt": "text/plain; charset=utf-8",
+  // Vídeo y audio: se reproducen en los bloques de medios (siguen con nosniff).
+  ".mp4": "video/mp4",
+  ".webm": "video/webm",
+  ".mov": "video/quicktime",
+  ".mp3": "audio/mpeg",
+  ".m4a": "audio/mp4",
+  ".wav": "audio/wav",
+  ".ogg": "audio/ogg",
 };
 
 const safeName = (name: string) =>

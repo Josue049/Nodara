@@ -132,7 +132,7 @@ test.describe("espacios de trabajo", () => {
     await expect(page.getByTestId("account-email")).toHaveText(TESTER.email);
     await page.getByTestId("new-workspace").click();
     await page.getByRole("textbox", { name: "Nombre del nuevo espacio" }).fill("Segundo espacio");
-    await page.getByRole("button", { name: "Crear" }).click();
+    await page.getByTestId("workspace-menu").getByRole("button", { name: "Crear", exact: true }).click();
     await expect(page.getByTestId("workspace-name")).toHaveText("Segundo espacio");
     await expect(page.getByTestId("sidebar-page")).toHaveCount(0);
     await page.getByTestId("workspace-switcher").click();

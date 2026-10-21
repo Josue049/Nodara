@@ -15,8 +15,23 @@ async function violations(page: Page, scope?: string) {
 for (const theme of ["light", "dark"] as const) {
   test.describe(`accesibilidad (axe) — tema ${theme}`, () => {
     test.beforeEach(async ({ page }) => {
-      await page.emulateMedia({ colorScheme: theme });
+      // Sin animaciones: axe debe medir el estado final, no un diálogo a mitad de su aparición (opacidad < 1).
+      await page.emulateMedia({ colorScheme: theme, reducedMotion: "reduce" });
       await page.addInitScript((t) => localStorage.setItem("nodara:theme", t), theme);
+    });
+
+    test("portada comercial y aviso del modo sin cuenta", async ({ page, browser }) => {
+      await page.goto("/bienvenida");
+      await page.getByTestId("landing").waitFor();
+      expect(await violations(page)).toEqual([]);
+      const ctx = await browser.newContext({ baseURL: "http://127.0.0.1:3100", colorScheme: theme, reducedMotion: "reduce", extraHTTPHeaders: { "x-nodara-e2e-token": process.env.NODARA_E2E_TOKEN ?? "" } });
+      await ctx.addInitScript((t) => localStorage.setItem("nodara:theme", t), theme);
+      const guest = await ctx.newPage();
+      await guest.goto("/bienvenida");
+      await guest.getByTestId("landing-try").click();
+      await guest.getByTestId("account-dialog").waitFor();
+      expect(await violations(guest)).toEqual([]);
+      await ctx.close();
     });
 
     test("inicio y barra lateral", async ({ page }) => {

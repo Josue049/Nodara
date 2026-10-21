@@ -3,7 +3,7 @@
 import { usePathname, useRouter } from "next/navigation";
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
 
-export type AuthUser = { id: string; email: string; name: string; avatarColor: string };
+export type AuthUser = { id: string; email: string; name: string; avatarColor: string; isGuest?: boolean };
 export type WorkspaceInfo = { id: string; name: string; icon: string | null; role: "owner" | "admin" | "member" | "guest"; memberCount: number };
 
 type Ctx = {
@@ -35,7 +35,10 @@ async function post(url: string, body?: unknown) {
   return res.status === 204 ? null : res.json();
 }
 
-/** Carga la sesión; sin sesión redirige a /login. Mientras tanto no muestra la aplicación. */
+/** Destino sin sesión: la portada comercial si se entra por la raíz; si no, el acceso conservando el destino. */
+export const signedOutTarget = (path: string) => (path === "/" ? "/bienvenida" : `/login?next=${encodeURIComponent(path)}`);
+
+/** Carga la sesión; sin sesión redirige a la portada o a /login. Mientras tanto no muestra la aplicación. */
 export function AuthGate({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -44,7 +47,7 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
   const load = useCallback(async () => {
     const res = await fetch("/api/me");
     if (res.status === 401) {
-      router.replace(`/login?next=${encodeURIComponent(pathname)}`);
+      router.replace(signedOutTarget(pathname));
       return;
     }
     const data = await res.json();
@@ -56,7 +59,7 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
     fetch("/api/me")
       .then(async (res) => {
         if (!alive) return;
-        if (res.status === 401) return router.replace(`/login?next=${encodeURIComponent(window.location.pathname)}`);
+        if (res.status === 401) return router.replace(signedOutTarget(window.location.pathname));
         const data = await res.json();
         setState({ user: data.user, workspaces: data.workspaces, current: data.currentWorkspaceId });
       })
@@ -87,7 +90,7 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
       },
       logout: async () => {
         await post("/api/auth/logout");
-        hardNavigate("/login");
+        hardNavigate(state.user.isGuest ? "/bienvenida" : "/login");
       },
     };
   })();

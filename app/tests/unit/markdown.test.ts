@@ -9,7 +9,7 @@ describe("Markdown → documento", () => {
     const { title, doc } = markdownToDoc("# Mi página\n\nHola mundo\n\n## Sección\n\n#### Profundo");
     expect(title).toBe("Mi página");
     expect(doc.content?.map((n) => n.type)).toEqual(["paragraph", "heading", "heading"]);
-    expect(doc.content?.[2].attrs?.level).toBe(3); // los niveles 4–6 se limitan a 3
+    expect(doc.content?.[2].attrs?.level).toBe(4); // H4 existe (como en Notion); 5–6 se limitan a 4
   });
 
   it("interpreta formatos en línea", () => {

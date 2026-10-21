@@ -1,9 +1,11 @@
 "use client";
 
-import { Check, ChevronDown, LogOut, Mail, Plus, Settings } from "lucide-react";
+import { Check, ChevronDown, CloudUpload, LogOut, Mail, Plus, Settings } from "lucide-react";
 import { useRef, useState } from "react";
+import { t } from "@/lib/strings";
 import { useAuth } from "./auth-provider";
 import { anchorOf, MenuRow, Popover, type Anchor } from "./database/popover";
+import { openAccountDialog } from "./guest";
 import { useWorkspace } from "./workspace-provider";
 
 const ROLE_LABELS = { owner: "Propietario", admin: "Administrador", member: "Miembro", guest: "Invitado" } as const;
@@ -62,8 +64,13 @@ export function WorkspaceMenu() {
           </div>
           <div className="border-t border-line py-1">
             <p className="truncate px-2 py-1 text-[12px] text-ink-3" data-testid="account-email">
-              {user.email}
+              {user.isGuest ? t.guestBadge : user.email}
             </p>
+            {user.isGuest && (
+              <MenuRow icon={<CloudUpload size={16} />} onClick={() => (close(), openAccountDialog("signup"))} testId="guest-save-menu">
+                <span className="text-accent">{t.guestSave}</span>
+              </MenuRow>
+            )}
             {workspaces.map((w) => (
               <MenuRow key={w.id} testId="workspace-item" onClick={() => (w.id === workspace.id ? close() : void switchWorkspace(w.id))} right={w.id === workspace.id ? <Check size={14} /> : null}>
                 {w.name}
@@ -89,8 +96,8 @@ export function WorkspaceMenu() {
             )}
           </div>
           <div className="border-t border-line pt-1">
-            <MenuRow icon={<LogOut size={16} />} onClick={() => void logout()} testId="logout">
-              Cerrar sesión
+            <MenuRow icon={<LogOut size={16} />} onClick={() => (!user.isGuest || window.confirm(t.guestDiscardConfirm)) && void logout()} testId="logout">
+              {user.isGuest ? t.guestDiscard : "Cerrar sesión"}
             </MenuRow>
           </div>
         </Popover>

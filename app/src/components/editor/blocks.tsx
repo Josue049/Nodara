@@ -9,18 +9,27 @@ import "katex/dist/katex.min.css";
 import { common, createLowlight } from "lowlight";
 import { AlignCenter, AlignLeft, AlignRight, Check, Copy, Download, ExternalLink, FileText, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import {
+  AudioBlockBase,
   BookmarkBase,
+  BreadcrumbBase,
   CALLOUT_COLORS,
   CalloutBase,
   FileBlockBase,
   ImageBlockBase,
   MathBlockBase,
   MathInlineBase,
+  PageLinkBase,
   TocBase,
+  VideoBlockBase,
 } from "@/lib/editor/schema";
+import { pathTo } from "@/lib/tree";
 import { EmojiPicker } from "../emoji-picker";
-import { IMAGE_TYPES, uploadFile } from "./upload";
+import { PageIcon } from "../page-icon";
+import { useOptionalWorkspace } from "../workspace-provider";
+import { getPageId } from "./database-node";
+import { AUDIO_TYPES, IMAGE_TYPES, uploadFile, VIDEO_TYPES } from "./upload";
 
 /** Renderiza LaTeX con KaTeX sin ejecutar HTML del usuario (`trust: false`); los errores se muestran, no se lanzan. */
 export function renderLatex(latex: string, display: boolean): { html: string; error: boolean } {
@@ -38,12 +47,12 @@ export const safeUrl = (u: string) => (/^(https?:\/\/|\/api\/files\/)/i.test(u) 
 
 
 /** Estado vacío de un bloque de medios: subir un archivo o pegar un enlace. */
-function MediaPicker({ kind, onFile, onUrl, onCancel }: { kind: "image" | "file" | "bookmark"; onFile?: (f: { name: string; url: string; size: number }) => void; onUrl: (u: string) => void; onCancel: () => void }) {
+function MediaPicker({ kind, onFile, onUrl, onCancel }: { kind: "image" | "file" | "bookmark" | "video" | "audio"; onFile?: (f: { name: string; url: string; size: number }) => void; onUrl: (u: string) => void; onCancel: () => void }) {
   const [url, setUrl] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const input = useRef<HTMLInputElement>(null);
-  const label = kind === "image" ? "imagen" : kind === "file" ? "archivo" : "marcador";
+  const label = { image: "imagen", file: "archivo", bookmark: "marcador", video: "vídeo", audio: "audio" }[kind];
   const submitUrl = () => {
     const v = url.trim();
     if (!v) return;
@@ -61,7 +70,7 @@ function MediaPicker({ kind, onFile, onUrl, onCancel }: { kind: "image" | "file"
               type="file"
               hidden
               data-testid={`${kind}-file-input`}
-              accept={kind === "image" ? IMAGE_TYPES.join(",") : undefined}
+              accept={kind === "image" ? IMAGE_TYPES.join(",") : kind === "video" ? VIDEO_TYPES.join(",") : kind === "audio" ? AUDIO_TYPES.join(",") : undefined}
               onChange={async (e) => {
                 const f = e.target.files?.[0];
                 if (!f) return;
@@ -91,7 +100,7 @@ function MediaPicker({ kind, onFile, onUrl, onCancel }: { kind: "image" | "file"
             }
             e.stopPropagation();
           }}
-          placeholder={`Pega el enlace de ${kind === "bookmark" ? "la página" : `la ${label}`}…`}
+          placeholder={`Pega el enlace ${kind === "bookmark" ? "de la página" : kind === "video" || kind === "audio" ? `del ${label}` : `de la ${label}`}…`}
           aria-label={`Enlace de ${label}`}
           className="h-8 min-w-[180px] flex-1 rounded-md border border-line bg-transparent px-2 outline-none focus:border-accent"
         />
@@ -226,6 +235,160 @@ function ImageView({ node, updateAttributes, deleteNode, editor, selected }: Nod
   );
 }
 export const ImageBlock = ImageBlockBase.extend({ addNodeView: () => ReactNodeViewRenderer(ImageView) });
+
+// ── Vídeo y audio ──
+function MediaView({ node, updateAttributes, deleteNode, editor, kind }: NodeViewProps & { kind: "video" | "audio" }) {
+  const a = node.attrs as { src: string; caption: string };
+  const src = safeUrl(a.src);
+  const testId = `${kind}-block`;
+  if (!a.src && editor.isEditable)
+    return (
+      <NodeViewWrapper contentEditable={false} data-testid={testId}>
+        <MediaPicker kind={kind} onFile={(f) => updateAttributes({ src: f.url })} onUrl={(u) => updateAttributes({ src: u })} onCancel={deleteNode} />
+      </NodeViewWrapper>
+    );
+  return (
+    <NodeViewWrapper className="nd-media-view group/media" data-testid={testId} contentEditable={false}>
+      {src ? (
+        kind === "video" ? (
+          <video src={src} controls preload="metadata" className="block w-full rounded-[4px] bg-black" />
+        ) : (
+          <audio src={src} controls preload="metadata" className="block w-full" />
+        )
+      ) : (
+        <div className="flex h-16 items-center justify-center rounded-[4px] bg-hover text-ink-3">{kind === "video" ? "Vídeo no disponible" : "Audio no disponible"}</div>
+      )}
+      {editor.isEditable ? (
+        <input
+          value={a.caption}
+          onChange={(e) => updateAttributes({ caption: e.target.value })}
+          placeholder="Añade un pie"
+          aria-label={`Pie del ${kind === "video" ? "vídeo" : "audio"}`}
+          className="mt-1 block w-full bg-transparent text-[14px] text-ink-2 outline-none placeholder:text-transparent group-hover/media:placeholder:text-ink-3 focus:placeholder:text-ink-3"
+        />
+      ) : (
+        a.caption && <p className="mt-1 text-[14px] text-ink-2">{a.caption}</p>
+      )}
+    </NodeViewWrapper>
+  );
+}
+const VideoView = (p: NodeViewProps) => <MediaView {...p} kind="video" />;
+const AudioView = (p: NodeViewProps) => <MediaView {...p} kind="audio" />;
+export const VideoBlock = VideoBlockBase.extend({ addNodeView: () => ReactNodeViewRenderer(VideoView) });
+export const AudioBlock = AudioBlockBase.extend({ addNodeView: () => ReactNodeViewRenderer(AudioView) });
+
+// ── Página / enlace a página ──
+function PageLinkView({ node, updateAttributes, deleteNode, editor }: NodeViewProps) {
+  const ws = useOptionalWorkspace();
+  const a = node.attrs as { pageId: string; title: string; icon: string | null };
+  const live = ws?.pages.find((p) => p.id === a.pageId);
+  const title = live?.title ?? a.title;
+  const icon = live ? live.icon : a.icon;
+  // Mantiene la copia del título (exportación, búsqueda y vistas públicas) al día con la página enlazada.
+  useEffect(() => {
+    if (live && editor.isEditable && (live.title !== a.title || live.icon !== a.icon)) updateAttributes({ title: live.title, icon: live.icon });
+  }, [live, a.title, a.icon, editor, updateAttributes]);
+  if (!a.pageId) {
+    if (!editor.isEditable || !ws) return <NodeViewWrapper />;
+    return (
+      <NodeViewWrapper contentEditable={false} data-testid="page-link-picker">
+        <PagePicker exclude={getPageId(editor)} onPick={(p) => updateAttributes({ pageId: p.id, title: p.title, icon: p.icon })} onCancel={deleteNode} />
+      </NodeViewWrapper>
+    );
+  }
+  const body = (
+    <>
+      <span className="flex size-[22px] shrink-0 items-center justify-center">
+        <PageIcon icon={icon} kind={live?.kind} size={19} />
+      </span>
+      <span className="nd-page-link-title truncate">{title || "Sin título"}</span>
+    </>
+  );
+  return (
+    <NodeViewWrapper className="nd-page-link" data-testid="page-link" contentEditable={false}>
+      {ws && live ? (
+        <Link href={`/${a.pageId}`} className="flex min-w-0 items-center gap-1.5 rounded-[4px] px-0.5 py-[3px] hover:bg-hover" draggable={false}>
+          {body}
+        </Link>
+      ) : (
+        <span className="flex min-w-0 items-center gap-1.5 px-0.5 py-[3px] text-ink-2">{body}</span>
+      )}
+    </NodeViewWrapper>
+  );
+}
+
+const normText = (v: string) => v.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase();
+
+/** Buscador de páginas del espacio para «Enlace a página». */
+function PagePicker({ exclude, onPick, onCancel }: { exclude: string | null; onPick: (p: { id: string; title: string; icon: string | null }) => void; onCancel: () => void }) {
+  const ws = useOptionalWorkspace();
+  const [q, setQ] = useState("");
+  const [index, setIndex] = useState(0);
+  const matches = (ws?.pages ?? []).filter((p) => p.id !== exclude && normText(p.title || "Sin título").includes(normText(q.trim()))).slice(0, 8);
+  return (
+    <div className="nd-menu w-[324px] max-w-full overflow-hidden" role="dialog" aria-label="Enlazar con una página">
+      <div className="p-2">
+        <input
+          autoFocus
+          value={q}
+          onChange={(e) => {
+            setQ(e.target.value);
+            setIndex(0);
+          }}
+          onKeyDown={(e) => {
+            e.stopPropagation();
+            if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+              e.preventDefault();
+              setIndex((i) => (i + (e.key === "ArrowDown" ? 1 : -1) + matches.length) % Math.max(1, matches.length));
+            } else if (e.key === "Enter" && matches[index]) {
+              e.preventDefault();
+              onPick(matches[index]);
+            } else if (e.key === "Escape") onCancel();
+          }}
+          placeholder="Buscar una página para enlazar…"
+          aria-label="Buscar una página para enlazar"
+          className="nd-menu-search"
+        />
+      </div>
+      <div role="listbox" aria-label="Páginas" className="nd-scroll max-h-[240px] overflow-y-auto pb-1">
+        {matches.length === 0 && <p className="nd-menu-empty">Sin resultados</p>}
+        {matches.map((p, i) => (
+          <button key={p.id} type="button" role="option" aria-selected={i === index} onMouseEnter={() => setIndex(i)} onClick={() => onPick(p)} className="nd-menu-item">
+            <span className="nd-menu-icon">
+              <PageIcon icon={p.icon} kind={p.kind} size={18} />
+            </span>
+            <span className="truncate">{p.title || "Sin título"}</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+export const PageLink = PageLinkBase.extend({ addNodeView: () => ReactNodeViewRenderer(PageLinkView) });
+
+// ── Ruta de navegación ──
+function BreadcrumbView({ editor }: NodeViewProps) {
+  const ws = useOptionalWorkspace();
+  const pageId = getPageId(editor);
+  const path = ws && pageId ? pathTo(ws.pages, pageId) : [];
+  return (
+    <NodeViewWrapper className="nd-breadcrumb" data-testid="breadcrumb-block" contentEditable={false}>
+      <nav aria-label="Ruta de la página" className="flex flex-wrap items-center gap-1 py-1 text-[14px] text-ink-2">
+        {path.length === 0 && <span className="text-ink-3">Ruta de navegación</span>}
+        {path.map((p, i) => (
+          <span key={p.id} className="flex items-center gap-1">
+            {i > 0 && <span className="text-ink-3">/</span>}
+            <Link href={`/${p.id}`} className="flex items-center gap-1 rounded px-1 py-0.5 hover:bg-hover" draggable={false}>
+              <PageIcon icon={p.icon} kind={p.kind} size={16} />
+              <span className="max-w-[180px] truncate">{p.title || "Sin título"}</span>
+            </Link>
+          </span>
+        ))}
+      </nav>
+    </NodeViewWrapper>
+  );
+}
+export const Breadcrumb = BreadcrumbBase.extend({ addNodeView: () => ReactNodeViewRenderer(BreadcrumbView) });
 
 // ── Archivo adjunto ──
 function FileView({ node, deleteNode, editor, updateAttributes }: NodeViewProps) {
@@ -434,7 +597,7 @@ function TocView({ editor }: NodeViewProps) {
 }
 export const TableOfContents = TocBase.extend({ addNodeView: () => ReactNodeViewRenderer(TocView) });
 
-export const nodeViewExtensions = { callout: Callout, imageBlock: ImageBlock, fileBlock: FileBlock, bookmark: Bookmark, mathBlock: MathBlock, mathInline: MathInline, tableOfContents: TableOfContents };
+export const nodeViewExtensions = { callout: Callout, imageBlock: ImageBlock, videoBlock: VideoBlock, audioBlock: AudioBlock, pageLink: PageLink, breadcrumb: Breadcrumb, fileBlock: FileBlock, bookmark: Bookmark, mathBlock: MathBlock, mathInline: MathInline, tableOfContents: TableOfContents };
 
 /** Pegar o soltar archivos en el editor: las imágenes se insertan como imagen y el resto como archivo adjunto. */
 export const MediaDrop = Extension.create({

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { hardNavigate } from "@/components/auth-provider";
+import { BrandLogo } from "@/components/brand-logo";
 
 type Info = { workspaceName: string; role: string; email: string; expired: boolean; used: boolean };
 const ROLE: Record<string, string> = { owner: "propietario", admin: "administrador", member: "miembro", guest: "invitado" };
@@ -34,7 +35,9 @@ export default function InvitePage() {
   return (
     <main className="flex min-h-screen items-center justify-center bg-bg px-4">
       <div className="flex w-full max-w-[400px] flex-col items-center gap-4 text-center" data-testid="invite-page">
-        <span className="flex size-12 items-center justify-center rounded-lg bg-ink text-[24px] font-semibold text-[var(--bg)]">N</span>
+        <span className="flex size-12 items-center justify-center" data-testid="auth-logo">
+          <BrandLogo size={48} />
+        </span>
         {missing && <h1 className="text-[22px] font-bold">Invitación no encontrada</h1>}
         {info && (
           <>

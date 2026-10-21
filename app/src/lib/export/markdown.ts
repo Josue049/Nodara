@@ -89,6 +89,15 @@ function blockMd(node: DocNode, depth = 0): string {
       const src = safe(node.attrs?.src);
       return src ? `![${escMd(String(node.attrs?.alt ?? ""))}](${src})${node.attrs?.caption ? `\n\n*${escMd(String(node.attrs.caption))}*` : ""}` : "";
     }
+    case "videoBlock":
+    case "audioBlock": {
+      const src = safe(node.attrs?.src);
+      return src ? `[${node.type === "videoBlock" ? "Vídeo" : "Audio"}${node.attrs?.caption ? `: ${escMd(String(node.attrs.caption))}` : ""}](${src})` : "";
+    }
+    case "pageLink":
+      return node.attrs?.pageId ? `[${escMd(String(node.attrs?.title || "Sin título"))}](/${String(node.attrs.pageId).replace(/[^0-9a-f-]/gi, "")})` : "";
+    case "breadcrumb":
+      return "";
     case "fileBlock":
     case "bookmark": {
       const url = safe(node.attrs?.url);
@@ -148,7 +157,7 @@ function blockHtml(node: DocNode): string {
     case "paragraph":
       return `<p>${inlineHtml(node.content)}</p>`;
     case "heading": {
-      const l = Math.min(3, Math.max(1, Number(node.attrs?.level ?? 1)));
+      const l = Math.min(4, Math.max(1, Number(node.attrs?.level ?? 1)));
       return `<h${l}>${inlineHtml(node.content)}</h${l}>`;
     }
     case "bulletList":
@@ -186,6 +195,16 @@ function blockHtml(node: DocNode): string {
       const src = safe(node.attrs?.src);
       return src ? `<figure><img src="${esc(src)}" alt="${esc(String(node.attrs?.alt ?? ""))}">${node.attrs?.caption ? `<figcaption>${esc(String(node.attrs.caption))}</figcaption>` : ""}</figure>` : "";
     }
+    case "videoBlock":
+    case "audioBlock": {
+      const src = safe(node.attrs?.src);
+      const tag = node.type === "videoBlock" ? "video" : "audio";
+      return src ? `<figure><${tag} src="${esc(src)}" controls></${tag}>${node.attrs?.caption ? `<figcaption>${esc(String(node.attrs.caption))}</figcaption>` : ""}</figure>` : "";
+    }
+    case "pageLink":
+      return node.attrs?.pageId ? `<p><a href="/${esc(String(node.attrs.pageId).replace(/[^0-9a-f-]/gi, ""))}">${esc(String(node.attrs?.title || "Sin título"))}</a></p>` : "";
+    case "breadcrumb":
+      return "";
     case "fileBlock":
     case "bookmark": {
       const url = safe(node.attrs?.url);
@@ -347,7 +366,7 @@ export function markdownToDoc(md: string): { title: string | null; doc: DocNode 
     }
     const h = /^(#{1,6})\s+(.*?)\s*#*\s*$/.exec(t);
     if (h) {
-      blocks.push({ type: "heading", attrs: { level: Math.min(3, h[1].length) }, content: parseInline(h[2]) });
+      blocks.push({ type: "heading", attrs: { level: Math.min(4, h[1].length) }, content: parseInline(h[2]) });
       i++;
       continue;
     }

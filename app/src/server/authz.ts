@@ -1,7 +1,7 @@
 import { and, eq, inArray, isNull, sql } from "drizzle-orm";
 import { HttpError, type SessionUser } from "./auth";
 import type { Db } from "./db";
-import { favorites, pagePermissions, pages, workspaceMembers } from "./schema";
+import { favorites, pagePermissions, pages, pageViews, workspaceMembers } from "./schema";
 
 export type Role = "owner" | "admin" | "member" | "guest";
 export type Level = "none" | "view" | "comment" | "edit" | "full";
@@ -119,6 +119,11 @@ export type VisiblePage = {
   level: Level;
   scope: Scope;
   creatorId: string | null;
+  cover: string | null;
+  /** ISO: última edición de la página. */
+  updatedAt: string;
+  /** ISO: última visita del usuario actual (nulo si nunca la abrió). */
+  viewedAt: string | null;
 };
 
 /** Páginas del espacio que el usuario puede ver (sin registros de bases de datos ni papelera). */
@@ -135,6 +140,8 @@ export async function visiblePages(db: Db, userId: string, workspaceId: string):
       kind: pages.kind,
       creatorId: pages.creatorId,
       scope: pages.scope,
+      cover: pages.cover,
+      updatedAt: pages.updatedAt,
     })
     .from(pages)
     .where(and(eq(pages.workspaceId, workspaceId), isNull(pages.deletedAt), isNull(pages.collectionId)));
@@ -142,6 +149,12 @@ export async function visiblePages(db: Db, userId: string, workspaceId: string):
     (await db.select({ pageId: pagePermissions.pageId, level: pagePermissions.level }).from(pagePermissions).where(eq(pagePermissions.userId, userId))).map((p) => [p.pageId, p.level as Level]),
   );
   const favs = new Set((await db.select({ id: favorites.pageId }).from(favorites).where(eq(favorites.userId, userId))).map((f) => f.id));
+  const views = new Map(
+    (await db.select({ pageId: pageViews.pageId, last: sql<string>`max(${pageViews.lastViewedAt})` }).from(pageViews).where(eq(pageViews.userId, userId)).groupBy(pageViews.pageId)).map((v) => [
+      v.pageId,
+      new Date(v.last).toISOString(),
+    ]),
+  );
   const byId = new Map(rows.map((r) => [r.id, r]));
   const memo = new Map<string, { explicit: Level; scope: Scope }>();
   const resolve = (id: string): { explicit: Level; scope: Scope } => {
@@ -162,7 +175,10 @@ export async function visiblePages(db: Db, userId: string, workspaceId: string):
     const r = resolve(p.id);
     const level = maxLevel(r.explicit, r.scope === "workspace" ? scopeLevel(role) : "none");
     if (level === "none") continue;
-    out.push({ id: p.id, parentId: p.parentId, title: p.title, icon: p.icon, position: p.position, kind: p.kind, isFavorite: favs.has(p.id), level, scope: r.scope, creatorId: p.creatorId });
+    out.push({
+      id: p.id, parentId: p.parentId, title: p.title, icon: p.icon, position: p.position, kind: p.kind, isFavorite: favs.has(p.id), level, scope: r.scope, creatorId: p.creatorId,
+      cover: p.cover, updatedAt: p.updatedAt.toISOString(), viewedAt: views.get(p.id) ?? null,
+    });
   }
   return out;
 }
