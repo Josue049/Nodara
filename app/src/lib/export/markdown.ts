@@ -3,11 +3,18 @@
  * Lógica pura, sin DOM: se usa en el servidor (exportar/importar) y en pruebas unitarias.
  */
 
+import { staticColor } from "../editor/colors";
+
 export type Mark = { type: string; attrs?: Record<string, unknown> };
 export type DocNode = { type: string; attrs?: Record<string, unknown>; content?: DocNode[]; text?: string; marks?: Mark[] };
 
 const SAFE_URL = /^(https?:\/\/|mailto:|\/api\/files\/|\/)/i;
 const safe = (u: unknown) => (typeof u === "string" && SAFE_URL.test(u) ? u : "");
+/** Color exportable: solo hex o rgb()/rgba() (evita inyectar CSS en el atributo style). */
+const cssColor = (v: unknown) => {
+  const c = typeof v === "string" ? staticColor(v) : "";
+  return /^(#[0-9a-f]{3,8}|rgba?\([\d\s.,%]+\))$/i.test(c) ? c : "";
+};
 
 // ───────────────────────── Documento → Markdown ─────────────────────────
 
@@ -143,7 +150,10 @@ function inlineHtml(nodes: DocNode[] = []): string {
         else if (m.type === "strike") out = `<s>${out}</s>`;
         else if (m.type === "underline") out = `<u>${out}</u>`;
         else if (m.type === "code") out = `<code>${out}</code>`;
-        else if (m.type === "highlight") out = `<mark>${out}</mark>`;
+        else if (m.type === "highlight") {
+          const bg = cssColor(m.attrs?.color);
+          out = bg ? `<mark style="background-color:${bg};color:inherit">${out}</mark>` : `<mark>${out}</mark>`;
+        } else if (m.type === "textStyle" && cssColor(m.attrs?.color)) out = `<span style="color:${cssColor(m.attrs?.color)}">${out}</span>`;
         else if (m.type === "link" && safe(m.attrs?.href)) out = `<a href="${esc(String(m.attrs?.href))}" rel="noopener noreferrer nofollow">${out}</a>`;
       }
       return out;

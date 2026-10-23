@@ -11,6 +11,38 @@ import { TaskItem } from "@tiptap/extension-task-item";
 import { TaskList } from "@tiptap/extension-task-list";
 import { Color, TextStyle } from "@tiptap/extension-text-style";
 import StarterKit from "@tiptap/starter-kit";
+import { themedColor } from "./colors";
+
+/** Color de texto pintado con la variable del tema (los hex antiguos de la paleta se traducen al vuelo). */
+const ThemedColor = Color.extend({
+  addGlobalAttributes() {
+    return [
+      {
+        types: this.options.types,
+        attributes: {
+          color: {
+            default: null,
+            parseHTML: (el) => el.style.getPropertyValue("color").replace(/['"]+/g, "") || null,
+            renderHTML: (a) => (typeof a.color === "string" && a.color ? { style: `color: ${themedColor(a.color)}` } : {}),
+          },
+        },
+      },
+    ];
+  },
+});
+
+/** Color de fondo del texto: sin relleno extra, con la variable del tema. */
+const ThemedHighlight = Highlight.extend({
+  addAttributes() {
+    return {
+      color: {
+        default: null,
+        parseHTML: (el) => el.getAttribute("data-color") || el.style.backgroundColor || null,
+        renderHTML: (a) => (typeof a.color === "string" && a.color ? { "data-color": a.color, style: `background-color: ${themedColor(a.color)}; color: inherit` } : {}),
+      },
+    };
+  },
+});
 
 /** Bloque de base de datos integrada: referencia una colección por id. La vista React se añade en el cliente. */
 export const DatabaseBlockBase = Node.create({
@@ -289,8 +321,8 @@ export function schemaExtensions(opts: { collaborative?: boolean; /** Sustituye 
     }),
     ...(opts.codeBlock ? [opts.codeBlock] : []),
     TextStyle,
-    Color,
-    Highlight.configure({ multicolor: true }),
+    ThemedColor,
+    ThemedHighlight.configure({ multicolor: true }),
     TableKit.configure({ table: { resizable: true } }),
     TaskList,
     TaskItem.configure({ nested: true }),

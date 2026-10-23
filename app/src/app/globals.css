@@ -78,6 +78,32 @@
   --home-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 12px 32px rgba(0, 0, 0, 0.38);
 }
 
+/* ── Colores de texto (--tx-*) y de fondo (--bgc-*) del editor, por tema ── */
+:root {
+  --tx-black: #000000;
+  --tx-gray: #787774; --bgc-gray: #f1f1ef;
+  --tx-brown: #9f6b53; --bgc-brown: #f4eeee;
+  --tx-orange: #d9730d; --bgc-orange: #fbecdd;
+  --tx-yellow: #cb912f; --bgc-yellow: #fbf3db;
+  --tx-green: #448361; --bgc-green: #edf3ec;
+  --tx-blue: #337ea9; --bgc-blue: #e7f3f8;
+  --tx-purple: #9065b0; --bgc-purple: #f6f3f9;
+  --tx-pink: #c14c8a; --bgc-pink: #f9f0f5;
+  --tx-red: #d44c47; --bgc-red: #fdebec;
+}
+:root[data-theme="dark"] {
+  --tx-black: #ffffff;
+  --tx-gray: #9b9b9b; --bgc-gray: #2f2f2f;
+  --tx-brown: #ba856f; --bgc-brown: #4a3228;
+  --tx-orange: #c77d48; --bgc-orange: #5c3b23;
+  --tx-yellow: #ca9849; --bgc-yellow: #564328;
+  --tx-green: #529e72; --bgc-green: #243d30;
+  --tx-blue: #379ad3; --bgc-blue: #143a4e;
+  --tx-purple: #9d68d3; --bgc-purple: #3c2d49;
+  --tx-pink: #d15796; --bgc-pink: #4e2c3c;
+  --tx-red: #df5452; --bgc-red: #522e2a;
+}
+
 /* Barra lateral: superficies del tema activo; el violeta de Nodara solo como acento (selección, foco, indicadores). */
 .nd-sidebar {
   --accent: var(--brand-violet);
@@ -308,7 +334,7 @@ body {
 
 /* Enlaces, resaltado y tablas */
 .nd-editor a { color: inherit; text-decoration: underline; text-decoration-color: var(--text-tertiary); text-underline-offset: 2px; cursor: pointer; }
-.nd-editor mark { border-radius: 3px; padding: 0 2px; color: inherit; }
+.nd-editor mark { border-radius: 3px; padding: 0; color: inherit; box-decoration-break: clone; -webkit-box-decoration-break: clone; }
 .nd-editor table { border-collapse: collapse; width: 100%; table-layout: fixed; margin: 6px 0; overflow: hidden; }
 .nd-editor th, .nd-editor td { border: 1px solid var(--border); padding: 4px 8px; vertical-align: top; position: relative; min-width: 1em; }
 .nd-editor th { background: var(--bg-hover); font-weight: 600; text-align: left; }
@@ -431,6 +457,10 @@ body {
 .nd-fade { animation: nd-fade-in 0.15s ease-out; }
 .nd-pop { animation: nd-pop-in 0.18s ease-out; }
 .nd-sidebar-wrap { transition: transform 0.2s ease; }
+/* Barra cerrada mostrada flotando al pasar el puntero por el botón de la barra superior */
+@keyframes nd-peek-in { from { opacity: 0; transform: translateX(-12px); } to { opacity: 1; transform: none; } }
+.nd-sidebar-peek { animation: nd-peek-in 0.16s ease-out; }
+@media (prefers-reduced-motion: reduce) { .nd-sidebar-peek { animation: none; } }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; scroll-behavior: auto !important; }
 }
