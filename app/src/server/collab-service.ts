@@ -38,6 +38,11 @@ type Room = {
   lastEditor: string | null;
   mentions: Set<string>;
   closed: boolean;
+  /**
+   * Vuelca la sala con el módulo que la creó. Cada ruta de Next empaqueta su propia copia de Yjs y la conversión a JSON
+   * falla («Unexpected case») si se hace con otra copia, así que otras rutas vuelcan siempre a través de esta función.
+   */
+  flush: () => Promise<void>;
 };
 
 const g = globalThis as unknown as { __nodaraRooms?: Map<string, Room> };
@@ -79,8 +84,9 @@ export function getRoom(db: Db, pageId: string): Room {
   const doc = new Y.Doc();
   const awareness = new Awareness(new Y.Doc());
   awareness.setLocalState(null); // el servidor no es un participante
-  room = { pageId, doc, awareness, clients: new Map(), ready: Promise.resolve(), persistTimer: null, closeTimer: null, dirty: false, lastEditor: null, mentions: new Set(), closed: false };
+  room = { pageId, doc, awareness, clients: new Map(), ready: Promise.resolve(), persistTimer: null, closeTimer: null, dirty: false, lastEditor: null, mentions: new Set(), closed: false, flush: async () => {} };
   const r = room;
+  r.flush = () => persist(db, r);
   r.ready = loadRoom(db, r).then(() => {
     if (r.dirty) schedulePersist(db, r);
   });
@@ -118,9 +124,13 @@ export async function persist(db: Db, room: Room): Promise<void> {
   }
 }
 
-export async function flushRoom(db: Db, pageId: string): Promise<void> {
-  const room = rooms.get(pageId);
-  if (room) await persist(db, room);
+export async function flushRoom(pageId: string): Promise<void> {
+  await rooms.get(pageId)?.flush();
+}
+
+/** Vuelca todas las salas con cambios pendientes (antes de una copia de seguridad completa). */
+export async function flushAllRooms(): Promise<void> {
+  await Promise.all([...rooms.values()].map((room) => room.flush()));
 }
 
 // ── Conexión de clientes ─────────────────────────────────────────────
