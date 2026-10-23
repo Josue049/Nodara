@@ -25,7 +25,7 @@ test("menú / inserta encabezado, filtra y navega con teclado", async ({ page })
   await page.keyboard.type("/");
   const menu = page.getByTestId("slash-menu");
   await expect(menu).toBeVisible();
-  await expect(menu.getByRole("option")).toHaveCount(76);
+  await expect(menu.getByRole("option")).toHaveCount(77);
   await page.keyboard.type("encab");
   await expect(menu.getByRole("option")).toHaveCount(8); // H1–H4 y sus variantes «Convertir en»
   await page.keyboard.press("ArrowDown");

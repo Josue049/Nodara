@@ -1,5 +1,5 @@
 import type { Page } from "@playwright/test";
-import { expect, gotoReady, test } from "./fixtures";
+import { apiCreate, expect, gotoReady, test } from "./fixtures";
 
 async function newPage(page: Page, title: string) {
   await gotoReady(page, "/");
@@ -72,20 +72,47 @@ test("convertir en: de texto a encabezado y a lista de tareas", async ({ page })
   await expect(page.getByTestId("editor").locator('ul[data-type="taskList"] li')).toHaveCount(1);
 });
 
-test("color de texto y de fondo se aplican y persisten", async ({ page }) => {
+test("color de texto y de fondo se aplican, se excluyen entre sí y persisten", async ({ page }) => {
   await newPage(page, "Colores");
   await typeAndSelect(page, "colorido");
   const menu = page.getByTestId("format-menu");
+  const pick = async (name: string) => {
+    await menu.getByRole("button", { name: "Color", exact: true }).click();
+    await menu.getByRole("menuitemradio", { name }).click();
+  };
+  const ed = page.getByTestId("editor");
+  await pick("Color del texto: Rojo");
+  await expect(ed.locator("p span").first()).toHaveCSS("color", "rgb(212, 76, 71)");
+  // El fondo sustituye al color del texto (un tramo tiene uno u otro)
+  await pick("Color de fondo: Amarillo");
+  await expect(ed.locator("mark")).toHaveCSS("background-color", "rgb(251, 243, 219)");
+  await expect(ed.locator("p span[style*='color']")).toHaveCount(0);
+  // Recientes y opción marcada
   await menu.getByRole("button", { name: "Color", exact: true }).click();
-  await menu.getByRole("button", { name: "Color del texto: Rojo" }).click();
-  await menu.getByRole("button", { name: "Color de fondo: Amarillo" }).click();
-  const span = page.getByTestId("editor").locator("p span").first();
-  await expect(span).toHaveCSS("color", "rgb(212, 76, 71)");
-  await expect(page.getByTestId("editor").locator("mark")).toHaveCSS("background-color", "rgb(251, 243, 219)");
+  await expect(page.getByTestId("color-panel")).toContainText("Usados recientemente");
+  await expect(page.getByTestId("color-panel").getByRole("menuitemradio", { name: "Color de fondo: Amarillo" }).last()).toHaveAttribute("aria-checked", "true");
+  await page.keyboard.press("Escape");
+  await expect(page.getByTestId("color-panel")).toBeHidden();
+  // Negro puro y, con el tema oscuro, cada color usa su tono propio
+  await pick("Color del texto: Negro");
+  await expect(ed.locator("mark")).toHaveCount(0);
+  await expect(ed.locator("p span").first()).toHaveCSS("color", "rgb(0, 0, 0)");
   await saved(page);
   await page.reload();
   await page.locator("html[data-nodara-ready]").waitFor({ state: "attached" });
-  await expect(page.getByTestId("editor").locator("p span").first()).toHaveCSS("color", "rgb(212, 76, 71)");
+  await expect(page.getByTestId("editor").locator("p span").first()).toHaveCSS("color", "rgb(0, 0, 0)");
+  await page.evaluate(() => document.documentElement.setAttribute("data-theme", "dark"));
+  await expect(page.getByTestId("editor").locator("p span").first()).toHaveCSS("color", "rgb(255, 255, 255)");
+});
+
+test("los colores antiguos (hex) siguen el tema oscuro", async ({ page, request }) => {
+  const doc = await apiCreate(request, { title: "Colores antiguos" });
+  const content = { type: "doc", content: [{ type: "paragraph", content: [{ type: "text", text: "viejo", marks: [{ type: "highlight", attrs: { color: "#fbf3db" } }] }] }] };
+  expect((await request.patch(`/api/pages/${doc.id}`, { data: { content } })).ok()).toBeTruthy();
+  await gotoReady(page, `/${doc.id}`);
+  await expect(page.getByTestId("editor").locator("mark")).toHaveCSS("background-color", "rgb(251, 243, 219)");
+  await page.evaluate(() => document.documentElement.setAttribute("data-theme", "dark"));
+  await expect(page.getByTestId("editor").locator("mark")).toHaveCSS("background-color", "rgb(86, 67, 40)");
 });
 
 test("asa de bloque: «+» inserta debajo y abre el menú /; el menú del asa elimina y duplica", async ({ page }) => {

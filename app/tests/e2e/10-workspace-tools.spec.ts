@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import type { Page } from "@playwright/test";
 import { apiCreate, expect, gotoReady, newUser, test } from "./fixtures";
 
@@ -92,6 +93,25 @@ test.describe("importar y exportar", () => {
     const download = page.waitForEvent("download");
     await page.getByTestId("export-md").click();
     expect((await download).suggestedFilename()).toBe("Exportable.md");
+  });
+
+  test("exportar justo después de escribir incluye lo último escrito y los colores", async ({ page, request }) => {
+    const doc = await apiCreate(request, { title: "Recién escrito" });
+    await gotoReady(page, `/${doc.id}`);
+    await page.getByTestId("editor").click();
+    await page.keyboard.type("Texto recién tecleado");
+    await openMenu(page);
+    const download = page.waitForEvent("download");
+    await page.getByTestId("export-md").click();
+    const file = await (await download).path();
+    expect(readFileSync(file!, "utf8")).toContain("Texto recién tecleado");
+    // Colores a HTML con el tono fijo del tema claro
+    await request.patch(`/api/pages/${doc.id}`, {
+      data: { content: { type: "doc", content: [{ type: "paragraph", content: [{ type: "text", text: "rojo", marks: [{ type: "textStyle", attrs: { color: "var(--tx-red)" } }] }, { type: "text", text: "fondo", marks: [{ type: "highlight", attrs: { color: "var(--bgc-blue)" } }] }] }] } },
+    });
+    const html = await (await request.get(`/api/pages/${doc.id}/export?format=html`)).text();
+    expect(html).toContain('<span style="color:#d44c47">rojo</span>');
+    expect(html).toContain('<mark style="background-color:#e7f3f8;color:inherit">fondo</mark>');
   });
 
   test("exportar una base de datos como CSV", async ({ page, request }) => {
@@ -273,6 +293,26 @@ test.describe("atajos, accesibilidad y responsive", () => {
     await expect(page.getByRole("complementary", { name: "Barra lateral" })).toBeHidden();
     await page.getByTestId("sidebar-toggle").click();
     await expect(page.getByRole("complementary", { name: "Barra lateral" })).toBeVisible();
+  });
+
+  test("el botón «‹‹» oculta la barra; el de la barra superior la muestra flotando al pasar el puntero y la fija con clic", async ({ page }) => {
+    await gotoReady(page, "/");
+    const sidebar = page.getByRole("complementary", { name: "Barra lateral" });
+    const shell = page.locator("[data-sidebar]");
+    await sidebar.hover();
+    await page.getByTestId("sidebar-collapse").click();
+    await expect(sidebar).toBeHidden();
+    await expect(shell).toHaveAttribute("data-sidebar", "closed");
+    const toggle = page.getByTestId("sidebar-toggle").first();
+    await toggle.hover();
+    await expect(shell).toHaveAttribute("data-sidebar", "peek");
+    await expect(sidebar).toBeVisible();
+    await expect(page.getByTestId("sidebar-collapse")).toHaveAccessibleName("Fijar barra lateral");
+    await page.mouse.move(900, 600);
+    await expect(shell).toHaveAttribute("data-sidebar", "closed");
+    await toggle.click();
+    await expect(shell).toHaveAttribute("data-sidebar", "open");
+    await expect(page.getByTestId("sidebar-collapse")).toHaveAccessibleName("Ocultar barra lateral");
   });
 
   test("en pantallas estrechas la barra lateral es un cajón que se cierra al navegar", async ({ page, request }) => {
