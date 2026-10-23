@@ -13,6 +13,10 @@ Nodara nace de la admiración por herramientas como Notion y su idea de que docu
   <img src="docs/images/base-de-datos.png" alt="Base de datos en vista de tabla" width="49%">
   <img src="docs/images/busqueda.png" alt="Búsqueda avanzada con filtros y resaltado" width="49%">
 </p>
+<p align="center">
+  <img src="docs/images/plantillas.png" alt="Galería de plantillas de página" width="49%">
+  <img src="docs/images/movil.png" alt="Nodara en un móvil" height="400">
+</p>
 
 ## Qué incluye
 | Área | Funcionalidades |
