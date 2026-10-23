@@ -44,7 +44,7 @@ import {
 import type { ViewType } from "@/lib/collections/types";
 import { dbApi } from "../database/api";
 import { colorBlock, deleteBlock, duplicateBlock, TURN_ICONS, TURN_INTO } from "./block-actions";
-import { SWATCHES } from "./colors";
+import { SWATCHES, TEXT_SWATCHES } from "./colors";
 import { getPageId } from "./database-node";
 
 /** Lo que el menú necesita de la aplicación (crear páginas, navegar, abrir el selector de emoji). */
@@ -132,7 +132,7 @@ function linkNewPage(make: (ctx: SlashContext, parent: string) => Promise<{ id: 
   };
 }
 
-const COLOR_EN: Record<string, string> = { Predeterminado: "default", Gris: "gray", Marrón: "brown", Naranja: "orange", Amarillo: "yellow", Verde: "green", Azul: "blue", Morado: "purple", Rosa: "pink", Rojo: "red" };
+const COLOR_EN: Record<string, string> = { Predeterminado: "default", Negro: "black", Gris: "gray", Marrón: "brown", Naranja: "orange", Amarillo: "yellow", Verde: "green", Azul: "blue", Morado: "purple", Rosa: "pink", Rojo: "red" };
 
 const TURN_KEYWORDS: Record<string, string[]> = { text: ["text"], h1: ["h1", "heading"], h2: ["h2", "heading"], h3: ["h3", "heading"], h4: ["h4", "heading"], bullet: ["bullet", "lista"], number: ["numbered", "lista"], todo: ["todo", "lista"], toggle: ["toggle", "lista"], code: ["code"], quote: ["quote"], callout: ["callout"] };
 
@@ -201,7 +201,7 @@ export const slashItems: SlashItem[] = [
   { id: "duplicate", section: "actions", title: "Duplicar", icon: Copy, keywords: ["duplicate", "duplicar", "copiar"], run: (e, r) => (e.chain().focus().deleteRange(r).run(), duplicateBlock(e, topAt(e))) },
   { id: "delete", section: "actions", title: "Eliminar", icon: Trash2, keywords: ["delete", "eliminar", "borrar", "quitar"], run: (e, r) => (e.chain().focus().deleteRange(r).run(), deleteBlock(e, topAt(e))) },
   // Colores del bloque actual
-  ...SWATCHES.map((s): SlashItem => ({
+  ...TEXT_SWATCHES.map((s): SlashItem => ({
     id: `color-${COLOR_EN[s.name]}`,
     section: "textColor",
     title: s.text ? `Texto ${s.name.toLowerCase()}` : "Texto predeterminado",

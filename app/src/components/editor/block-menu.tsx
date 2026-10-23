@@ -4,7 +4,7 @@ import type { Editor } from "@tiptap/core";
 import { Check, ChevronRight, Copy, MessageSquareText, Palette, Repeat2, Trash2 } from "lucide-react";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { blockIdOfNode, blockTypeLabel, colorBlock, countText, deleteBlock, duplicateBlock, focusBlock, isConvertible, TURN_ICONS, TURN_INTO } from "./block-actions";
-import { SWATCHES } from "./colors";
+import { SWATCHES, TEXT_SWATCHES } from "./colors";
 import { MenuIcon } from "./slash-menu";
 
 type Action = { id: string; label: string; icon: React.ReactNode; hint?: string; sub?: "turn" | "color"; run?: () => void; group: number };
@@ -77,7 +77,7 @@ export function BlockMenu({
 
   const turnItems: SubItem[] = TURN_INTO.map((t) => ({ id: `turn-${t.id}`, label: t.label, icon: <MenuIcon icon={TURN_ICONS[t.id] ?? Repeat2} />, checked: t.id === currentType, run: () => (select(), t.run(editor)) }));
   const colorItems: SubItem[] = [
-    ...SWATCHES.map((s, i) => ({ id: `text-${i}`, header: i === 0 ? "Color del texto" : undefined, label: s.text ? `Texto ${s.name.toLowerCase()}` : "Texto predeterminado", icon: <MenuIcon icon={{ swatch: s.text, kind: "text" }} />, run: () => colorBlock(editor, pos, "text", s) })),
+    ...TEXT_SWATCHES.map((s, i) => ({ id: `text-${i}`, header: i === 0 ? "Color del texto" : undefined, label: s.text ? `Texto ${s.name.toLowerCase()}` : "Texto predeterminado", icon: <MenuIcon icon={{ swatch: s.text, kind: "text" }} />, run: () => colorBlock(editor, pos, "text", s) })),
     ...SWATCHES.map((s, i) => ({ id: `bg-${i}`, header: i === 0 ? "Color de fondo" : undefined, label: s.bg ? `Fondo ${s.name.toLowerCase()}` : "Fondo predeterminado", icon: <MenuIcon icon={{ swatch: s.bg, kind: "bg" }} />, run: () => colorBlock(editor, pos, "bg", s) })),
   ];
 

@@ -15,7 +15,7 @@ import {
   type DragMoveEvent,
   type DragStartEvent,
 } from "@dnd-kit/core";
-import { ChevronRight, CloudUpload, Home, LayoutTemplate, Moon, MoreHorizontal, Plus, Search, SquarePen, Table2, Trash2, Undo2, Upload, X } from "lucide-react";
+import { ChevronRight, ChevronsLeft, ChevronsRight, CloudUpload, Home, LayoutTemplate, Moon, MoreHorizontal, Plus, Search, SquarePen, Table2, Trash2, Undo2, Upload, X } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
@@ -269,7 +269,8 @@ function ThemeToggle() {
   );
 }
 
-export function Sidebar() {
+/** `floating`: la barra está cerrada y se muestra flotando; su botón la fija en vez de ocultarla. */
+export function Sidebar({ floating = false, onToggle }: { floating?: boolean; onToggle?: () => void } = {}) {
   const { pages, loaded, createPage, createDatabase, movePage, setSearchOpen } = useWorkspace();
   const params = useParams<{ pageId?: string }>();
   const router = useRouter();
@@ -346,12 +347,24 @@ export function Sidebar() {
   };
 
   return (
-    <aside className="nd-sidebar relative flex h-full w-[var(--sidebar-w)] max-w-[85vw] shrink-0 flex-col bg-sidebar text-ink" aria-label={t.sidebar}>
+    <aside className="nd-sidebar group/sb relative flex h-full w-[var(--sidebar-w)] max-w-[85vw] shrink-0 flex-col bg-sidebar text-ink" aria-label={t.sidebar}>
       <div className="flex h-[48px] items-center px-2 pt-1">
         <Link href="/" aria-label={t.brandHome} title={t.home} className="flex h-9 items-center gap-2 rounded-md px-2 transition-colors hover:bg-hover" data-testid="sidebar-brand">
           <BrandLogo size={26} />
           <span className="text-[17px] font-bold tracking-[-0.02em] text-ink">Nodara</span>
         </Link>
+        {onToggle && (
+          <button
+            type="button"
+            data-testid="sidebar-collapse"
+            aria-label={floating ? "Fijar barra lateral" : "Ocultar barra lateral"}
+            title={floating ? "Fijar barra lateral (Ctrl+\\)" : "Ocultar barra lateral (Ctrl+\\)"}
+            onClick={onToggle}
+            className="ml-auto flex size-7 items-center justify-center rounded-md text-ink-2 hover:bg-hover focus-visible:opacity-100 md:opacity-0 md:group-hover/sb:opacity-100"
+          >
+            {floating ? <ChevronsRight size={18} /> : <ChevronsLeft size={18} />}
+          </button>
+        )}
       </div>
       <div className="flex h-[45px] items-center gap-2 px-3">
         <WorkspaceMenu />

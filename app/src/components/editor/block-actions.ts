@@ -1,10 +1,10 @@
 // Operaciones sobre un bloque (convertir, color, duplicar, eliminar, contar), compartidas por el menú «/»,
 // el menú del asa de bloque y el menú de formato.
-import type { Editor } from "@tiptap/core";
+import type { ChainedCommands, Editor } from "@tiptap/core";
 import type { Node as PMNode } from "@tiptap/pm/model";
 import { TextSelection } from "@tiptap/pm/state";
 import { ChevronRight, Code, Heading1, Heading2, Heading3, Heading4, Lightbulb, List, ListOrdered, ListTodo, Quote, Type, type LucideIcon } from "lucide-react";
-import { SWATCHES } from "./colors";
+import type { Swatch } from "./colors";
 
 export type TurnInto = { id: string; label: string; run: (e: Editor) => void };
 
@@ -115,8 +115,20 @@ export function deleteBlock(e: Editor, pos: number) {
   if (node) e.chain().focus().deleteRange({ from: pos, to: pos + node.nodeSize }).run();
 }
 
-/** Aplica color de texto o de fondo a todo el texto del bloque («Color» del bloque). `null` = predeterminado. */
-export function colorBlock(e: Editor, pos: number, kind: "text" | "bg", swatch: (typeof SWATCHES)[number]) {
+export type ColorKind = "text" | "bg";
+
+/**
+ * Aplica un color a la selección de la cadena. Texto y fondo se excluyen: elegir uno quita el otro,
+ * y «Predeterminado» (sin valor) deja el texto sin color de ningún tipo.
+ */
+export function withColor(chain: ChainedCommands, kind: ColorKind, swatch: Swatch): ChainedCommands {
+  const value = kind === "text" ? swatch.text : swatch.bg;
+  if (!value) return chain.unsetColor().unsetHighlight();
+  return kind === "text" ? chain.unsetHighlight().setColor(value) : chain.unsetColor().setHighlight({ color: value });
+}
+
+/** Aplica color de texto o de fondo a todo el texto del bloque («Color» del bloque). */
+export function colorBlock(e: Editor, pos: number, kind: ColorKind, swatch: Swatch) {
   const node = e.state.doc.nodeAt(pos);
   if (!node) return;
   const from = pos + 1;
@@ -125,9 +137,30 @@ export function colorBlock(e: Editor, pos: number, kind: "text" | "bg", swatch: 
     tr.setSelection(TextSelection.create(tr.doc, from, to));
     return true;
   });
-  if (kind === "text") (swatch.text ? chain.setColor(swatch.text) : chain.unsetColor()).run();
-  else (swatch.bg ? chain.setHighlight({ color: swatch.bg }) : chain.unsetHighlight()).run();
+  withColor(chain, kind, swatch).run();
+  rememberColor(kind, swatch);
   e.commands.setTextSelection(to);
+}
+
+const RECENT_KEY = "nodara:recent-colors";
+export type RecentColor = { kind: ColorKind; id: string };
+
+/** Últimos colores usados (preferencia local del navegador), del más reciente al más antiguo. */
+export function recentColors(): RecentColor[] {
+  try {
+    const v = JSON.parse(localStorage.getItem(RECENT_KEY) ?? "[]");
+    return Array.isArray(v) ? v.filter((r) => (r?.kind === "text" || r?.kind === "bg") && typeof r.id === "string").slice(0, 5) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function rememberColor(kind: ColorKind, swatch: Swatch) {
+  if (swatch.id === "default") return;
+  try {
+    const next = [{ kind, id: swatch.id }, ...recentColors().filter((r) => !(r.kind === kind && r.id === swatch.id))].slice(0, 5);
+    localStorage.setItem(RECENT_KEY, JSON.stringify(next));
+  } catch {}
 }
 
 /** Recuento de palabras y caracteres del texto de un bloque. */
