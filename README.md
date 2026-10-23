@@ -60,5 +60,8 @@ La suite completa se ejecuta con `scripts/test-seq.ps1 -All`: ESLint, TypeScript
 ## Límites conocidos
 Una sola instancia de aplicación (salas colaborativas en memoria), sin envío de correo (enlaces de un solo uso), archivos en disco local, sin vistas vinculadas entre bases ni «última edición por» en propiedades. Lista completa y honesta en [`docs/LIMITATIONS.md`](docs/LIMITATIONS.md).
 
+## Desarrollador
+Desarrollado por **Josue** ([@Josue049](https://github.com/Josue049)).
+
 ## Licencia
 MIT. Notion es una marca registrada de Notion Labs, Inc.; Nodara no está afiliado, patrocinado ni respaldado por Notion Labs.
